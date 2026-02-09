@@ -1,29 +1,41 @@
 import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SelectionCard } from "@/components/SelectionCard";
-import { SegmentedButton } from "@/components/SegmentedButton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const semesters = [
-  "Semester 1",
-  "Semester 2",
-  "Semester 3",
-  "Semester 4",
-  "Semester 5",
-  "Semester 6",
-  "Semester 7",
-  "Semester 8",
+  { value: "sem-1", label: "Semester 1" },
+  { value: "sem-2", label: "Semester 2" },
+  { value: "sem-3", label: "Semester 3" },
+  { value: "sem-4", label: "Semester 4" },
+  { value: "sem-5", label: "Semester 5" },
+  { value: "sem-6", label: "Semester 6" },
+  { value: "sem-7", label: "Semester 7" },
+  { value: "sem-8", label: "Semester 8" },
 ];
 
 const subjects = [
-  "Database Management Systems (DBMS)",
-  "Object Oriented Programming (OOPS)",
-  "Operating Systems (OS)",
-  "Computer Networks (CN)",
-  "Data Structures & Algorithms (DSA)",
-  "Web Technologies",
+  { value: "dbms", label: "Database Management Systems (DBMS)" },
+  { value: "oops", label: "Object Oriented Programming (OOPS)" },
+  { value: "os", label: "Operating Systems (OS)" },
+  { value: "cn", label: "Computer Networks (CN)" },
+  { value: "dsa", label: "Data Structures & Algorithms (DSA)" },
+  { value: "web", label: "Web Technologies" },
+  { value: "ai", label: "Artificial Intelligence (AI)" },
+  { value: "ml", label: "Machine Learning (ML)" },
 ];
 
-const evaluationTypes = ["Midsem", "Eval 1", "Endsem"];
+const evaluationTypes = [
+  { value: "midsem", label: "Midsem" },
+  { value: "eval-1", label: "Eval 1" },
+  { value: "eval-2", label: "Eval 2" },
+  { value: "endsem", label: "Endsem" },
+];
 
 const Index = () => {
   return (
@@ -46,8 +58,8 @@ const Index = () => {
         <div className="max-w-xl mx-auto">
           <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-card">
             {/* Step 1: Semester */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
                   1
                 </div>
@@ -55,20 +67,23 @@ const Index = () => {
                   Select Semester
                 </h2>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {semesters.map((semester) => (
-                  <SelectionCard
-                    key={semester}
-                    label={semester.replace("Semester ", "Sem ")}
-                    selected={semester === "Semester 3"}
-                  />
-                ))}
-              </div>
+              <Select>
+                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
+                  <SelectValue placeholder="Choose a semester" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {semesters.map((semester) => (
+                    <SelectItem key={semester.value} value={semester.value}>
+                      {semester.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Step 2: Subject */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
                   2
                 </div>
@@ -76,20 +91,23 @@ const Index = () => {
                   Select Subject
                 </h2>
               </div>
-              <div className="space-y-2">
-                {subjects.map((subject) => (
-                  <SelectionCard
-                    key={subject}
-                    label={subject}
-                    selected={subject === "Database Management Systems (DBMS)"}
-                  />
-                ))}
-              </div>
+              <Select>
+                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
+                  <SelectValue placeholder="Choose a subject" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.value} value={subject.value}>
+                      {subject.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Step 3: Evaluation Type */}
             <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
                   3
                 </div>
@@ -97,10 +115,18 @@ const Index = () => {
                   Select Evaluation Type
                 </h2>
               </div>
-              <SegmentedButton
-                options={evaluationTypes}
-                selected="Midsem"
-              />
+              <Select>
+                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
+                  <SelectValue placeholder="Choose evaluation type" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {evaluationTypes.map((evalType) => (
+                    <SelectItem key={evalType.value} value={evalType.value}>
+                      {evalType.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Action Button */}
