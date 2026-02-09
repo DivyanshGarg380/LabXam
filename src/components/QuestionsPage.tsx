@@ -28,21 +28,24 @@ export function QuestionsPage({
       <div className="container py-6 sm:py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+          {onBack && (
+            <Button
+              variant="ghost"
+              onClick={onBack}
+              className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+          )}
 
           <div className="space-y-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
               {subject}
             </h1>
-            <p className="text-muted-foreground">
-              {semester} · {evaluationType}
+
+            <p className="text-sm text-muted-foreground">
+              {semester} &nbsp;•&nbsp; {evaluationType}
             </p>
 
             <div className="flex flex-wrap gap-2 pt-1">
@@ -60,7 +63,7 @@ export function QuestionsPage({
 
         {/* Questions List */}
         {questions.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             {questions.map((question, index) => (
               <QuestionCard
                 key={index}
@@ -70,7 +73,10 @@ export function QuestionsPage({
             ))}
           </div>
         ) : (
-          <EmptyState />
+          <EmptyState
+            title="No questions available"
+            description="Questions for this evaluation will be added soon."
+          />
         )}
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -19,25 +20,45 @@ const semesters = [
   { value: "sem-8", label: "Semester 8" },
 ];
 
-const subjects = [
-  { value: "dbms", label: "Database Management Systems (DBMS)" },
-  { value: "oops", label: "Object Oriented Programming (OOPS)" },
-  { value: "os", label: "Operating Systems (OS)" },
-  { value: "cn", label: "Computer Networks (CN)" },
-  { value: "dsa", label: "Data Structures & Algorithms (DSA)" },
-  { value: "web", label: "Web Technologies" },
-  { value: "ai", label: "Artificial Intelligence (AI)" },
-  { value: "ml", label: "Machine Learning (ML)" },
-];
+const subjectsBySemester = {
+  "sem-1": [],
+  "sem-2": [],
+  "sem-3": [],
+  "sem-4": [
+    { value: "dbs", label: "Database Systems (DBSL)" },
+    { value: "osdl", label: "Software Development Lab (OSDL)" },
+  ],
+  "sem-5": [],
+  "sem-6": [],
+  "sem-7": [],
+  "sem-8": [],
+};
 
-const evaluationTypes = [
-  { value: "midsem", label: "Midsem" },
-  { value: "eval-1", label: "Eval 1" },
-  { value: "eval-2", label: "Eval 2" },
-  { value: "endsem", label: "Endsem" },
-];
+
+const evaluationBySemester = {
+  "sem-1": ["midsem", "endsem"],
+  "sem-2": ["midsem", "eval-1", "endsem"],
+  "sem-3": ["midsem", "eval-1", "eval-2", "endsem"],
+  "sem-4": ["midsem", "eval-1", "eval-2", "endsem"],
+  "sem-5": ["midsem", "eval-1", "endsem"],
+  "sem-6": ["midsem", "endsem"],
+  "sem-7": ["midsem", "endsem"],
+  "sem-8": ["midsem", "endsem"],
+};
+
+const evaluationLabels = {
+  midsem: "Midsem",
+  "eval-1": "Internal Evaluation 1",
+  "eval-2": "Internal Evaluation 2",
+  endsem: "Endsem",
+};
 
 const Index = () => {
+
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedEval, setSelectedEval] = useState("");
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8 sm:py-12">
@@ -60,18 +81,22 @@ const Index = () => {
             {/* Step 1: Semester */}
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
-                  1
-                </div>
                 <h2 className="text-base font-semibold text-foreground">
                   Select Semester
                 </h2>
               </div>
-              <Select>
+              <Select
+                value={selectedSemester}
+                onValueChange={(value) => {
+                  setSelectedSemester(value);
+                  setSelectedSubject("");
+                  setSelectedEval("");
+                }}
+              >
                 <SelectTrigger className="w-full h-12 rounded-xl bg-background">
                   <SelectValue placeholder="Choose a semester" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover">
+                <SelectContent>
                   {semesters.map((semester) => (
                     <SelectItem key={semester.value} value={semester.value}>
                       {semester.label}
@@ -84,23 +109,38 @@ const Index = () => {
             {/* Step 2: Subject */}
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
-                  2
-                </div>
                 <h2 className="text-base font-semibold text-foreground">
                   Select Subject
                 </h2>
               </div>
-              <Select>
+              <Select
+                value={selectedSubject}
+                onValueChange={setSelectedSubject}
+                disabled={!selectedSemester}
+              >
                 <SelectTrigger className="w-full h-12 rounded-xl bg-background">
-                  <SelectValue placeholder="Choose a subject" />
+                  <SelectValue
+                    placeholder={
+                      !selectedSemester
+                        ? "Select semester first"
+                        : subjectsBySemester[selectedSemester]?.length === 0
+                        ? "Coming soon"
+                        : "Choose a subject"
+                    }
+                  />
                 </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {subjects.map((subject) => (
-                    <SelectItem key={subject.value} value={subject.value}>
-                      {subject.label}
+                <SelectContent>
+                  {subjectsBySemester[selectedSemester]?.length > 0 ? (
+                    subjectsBySemester[selectedSemester].map((subject) => (
+                      <SelectItem key={subject.value} value={subject.value}>
+                        {subject.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem disabled value="coming-soon">
+                      🚧 Coming Soon
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -108,37 +148,63 @@ const Index = () => {
             {/* Step 3: Evaluation Type */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
-                  3
-                </div>
                 <h2 className="text-base font-semibold text-foreground">
                   Select Evaluation Type
                 </h2>
               </div>
-              <Select>
+              <Select
+                value={selectedEval}
+                onValueChange={setSelectedEval}
+                disabled={!selectedSemester}
+              >
                 <SelectTrigger className="w-full h-12 rounded-xl bg-background">
-                  <SelectValue placeholder="Choose evaluation type" />
+                  <SelectValue
+                    placeholder={
+                      !selectedSemester
+                        ? "Select semester first"
+                        : evaluationBySemester[selectedSemester]?.length === 0
+                        ? "Coming soon"
+                        : "Choose evaluation type"
+                    }
+                  />
                 </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {evaluationTypes.map((evalType) => (
-                    <SelectItem key={evalType.value} value={evalType.value}>
-                      {evalType.label}
+
+                <SelectContent>
+                  {evaluationBySemester[selectedSemester]?.length > 0 ? (
+                    evaluationBySemester[selectedSemester].map((evalKey) => (
+                      <SelectItem key={evalKey} value={evalKey}>
+                        {evaluationLabels[evalKey]}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem disabled value="coming-soon">
+                      🚧 Coming Soon
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             {/* Action Button */}
-            <Button className="w-full h-12 text-base font-semibold rounded-xl bg-primary hover:bg-primary/90">
+            <Button
+              disabled={!selectedSemester || !selectedSubject || !selectedEval}
+              className="w-full h-12 text-base font-semibold rounded-xl"
+            >
               View Questions
             </Button>
           </div>
 
-          {/* Footer hint */}
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Select your preferences above to view lab exam questions
-          </p>
+          {/* Footer */}
+          <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              For the students of <span className="font-medium text-foreground">MIT Manipal</span>
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+              Built by <span className="font-medium text-foreground">Starman</span>{" "}
+              — simplifying LAB EXAM prep
+            </p>
+          </div>
         </div>
       </div>
     </div>
