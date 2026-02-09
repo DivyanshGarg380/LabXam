@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 const semesters = [
   { value: "sem-1", label: "Semester 1" },
@@ -25,7 +26,7 @@ const subjectsBySemester = {
   "sem-2": [],
   "sem-3": [],
   "sem-4": [
-    { value: "dbs", label: "Database Systems (DBSL)" },
+    { value: "dbsl", label: "Database Systems (DBSL)" },
     { value: "osdl", label: "Software Development Lab (OSDL)" },
   ],
   "sem-5": [],
@@ -34,16 +35,15 @@ const subjectsBySemester = {
   "sem-8": [],
 };
 
-
 const evaluationBySemester = {
-  "sem-1": ["midsem", "endsem"],
-  "sem-2": ["midsem", "eval-1", "endsem"],
-  "sem-3": ["midsem", "eval-1", "eval-2", "endsem"],
-  "sem-4": ["midsem", "eval-1", "eval-2", "endsem"],
-  "sem-5": ["midsem", "eval-1", "endsem"],
-  "sem-6": ["midsem", "endsem"],
-  "sem-7": ["midsem", "endsem"],
-  "sem-8": ["midsem", "endsem"],
+  "1": ["midsem", "endsem"],
+  "2": ["midsem", "eval-1", "endsem"],
+  "3": ["midsem", "eval-1", "eval-2", "endsem"],
+  "4": ["midsem", "eval-1", "eval-2", "endsem"],
+  "5": ["midsem", "eval-1", "endsem"],
+  "6": ["midsem", "endsem"],
+  "7": ["midsem", "endsem"],
+  "8": ["midsem", "endsem"],
 };
 
 const evaluationLabels = {
@@ -58,6 +58,7 @@ const Index = () => {
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedEval, setSelectedEval] = useState("");
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,6 +190,9 @@ const Index = () => {
             <Button
               disabled={!selectedSemester || !selectedSubject || !selectedEval}
               className="w-full h-12 text-base font-semibold rounded-xl"
+              onClick={() => {
+                navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&eval=${selectedEval}`);
+              }}
             >
               View Questions
             </Button>

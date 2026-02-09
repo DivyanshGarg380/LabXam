@@ -1,14 +1,23 @@
 import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { QuestionsPage } from "@/components/QuestionsPage";
 import { questionsDB } from "@/data/questions";
+import { semesters, subjectMap, evalMap } from "@/data/mapping";
 
 const Questions = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
-  const semester = params.get("sem");
-  const subject = params.get("subject");
-  const evaluationType = params.get("eval");
+  const semId = params.get("sem");
+  const subjectId = params.get("subject");
+  const evalId = params.get("eval");
+
+  if (!semId || !subjectId || !evalId) {
+    return <Navigate to="/empty" replace />;
+  }
+
+  const semester = semesters[semId];
+  const subject = subjectMap[semId]?.[subjectId];
+  const evaluationType = evalMap[evalId];
 
   if (!semester || !subject || !evaluationType) {
     return <Navigate to="/empty" replace />;

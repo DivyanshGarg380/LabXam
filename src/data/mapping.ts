@@ -1,20 +1,18 @@
-export const semesterMap: Record<string, string> = {
-  "1": "Semester 1",
-  "2": "Semester 2",
-  "3": "Semester 3",
-  "4": "Semester 4",
-  "5": "Semester 5",
-  "6": "Semester 6",
-  "7": "Semester 7",
-  "8": "Semester 8",
-};
+export const semesters = [
+  { value: "1", label: "Semester 1" },
+  { value: "2", label: "Semester 2" },
+  { value: "3", label: "Semester 3" },
+  { value: "4", label: "Semester 4" },
+  { value: "5", label: "Semester 5" },
+  { value: "6", label: "Semester 6" },
+  { value: "7", label: "Semester 7" },
+  { value: "8", label: "Semester 8" },
+];
+
 
 export const subjectMap: Record<string, Record<string, string>> = {
-  "3": {
-    dbms: "Database Management Systems (DBMS)",
-  },
   "4": {
-    os: "Operating Systems Lab",
+    dbsl: "Database Systems (DBSL)",
   },
 };
 
