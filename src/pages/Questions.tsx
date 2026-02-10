@@ -30,9 +30,9 @@ const Questions = () => {
   const subjectKey = normalizeSubject(subject);
   const evalKey = normalizeEvaluation(evalType);
 
-  const questionSet = questionsDB[semesterKey]?.[subjectKey]?.[evalKey];
+  const evalData = questionsDB[semesterKey]?.[subjectKey]?.[evalKey];
 
-  if(!questionSet) {
+  if(!evalData || Object.keys(evalData).length === 0) {
     return (
       <QuestionsPage
         semester={semesterKey}
@@ -45,17 +45,27 @@ const Questions = () => {
     );
   }
 
+  const allQuestions: string[] = [];
+  const sections: string[] = [];
+
+  Object.entries(evalData).forEach(([sectionData, data]) => {
+    if(data.year === year) {
+      sections.push(sectionData);
+      allQuestions.push(...data.questions);
+    }
+  })
+
   return (
-     <QuestionsPage
+    <QuestionsPage
       semester={semesterKey}
       subject={subjectKey}
       evaluationType={evalKey}
-      section={questionSet.section}
+      section={sections.join(", ")}
       year={year}
-      questions={questionSet.questions}
+      questions={allQuestions}
       onBack={() => navigate(-1)}
     />
-  )
+  );
 }
 
 export default Questions;
