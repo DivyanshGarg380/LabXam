@@ -36,7 +36,7 @@ export function QuestionCard({ number, question, section }: QuestionCardProps) {
 
           {/* Section + Question */}
           <div className="flex flex-col gap-1 pt-1">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-xs font-bold text-muted-foreground">
               {section}
             </span>
 
