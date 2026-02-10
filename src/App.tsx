@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
-import EmptyDemo from "./pages/EmptyDemo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -25,14 +24,11 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/questions" element={<Questions />} />
-            <Route path="/empty" element={<EmptyDemo />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-
         </TooltipProvider>
       </QueryClientProvider>
     </BrowserRouter>

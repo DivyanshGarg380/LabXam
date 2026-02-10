@@ -1,45 +1,38 @@
-import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { QuestionsPage } from "@/components/QuestionsPage";
-import { questionsDB } from "@/data/questions";
-import { semesters, subjectMap, evalMap } from "@/data/mapping";
+import { useEffect } from "react"; 
+import { toast } from "sonner";
 
 const Questions = () => {
+  const [searchParams] = useSearchParams();
+  const semester = searchParams.get("sem");
+  const subject = searchParams.get("subject");
+  const year = searchParams.get("year");
+  const evalType = searchParams.get("eval");
+
   const navigate = useNavigate();
-  const [params] = useSearchParams();
 
-  const semId = params.get("sem");
-  const subjectId = params.get("subject");
-  const evalId = params.get("eval");
+  useEffect(() => {
+    if(!semester || !subject || !year || !evalType) {
+      toast.error("Missing required query parameters. Redirecting to home.");
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 2000);
+      return;
+    }
+  }, [semester, subject, year, evalType, navigate]);
 
-  if (!semId || !subjectId || !evalId) {
-    return <Navigate to="/empty" replace />;
-  }
-
-  const semester = semesters[semId];
-  const subject = subjectMap[semId]?.[subjectId];
-  const evaluationType = evalMap[evalId];
-
-  if (!semester || !subject || !evaluationType) {
-    return <Navigate to="/empty" replace />;
-  }
-
-  const data = questionsDB[semester]?.[subject]?.[evaluationType];
-
-  if (!data) {
-    return <Navigate to="/empty" replace />;
-  }
+  if(!semester || !subject || !year || !evalType) return null;
 
   return (
-    <QuestionsPage
-      semester={semester}
-      subject={subject}
-      evaluationType={evaluationType}
-      section={data.section}
-      date={data.date}
-      questions={data.questions}
+     <QuestionsPage
+      semester={`Semester ${semester}`}
+      subject={subject.toUpperCase()}
+      evaluationType={evalType}
+      year={year}
       onBack={() => navigate(-1)}
     />
-  );
-};
+  )
+}
 
 export default Questions;

@@ -11,28 +11,28 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const semesters = [
-  { value: "sem-1", label: "Semester 1" },
-  { value: "sem-2", label: "Semester 2" },
-  { value: "sem-3", label: "Semester 3" },
-  { value: "sem-4", label: "Semester 4" },
-  { value: "sem-5", label: "Semester 5" },
-  { value: "sem-6", label: "Semester 6" },
-  { value: "sem-7", label: "Semester 7" },
-  { value: "sem-8", label: "Semester 8" },
+  { value: "1", label: "Semester 1" },
+  { value: "2", label: "Semester 2" },
+  { value: "3", label: "Semester 3" },
+  { value: "4", label: "Semester 4" },
+  { value: "5", label: "Semester 5" },
+  { value: "6", label: "Semester 6" },
+  { value: "7", label: "Semester 7" },
+  { value: "8", label: "Semester 8" },
 ];
 
 const subjectsBySemester = {
-  "sem-1": [],
-  "sem-2": [],
-  "sem-3": [],
-  "sem-4": [
+  "1": [],
+  "2": [],
+  "3": [],
+  "4": [
     { value: "dbsl", label: "Database Systems (DBSL)" },
     { value: "osdl", label: "Software Development Lab (OSDL)" },
   ],
-  "sem-5": [],
-  "sem-6": [],
-  "sem-7": [],
-  "sem-8": [],
+  "5": [],
+  "6": [],
+  "7": [],
+  "8": [],
 };
 
 const evaluationBySemester = {
@@ -58,6 +58,7 @@ const Index = () => {
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedEval, setSelectedEval] = useState("");
+  const [selectYear, setSelectYear] = useState("");
   const navigate = useNavigate();
 
   return (
@@ -92,6 +93,7 @@ const Index = () => {
                   setSelectedSemester(value);
                   setSelectedSubject("");
                   setSelectedEval("");
+                  setSelectYear("");
                 }}
               >
                 <SelectTrigger className="w-full h-12 rounded-xl bg-background">
@@ -146,7 +148,35 @@ const Index = () => {
               </Select>
             </div>
 
-            {/* Step 3: Evaluation Type */}
+            {/* Step 3: Year */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="text-base font-semibold text-foreground">
+                  Select Year
+                </h2>
+              </div>
+              <Select
+                value={selectYear}
+                onValueChange={setSelectYear}
+                disabled={!selectedSemester || !selectedSubject}
+              >
+                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
+                  <SelectValue
+                    placeholder={
+                      !selectedSemester || !selectedSubject
+                        ? "Select semester and subject first" 
+                        : "Choose year"
+                    }
+                  />  
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2026">2026</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Step 4: Evaluation Type */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <h2 className="text-base font-semibold text-foreground">
@@ -188,10 +218,10 @@ const Index = () => {
 
             {/* Action Button */}
             <Button
-              disabled={!selectedSemester || !selectedSubject || !selectedEval}
+              disabled={!selectedSemester || !selectedSubject || !selectedEval || !selectYear}
               className="w-full h-12 text-base font-semibold rounded-xl"
               onClick={() => {
-                navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&eval=${selectedEval}`);
+                navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&year=${selectYear}&eval=${selectedEval}`);
               }}
             >
               View Questions

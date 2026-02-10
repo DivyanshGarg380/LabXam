@@ -9,7 +9,7 @@ interface QuestionsPageProps {
   subject: string;
   evaluationType: string;
   section?: string;
-  date?: string;
+  year: string;
   questions?: string[];
   onBack?: () => void;
 }
@@ -18,8 +18,8 @@ export function QuestionsPage({
   semester,
   subject,
   evaluationType,
-  section = "Section A",
-  date = "Dec 2024",
+  section,
+  year,
   questions = [],
   onBack,
 }: QuestionsPageProps) {
@@ -32,10 +32,20 @@ export function QuestionsPage({
             <Button
               variant="ghost"
               onClick={onBack}
-              className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              className="
+                  mb-4 -ml-2
+                  flex items-center gap-2
+                  text-muted-foreground
+                  rounded-full
+                  px-3 py-2
+                  transition-all
+                  hover:bg-primary/10
+                  hover:text-primary
+                  group
+                "
+            > 
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-sm font-medium">Back</span>
             </Button>
           )}
 
@@ -49,13 +59,16 @@ export function QuestionsPage({
             </p>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              <Badge>
-                <Users className="w-3 h-3 mr-1.5" />
-                {section}
-              </Badge>
+              {section && (
+                <Badge>
+                  <Users className="w-3 h-3 mr-1.5" />
+                  {section}
+                </Badge>
+              )}
+
               <Badge>
                 <Calendar className="w-3 h-3 mr-1.5" />
-                {date}
+                {year}
               </Badge>
             </div>
           </div>
