@@ -6,21 +6,17 @@ export interface QuestionSet {
   questions: string[];
 }
 
-export interface SubjectQuestions {
-  [evaluationType: string]: QuestionSet;
-}
+export type SubjectQuestions = Partial<
+  Record<EvaluationType, QuestionSet>
+>;
 
-export interface SemesterQuestions {
-  [subject: string]: SubjectQuestions;
-}
+export type SemesterQuestions = Record<string, SubjectQuestions>;
 
-export interface QuestionsDB {
-  [semester: string]: SemesterQuestions;
-}
+export type QuestionsDB = Record<string, SemesterQuestions>;
 
 export const questionsDB: QuestionsDB = {
   "Semester 4": {
-    "Database Systems (DBSL)": {
+    dbsl: {
       Midsem: {
         section: "CCE C",
         year: "2025",
@@ -42,3 +38,4 @@ export const questionsDB: QuestionsDB = {
     },
   },
 };
+

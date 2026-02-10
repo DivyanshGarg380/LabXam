@@ -51,12 +51,17 @@ export function QuestionsPage({
 
           <div className="space-y-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              {subject}
+              {subject.toUpperCase()}
             </h1>
 
             <p className="text-sm text-muted-foreground">
-              {semester} &nbsp;•&nbsp; {evaluationType}
+              {semester}
+              <span className="mx-2">•</span>
+              <span className="font-medium text-foreground">
+                {evaluationType}
+              </span>
             </p>
+
 
             <div className="flex flex-wrap gap-2 pt-1">
               {section && (
@@ -78,11 +83,15 @@ export function QuestionsPage({
         {questions.length > 0 ? (
           <div className="space-y-4 pt-2">
             {questions.map((question, index) => (
+              <div
+                key={`${index}-${question.slice(0, 20)}`}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
               <QuestionCard
-                key={index}
                 number={index + 1}
                 question={question}
               />
+            </div>
             ))}
           </div>
         ) : (
