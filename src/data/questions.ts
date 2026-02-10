@@ -38,7 +38,7 @@ export const questionsDB: QuestionsDB = {
           year: "2025",
           questions: [
             "Design a database schema for a library management system with at least 5 tables and proper normalization.",
-            "Write a stored procedure to transfer funds between two accounts ensuring transaction safety.",
+            
           ],
         },
       },

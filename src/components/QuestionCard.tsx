@@ -5,9 +5,10 @@ import { useState } from "react";
 interface QuestionCardProps {
   number: number;
   question: string;
+  section: string;
 }
 
-export function QuestionCard({ number, question}: QuestionCardProps) {
+export function QuestionCard({ number, question, section }: QuestionCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -26,17 +27,26 @@ export function QuestionCard({ number, question}: QuestionCardProps) {
     <div className="question-card animate-fade-in">
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-4 flex-1 min-w-0">
+          {/* Number */}
           <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-badge-bg flex items-center justify-center">
             <span className="text-sm font-semibold text-badge-text">
               {number}
             </span>
           </div>
 
-          <p className="text-foreground text-sm sm:text-base leading-relaxed pt-1">
-            {question}
-          </p>
+          {/* Section + Question */}
+          <div className="flex flex-col gap-1 pt-1">
+            <span className="text-xs font-medium text-muted-foreground">
+              {section}
+            </span>
+
+            <p className="text-foreground text-sm sm:text-base leading-relaxed">
+              {question}
+            </p>
+          </div>
         </div>
 
+        {/* Copy button */}
         <Button
           variant="ghost"
           size="icon"

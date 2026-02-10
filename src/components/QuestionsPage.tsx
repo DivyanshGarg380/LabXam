@@ -8,9 +8,11 @@ interface QuestionsPageProps {
   semester: string;
   subject: string;
   evaluationType: string;
-  section?: string;
   year: string;
-  questions?: string[];
+  questions?: {
+    question: string;
+    section: string;
+  }[];
   onBack?: () => void;
 }
 
@@ -18,7 +20,6 @@ export function QuestionsPage({
   semester,
   subject,
   evaluationType,
-  section,
   year,
   questions = [],
   onBack,
@@ -61,37 +62,23 @@ export function QuestionsPage({
                 {evaluationType}
               </span>
             </p>
-
-
-            <div className="flex flex-wrap gap-2 pt-1">
-              {section && (
-                <Badge>
-                  <Users className="w-3 h-3 mr-1.5" />
-                  {section}
-                </Badge>
-              )}
-
-              <Badge>
-                <Calendar className="w-3 h-3 mr-1.5" />
-                {year}
-              </Badge>
-            </div>
           </div>
         </div>
 
         {/* Questions List */}
         {questions.length > 0 ? (
           <div className="space-y-4 pt-2">
-            {questions.map((question, index) => (
+           {questions.map(({ question, section }, index) => (
               <div
                 key={`${index}-${question.slice(0, 20)}`}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-              <QuestionCard
-                number={index + 1}
-                question={question}
-              />
-            </div>
+                <QuestionCard
+                  number={index + 1}
+                  question={question}
+                  section={section}
+                />
+              </div>
             ))}
           </div>
         ) : (

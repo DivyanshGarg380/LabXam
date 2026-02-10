@@ -45,13 +45,16 @@ const Questions = () => {
     );
   }
 
-  const allQuestions: string[] = [];
-  const sections: string[] = [];
-
+  const allQuestions: { question: string; section: string }[] = [];
+  
   Object.entries(evalData).forEach(([sectionData, data]) => {
     if(data.year === year) {
-      sections.push(sectionData);
-      allQuestions.push(...data.questions);
+      data.questions.forEach((q) => {
+      allQuestions.push({
+        question: q,
+        section: sectionData,
+      });
+    });
     }
   })
 
@@ -60,7 +63,6 @@ const Questions = () => {
       semester={semesterKey}
       subject={subjectKey}
       evaluationType={evalKey}
-      section={sections.join(", ")}
       year={year}
       questions={allQuestions}
       onBack={() => navigate(-1)}
