@@ -1,73 +1,99 @@
-# Welcome to your Lovable project
+# Lab Exam Questions Hub
 
-## Project info
+A clean and intuitive web application to help students access previous year lab exam questions, organized semester-wise, subject-wise, and evaluation-wise.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+The goal of this project is to eliminate the need to search through scattered WhatsApp messages, PDFs, and shared drives before lab exams.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- Semester-based selection
+- Subject filtering based on semester
+- Evaluation-wise question listing (Midsem, Endsem)
+- Graceful handling of unavailable data
+- Clean and shareable URLs
+- Centralized and scalable question storage
+- Minimal and responsive UI
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Tech Stack
 
-**Use your preferred IDE**
+- React + TypeScript
+- Tailwind CSS
+- shadcn/ui
+- React Router
+- Lucide Icons
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Project Structure
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/
+├── components/
+│ ├── QuestionsPage.tsx
+│ ├── QuestionCard.tsx
+│ └── EmptyState.tsx
+│
+├── data/
+│ ├── questions.ts # Central question database
+│ └── mappings.ts # URL ID → display label mapping
+│
+├── pages/
+│ ├── Index.tsx # Landing and selection page
+│ ├── Questions.tsx # Questions route
+│ ├── EmptyDemo.tsx
+│ └── NotFound.tsx
+│
+└── App.tsx
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Routing Logic
 
-**Use GitHub Codespaces**
+The application uses clean, query-based URLs.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Example: ``` /questions?sem=4&subject=dbsl&eval=midsem ```
 
-## What technologies are used for this project?
+### URL Parameters
 
-This project is built with:
+| Parameter | Description |
+|---------|------------|
+| `sem` | Semester ID |
+| `subject` | Subject ID |
+| `eval` | Evaluation type |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+URL parameters are mapped internally to user-friendly labels before rendering.
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Data Handling
 
-## Can I connect a custom domain to my Lovable project?
+All questions are stored in a centralized TypeScript file using the following hierarchy:
 
-Yes, you can!
+``` Semester → Subject → Evaluation → Questions ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This approach:
+- Keeps the application lightweight
+- Avoids premature backend complexity
+- Allows easy migration to an API or database later
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## Getting Started
+
+### Install dependencies
+```bash
+npm install
+```
+### Run the development server
+```
+npm run dev
+```
+### Open in browser
+```
+http://localhost:8080
+```
