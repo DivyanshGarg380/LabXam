@@ -1,6 +1,5 @@
 import { ArrowLeft, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/Badge";
 import { QuestionCard } from "@/components/QuestionCard";
 import { EmptyState } from "@/components/EmptyState";
 

@@ -38,16 +38,15 @@ src/
 │ └── EmptyState.tsx
 │
 ├── data/
-│ ├── questions.ts # Central question database
-│ └── mappings.ts # URL ID → display label mapping
+│ ├── questions.ts
 │
 ├── pages/
-│ ├── Index.tsx # Landing and selection page
-│ ├── Questions.tsx # Questions route
-│ ├── EmptyDemo.tsx
+│ ├── Index.tsx
+│ ├── Questions.tsx
 │ └── NotFound.tsx
 │
 └── App.tsx
+└── Main.tsx
 ```
 
 ---
@@ -56,7 +55,7 @@ src/
 
 The application uses clean, query-based URLs.
 
-Example: ``` /questions?sem=4&subject=dbsl&eval=midsem ```
+Example: ``` questions?sem=<sem_name>&subject=<subject_name>&year=<year>&eval=<eval_type> ```
 
 ### URL Parameters
 
@@ -64,6 +63,7 @@ Example: ``` /questions?sem=4&subject=dbsl&eval=midsem ```
 |---------|------------|
 | `sem` | Semester ID |
 | `subject` | Subject ID |
+| `year` | Year |
 | `eval` | Evaluation type |
 
 URL parameters are mapped internally to user-friendly labels before rendering.
@@ -74,7 +74,7 @@ URL parameters are mapped internally to user-friendly labels before rendering.
 
 All questions are stored in a centralized TypeScript file using the following hierarchy:
 
-``` Semester → Subject → Evaluation → Questions ```
+``` Semester → Subject → Year → Evaluation → Questions ```
 
 This approach:
 - Keeps the application lightweight

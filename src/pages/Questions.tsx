@@ -1,13 +1,18 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { QuestionsPage } from "@/components/QuestionsPage";
-import { useEffect, useMemo } from "react"; 
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { normalizeSemester, normalizeEvaluation, normalizeSubject } from "@/utils/normalize";
+import {
+  normalizeSemester,
+  normalizeEvaluation,
+  normalizeSubject,
+} from "@/utils/normalize";
 import { questionsDB } from "@/data/questions";
 
 const Questions = () => {
   const [searchParams] = useSearchParams();
-   const navigate = useNavigate();
+  const navigate = useNavigate();
+
   const semester = searchParams.get("sem");
   const subject = searchParams.get("subject");
   const year = searchParams.get("year");
@@ -16,45 +21,31 @@ const Questions = () => {
   const redirectHome = (message: string) => {
     toast.error(message);
     setTimeout(() => {
-      navigate("/", { replace:true });
+      navigate("/", { replace: true });
     }, 2000);
-  }
+  };
 
-  const semesterKey = semester ? normalizeSemester(semester) : null;
-  const subjectKey = subject ? normalizeSubject(subject) : null;
-  const evalKey = evalType ? normalizeEvaluation(evalType) : null;
+  useEffect(() => {
+    if (!semester || !subject || !year || !evalType) {
+      redirectHome("Missing required query parameters.");
+    }
+  }, [semester, subject, year, evalType]);
+
+  const semesterKey = semester ? normalizeSemester(semester) : "";
+  const subjectKey = subject ? normalizeSubject(subject) : "";
+  const evalKey = evalType ? normalizeEvaluation(evalType) : "";
 
   const evalData =
     semesterKey && subjectKey && evalKey
       ? questionsDB[semesterKey]?.[subjectKey]?.[evalKey]
       : null;
 
-
-  useEffect(() => {
-    if (!semester || !subject || !year || !evalType) {
-      redirectHome("Missing required query parameters.");
-      return;
-    }
-
-    if (!semesterKey || !subjectKey || !evalKey) {
-      redirectHome("Invalid URL parameters.");
-      return;
-    }
-
-    if (!evalData) {
-      redirectHome("Invalid combination of parameters.");
-      return;
-    }
-  }, [ semester, subject, year, evalType, semesterKey, subjectKey, evalKey, evalData]);
-
-  if (!semester || !subject || !year || !evalType || !semesterKey || !subjectKey || !evalKey || !evalData) {
-    return null;
-  }
-
   const allQuestions = useMemo(() => {
+    if (!evalData) return [];
+
     const result: { question: string; section: string }[] = [];
 
-    Object.entries(evalData).forEach(([sectionName, data]) => {
+    Object.entries(evalData).forEach(([sectionName, data]: any) => {
       if (data.year === year) {
         data.questions.forEach((q: string) => {
           result.push({
@@ -64,28 +55,20 @@ const Questions = () => {
         });
       }
     });
+
     return result;
   }, [evalData, year]);
-
-  useEffect(() => {
-    if (allQuestions.length === 0) {
-      redirectHome("No data found for selected year.");
-    }
-  }, [allQuestions]);
-
-  if (allQuestions.length === 0) return null;
 
   return (
     <QuestionsPage
       semester={semesterKey}
       subject={subjectKey}
       evaluationType={evalKey}
-      year={year}
+      year={year ?? ""}
       questions={allQuestions}
       onBack={() => navigate("/", { replace: true })}
     />
   );
 };
-
 
 export default Questions;
