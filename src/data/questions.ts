@@ -1,5 +1,4 @@
 export type EvaluationType = "Midsem" | "Internal Evaluation 1" | "Internal Evaluation 2" | "Endsem";
-
 export interface QuestionSet {
   section: string;
   year: string;
@@ -9,7 +8,6 @@ export interface QuestionSet {
 export type SubjectQuestions = Partial<
   Record<EvaluationType, Record<string, Omit<QuestionSet, "section">>>
 >;
-
 
 export type SemesterQuestions = Record<string, SubjectQuestions>;
 
