@@ -1,6 +1,6 @@
 import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -61,9 +61,68 @@ const Index = () => {
   const [selectYear, setSelectYear] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (savedTheme === "light") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      applySystemTheme();
+    }
+  }, []);
+
+  const applySystemTheme = () => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    if (prefersDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
       <div className="container py-8 sm:py-12">
+
+        {/* Theme Toggle Buttons */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              document.documentElement.classList.remove("dark");
+              localStorage.setItem("theme", "light");
+            }}
+          >
+            Light
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              document.documentElement.classList.add("dark");
+              localStorage.setItem("theme", "dark");
+            }}
+          >
+            Dark
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              localStorage.setItem("theme", "system");
+              applySystemTheme();
+            }}
+          >
+            System
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-10 sm:mb-12">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-6">

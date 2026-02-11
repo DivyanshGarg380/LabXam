@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
@@ -18,6 +19,38 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+
+    const applySystemTheme = () => {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if(prefersDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    };
+
+    if(savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (savedTheme === "light") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      applySystemTheme();
+    }
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const listener = () => {
+      if (localStorage.getItem("theme") === "system") {
+        applySystemTheme();
+      }
+    };
+
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
+
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
