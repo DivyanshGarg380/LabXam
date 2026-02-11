@@ -40,7 +40,7 @@ export function QuestionCard({ number, question, section }: QuestionCardProps) {
               {section}
             </span>
 
-            <p className="text-foreground text-sm sm:text-base leading-relaxed">
+            <p className="text-foreground text-sm sm:text-base leading-relaxed whitespace-pre-line">
               {question}
             </p>
           </div>

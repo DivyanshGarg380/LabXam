@@ -22,14 +22,41 @@ export const questionsDB: QuestionsDB = {
         "IT-D": {
           year: "2026",
           questions: [
-            "There is a cricket game scenario. Construct an enum Shot with fields as One, Two, Four, Six, Out. There is a CricketPlayer class which implements an interface with three methods (run, appeal, umpireDecision). If a player isn't out (OUT from enum -> pass 0), add scores of that player. If he is out, display the total runs he made and print OUT. The bowler can take an appeal and ask the umpire to check (basic check if boolean isOut = true). Three threads must operate. Implement everything in a menu-driven program.",
+            `Cricket Game Simulation (Multithreading + Enum + Interface):
+            • Create an enum Shot { ONE, TWO, FOUR, SIX, OUT }.
+            • Create a CricketPlayer class implementing an interface with methods: run(), appeal(), umpireDecision().
+            • If shot ≠ OUT → add runs.
+            • If OUT → display total runs and print "OUT".
+            • Bowler can appeal and umpire checks using boolean isOut.
+            • Use three threads and implement everything in a menu-driven program.`
           ],
         },
 
         "CCE-D": {
           year: "2026",
           questions: [
-            "Design and implement a Java-based Hotel Booking Management System. The system should simulate a real-world hotel where multiple customers attempt to book rooms concurrently. The hotel has a limited number of rooms, and booking requests must be handled safely to avoid data inconsistency. Each customer booking request must be processed in a separate thread. If no rooms are available, the booking thread must wait. When a room is released by another customer, waiting booking threads should be notified and allowed to proceed. Room details such as room number, room type, price per day, and booking status must be maintained using object-oriented principles. Use an enumeration to represent different room types and their base tariffs. All booking and cancellation details must be stored in a file and later read back and displayed to the user. Use appropriate thread synchronization techniques, simulate processing delays using Thread.sleep(), and handle all necessary exceptions.",
+            `Hotel Booking Management System (Multithreading + File Handling):
+            • Simulate concurrent room booking using threads.
+            • Limited rooms — if unavailable, threads must wait.
+            • When a room is released, waiting threads must be notified.
+            • Maintain room details (number, type, tariff, booking status).
+            • Use enum for room types and base tariffs.
+            • Store booking/cancellation details in a file and read them back.
+            • Apply synchronization, Thread.sleep(), and exception handling.`
+          ],
+        },
+        "AIML-C": {
+          year: "2026",
+          questions: [
+            `File-Based Chat System (Multithreading + Synchronization):
+            • Implement Sender, Receiver, and Moderator threads.
+            • Use a shared file 'chatlog.txt' for communication.
+            • Sender writes one message at a time and notifies others.
+            • Receiver reads only after a new message is written.
+            • Moderator validates each message (Approve/Reject).
+            • Use synchronized, wait(), notify()/notifyAll().
+            • Ensure no read/write conflicts and proper coordination.
+            • Run until a predefined number of messages are exchanged.`
           ],
         },
       },
@@ -40,13 +67,30 @@ export const questionsDB: QuestionsDB = {
         "CCE-C": {
           year: "2026",
           questions: [
-            "Create tables: AppUser(UID PK, Uname, Sub_Type ('Basic','Premium','VIP')), Movie(MID PK, Title UNIQUE, Genre, ReleaseYear (>=2000), Rating), WatchHistory(UID, MID, WatchDate NOT NULL). Implement SQL queries: (1) List all movies watched by users with Basic subscription in 2025, ordered by user name descending. (2) Find genres where the average movie rating is greater than 4. (3) Find users who watched more movies than the average number of movies watched per user.",
+            `Tables:
+            • AppUser(UID PK, Uname, Sub_Type CHECK('Basic','Premium','VIP'))
+            • Movie(MID PK, Title UNIQUE, Genre, ReleaseYear >= 2000, Rating)
+            • WatchHistory(UID FK, MID FK, WatchDate NOT NULL)
+
+            Queries:
+            1. List movies watched by Basic users in 2025 and order by Uname DESC
+            2. Find genres with average rating > 4
+            3. Find users who watched more movies than the average per user`
           ],
         },
+
         "AIML-B": {
           year: "2026",
           questions: [
-            "Create tables: service_request(srno numeric, request string, sr_date Date) and assign(srno references srno, department string). Constraints: request and department are NOT NULL; department must be one of ('NH Repair','Bridges','PWD'). Implement SQL queries: (1a) Find all service request numbers assigned to NH Repair department sorted in descending order of sr_date. (1b) Find service requests assigned to at least two departments. (2a) Find service requests containing 'oa' and assigned to PWD sorted in descending order of srno. (2b) For service requests of year 2022, find the number of departments to which each request has been assigned.",
+            `Tables:
+            • service_request(srno PK, request NOT NULL, sr_date)
+            • assign(srno FK, department NOT NULL CHECK('NH Repair','Bridges','PWD'))
+
+            Queries:
+            1a. SR numbers assigned to 'NH Repair' and order by sr_date DESC
+            1b. Service requests assigned to at least two departments
+            2a. SRs containing 'oa' assigned to 'PWD' and order by srno DESC
+            2b. For year 2022, count departments per service request`
           ],
         },
       },
