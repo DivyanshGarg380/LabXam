@@ -43,9 +43,6 @@ export const questionsDB: QuestionsDB = {
             "Create tables: AppUser(UID PK, Uname, Sub_Type ('Basic','Premium','VIP')), Movie(MID PK, Title UNIQUE, Genre, ReleaseYear (>=2000), Rating), WatchHistory(UID, MID, WatchDate NOT NULL). Implement SQL queries: (1) List all movies watched by users with Basic subscription in 2025, ordered by user name descending. (2) Find genres where the average movie rating is greater than 4. (3) Find users who watched more movies than the average number of movies watched per user.",
           ],
         },
-      },
-
-      Endsem: {
         "AIML-B": {
           year: "2026",
           questions: [
