@@ -35,7 +35,7 @@ export const questionsDB: QuestionsDB = {
       },
     },
 
-    dbs: {
+    dbsl: {
       Midsem: {
         "CCE-C": {
           year: "2026",
