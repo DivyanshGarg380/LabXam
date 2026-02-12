@@ -31,7 +31,7 @@ jobs:
         run: npx eslint src
 
       - name: Run Tests
-        run: npm run test:run
+        run: vitest run
 
       - name: Build project
         run: npm run build
