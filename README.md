@@ -6,6 +6,8 @@ The goal of this project is to eliminate the need to search through scattered Wh
 
 ---
 
+![CI](https://github.com/DivyanshGarg380/LabXam/actions/workflows/ci.yml/badge.svg)
+
 ## Features
 
 - Semester-based selection
