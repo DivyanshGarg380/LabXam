@@ -91,6 +91,20 @@ export const questionsDB: QuestionsDB = {
             2b. For year 2022, count departments per service request`
           ],
         },
+        "IT-A": {
+          year: "2026",
+          questions: [
+            `Tables:
+            • Sensor(SID PRIMARY KEY, sensor_type, unit CHECK('C','F','%'), location)
+            • Observations(OID PRIMARY KEY, temperature >= -270, humidity BETWEEN 0 AND 100, SID REFERENCES Sensor(SID))
+
+            Queries:
+            1a. Find the average temperature of all non-zero temperature records
+            1b. Find sensor_type, count of sensors, average temperature, and average humidity for sensor types that record both non-zero temperature and non-zero humidity
+            2a. Find maximum recorded temperature and maximum recorded humidity across all sensors
+            2b. Count actual number of temperature sensors and humidity sensors based on non-zero values (If a Smart sensor has both non-zero temperature and humidity, count it twice: once as temperature sensor and once as humidity sensor)`,
+          ],
+        } 
       },
     },
   },
