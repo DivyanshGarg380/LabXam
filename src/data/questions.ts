@@ -29,7 +29,21 @@ export const questionsDB: QuestionsDB = {
             • Use three threads and implement everything in a menu-driven program.`
           ],
         },
-
+        "DSE-C": {
+          year: "2026",
+          questions: [
+            `Library Management System (Multithreading + Enum + Interface):
+            • Create an interface with methods: borrowBook(), returnBook().
+            • Create an enum Status { BORROW, RETURN, NOT_AVAILABLE }.
+            • Create a base class LibraryMember with attributes: name, totalBorrowed.
+            • Create a derived class StudentManager extends LibraryMember and implements the interface.
+            • Implement three threads: Borrowing, Returning, and Librarian.
+            • Borrowing thread handles book borrowing.
+            • Returning thread handles book returning.
+            • Librarian thread periodically displays the status of books.
+            • No menu-driven program required.`
+          ],
+        },
         "CCE-D": {
           year: "2026",
           questions: [
