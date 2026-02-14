@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import SubmitQuestion from "./pages/SubmitQuestion";
 
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
@@ -60,6 +61,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/questions" element={<Questions />} />
+            <Route path='/submit' element={<SubmitQuestion />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
