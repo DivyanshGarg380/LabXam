@@ -9,6 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Monitor, Moon, Sun } from "lucide-react";
+
 
 const semesters = [
   { value: "1", label: "Semester 1" },
@@ -88,39 +96,45 @@ const Index = () => {
       <div className="container py-8 sm:py-12">
 
         {/* Theme Toggle Buttons */}
-        <div className="absolute top-4 right-4 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              document.documentElement.classList.remove("dark");
-              localStorage.setItem("theme", "light");
-            }}
-          >
-            Light
-          </Button>
+        <div className="absolute top-4 right-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="rounded-xl">
+                Theme
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  document.documentElement.classList.remove("dark");
+                  localStorage.setItem("theme", "light");
+                }}
+              >
+                <Sun className="w-4 h-4 mr-2" />
+                Light
+              </DropdownMenuItem>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              document.documentElement.classList.add("dark");
-              localStorage.setItem("theme", "dark");
-            }}
-          >
-            Dark
-          </Button>
+              <DropdownMenuItem
+                onClick={() => {
+                  document.documentElement.classList.add("dark");
+                  localStorage.setItem("theme", "dark");
+                }}
+              >
+                <Moon className="w-4 h-4 mr-2" />
+                Dark
+              </DropdownMenuItem>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              localStorage.setItem("theme", "system");
-              applySystemTheme();
-            }}
-          >
-            System
-          </Button>
+              <DropdownMenuItem
+                onClick={() => {
+                  localStorage.setItem("theme", "system");
+                  applySystemTheme();
+                }}
+              >
+                <Monitor className="w-4 h-4 mr-2" />
+                System
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Header */}
