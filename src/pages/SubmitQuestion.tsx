@@ -187,7 +187,7 @@ const SubmitQuestion = () => {
             <label className="text-sm font-medium">Question</label>
             <textarea
                 className="w-full min-h-[150px] rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                placeholder="Enter the exam question exactly as it appeared..."
+                placeholder="Enter the exam question with all necessary details and mention your class and section."
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
             />
