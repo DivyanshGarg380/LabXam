@@ -148,6 +148,18 @@ const Index = () => {
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Find previous lab exam questions easily
           </p>
+
+          <div className="mt-6">
+            <p className="text-sm text-muted-foreground">
+              Have a new question{" "}
+              <span
+                onClick={() => navigate("/submit")}
+                className="text-primary font-medium cursor-pointer hover:underline"
+              >
+                Submit it here →
+              </span>
+            </p>
+          </div>
         </div>
 
         {/* Selection Panel */}
