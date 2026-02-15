@@ -17,6 +17,7 @@ The goal of this project is to eliminate the need to search through scattered Wh
 - Clean and shareable URLs
 - Centralized and scalable question storage
 - Minimal and responsive UI
+- Rate limited ofc 😈
 
 ---
 
