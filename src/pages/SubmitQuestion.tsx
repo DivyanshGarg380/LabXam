@@ -29,6 +29,8 @@ const SubmitQuestion = () => {
   const navigate = useNavigate();
   const [cooldown, setCoolDown] = useState<number | null>(null);
 
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
   useEffect(() => {
     if(cooldown === null) return;
     if(cooldown <= 0) {
@@ -42,6 +44,14 @@ const SubmitQuestion = () => {
 
     return () => clearTimeout(timer);
   }, [cooldown]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const subjects = subject_sem[semester] || [];
 
@@ -96,6 +106,19 @@ const SubmitQuestion = () => {
 
     setLoading(false);
   };
+
+  if(isPageLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground text-sm">
+            Loading submission form...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-4 py-16">

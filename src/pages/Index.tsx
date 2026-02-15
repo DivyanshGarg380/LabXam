@@ -68,6 +68,7 @@ const Index = () => {
   const [selectedEval, setSelectedEval] = useState("");
   const [selectYear, setSelectYear] = useState("");
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -303,13 +304,23 @@ const Index = () => {
 
             {/* Action Button */}
             <Button
-              disabled={!selectedSemester || !selectedSubject || !selectedEval || !selectYear}
+              disabled={!selectedSemester || !selectedSubject || !selectedEval || !selectYear || isLoading}
               className="w-full h-12 text-base font-semibold rounded-xl"
               onClick={() => {
-                navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&year=${selectYear}&eval=${selectedEval}`);
+                setIsLoading(true);
+                setTimeout(() => {
+                  navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&year=${selectYear}&eval=${selectedEval}`);
+                }, 500);
               }}
             >
-              View Questions
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Loading...
+                </span>
+              ) : (
+                "View Questions"
+              )}
             </Button>
           </div>
 
@@ -320,8 +331,7 @@ const Index = () => {
             </p>
 
             <p className="text-xs text-muted-foreground">
-              Built by <span className="font-medium text-foreground">Starman</span>{" "}
-              — simplifying LAB EXAM prep
+              Built by <span className="font-medium text-foreground">Starman ⌯✈︎</span>{" "}
             </p>
           </div>
         </div>

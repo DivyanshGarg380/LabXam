@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { QuestionsPage } from "@/components/QuestionsPage";
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useState } from "react";
 import { toast } from "sonner";
 import {
   normalizeSemester,
@@ -18,6 +18,7 @@ type EvaluationData = Record<string, SectionData>;
 
 const Questions = () => {
   const [searchParams] = useSearchParams();
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const semester = searchParams.get("sem");
@@ -45,6 +46,14 @@ const Questions = () => {
   const subjectKey = subject ? normalizeSubject(subject) : "";
   const evalKey = evalType ? normalizeEvaluation(evalType) : "";
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const evalData: EvaluationData | null =
     semesterKey && subjectKey && evalKey
       ? (questionsDB[semesterKey]?.[subjectKey]?.[evalKey] as
@@ -71,16 +80,25 @@ const Questions = () => {
     return result;
   }, [evalData, year]);
 
-  return (
-    <QuestionsPage
-      semester={semesterKey}
-      subject={subjectKey}
-      evaluationType={evalKey}
-      year={year ?? ""}
-      questions={allQuestions}
-      onBack={() => navigate("/", { replace: true })}
-    />
-  );
+  return isLoading ? (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground text-sm">
+            Fetching questions...
+          </p>
+      </div>    
+    </div>
+  ) : (
+      <QuestionsPage
+        semester={semesterKey}
+        subject={subjectKey}
+        evaluationType={evalKey}
+        year={year ?? ""}
+        questions={allQuestions}
+        onBack={() => navigate("/", { replace: true })}
+      />
+  )
 };
 
 export default Questions;
