@@ -100,3 +100,9 @@ npm run dev
 ```
 http://localhost:8080
 ```
+
+### Before raising a PR pls do this
+```
+npm test
+```
+
