@@ -32,16 +32,24 @@ export const questionsDB: QuestionsDB = {
         "DSE-C": {
           year: "2026",
           questions: [
-            `Library Management System (Multithreading + Enum + Interface):
-            • Create an interface with methods: borrowBook(), returnBook().
-            • Create an enum Status { BORROW, RETURN, NOT_AVAILABLE }.
-            • Create a base class LibraryMember with attributes: name, totalBorrowed.
-            • Create a derived class StudentManager extends LibraryMember and implements the interface.
-            • Implement three threads: Borrowing, Returning, and Librarian.
-            • Borrowing thread handles book borrowing.
-            • Returning thread handles book returning.
-            • Librarian thread periodically displays the status of books.
-            • No menu-driven program required.`
+            `Library Book Lending System (Multithreading + OOP + Enum + Interface):
+            • Define an interface LibraryOperations with methods: borrowBook(), returnBook().
+            • Create a base class LibraryMember with attributes: memberName, booksBorrowed.
+            • Create a derived class StudentMember that extends LibraryMember and implements LibraryOperations.
+            • Define an enum TransactionType { BORROW, RETURN, NOT_AVAILABLE }.
+            • Create three threads:
+                - Borrowing Thread (student borrowing a book)
+                - Returning Thread (student returning a book)
+                - Librarian Thread (monitors book availability and announces final status)
+            • Use synchronization to ensure:
+                - Book count updates are thread-safe.
+                - No book can be borrowed when stock is zero.
+                - Only valid borrow/return operations are performed.
+            • After each transaction display:
+                - Transaction type
+                - Current available book count
+                - Number of books borrowed by the member
+                - Final status announced by the librarian.`
           ],
         },
         "CCE-D": {
