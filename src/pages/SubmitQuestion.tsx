@@ -19,6 +19,7 @@ const subject_sem: Record<string, string[]> = {
 };
 
 const years = ["2025", "2026"];
+const COOLDOWN_TIME = 2* 60 * 1000;
 
 const SubmitQuestion = () => {
   const [semester, setSemester] = useState("");
@@ -30,6 +31,7 @@ const SubmitQuestion = () => {
   const [cooldown, setCoolDown] = useState<number | null>(null);
 
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const subjects = subject_sem[semester] || [];
 
   useEffect(() => {
     if(cooldown === null) return;
@@ -45,7 +47,18 @@ const SubmitQuestion = () => {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  useEffect(() => {
+  useEffect(() => { 
+    const lastSubmission = localStorage.getItem("lastSubmissionTime");
+    if(lastSubmission) {
+      const timePassed = Date.now() - parseInt(lastSubmission);
+      if(timePassed < COOLDOWN_TIME) {
+        const remaining = Math.ceil(
+          (COOLDOWN_TIME - timePassed) / 1000
+        );
+        setCoolDown(remaining);
+      }
+    }
+
     const timer = setTimeout(() => {
       setIsPageLoading(false);
     }, 500);
@@ -53,11 +66,27 @@ const SubmitQuestion = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const subjects = subject_sem[semester] || [];
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if(event.key === "lastSubmissionTime" && event.newValue) {
+        const timePassed = Date.now() - parseInt(event.newValue);
+
+        if(timePassed < COOLDOWN_TIME) {
+          const remaining = Math.ceil(
+            (COOLDOWN_TIME - timePassed) / 1000
+          );
+          setCoolDown(remaining);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    }
+  }, []);
 
   const sendQuestion = async () => {
-
-    const COOLDOWN_TIME = 2*60*1000;
 
     const lastSubmission = localStorage.getItem("lastSubmissionTime");
     if(lastSubmission) {
@@ -72,6 +101,11 @@ const SubmitQuestion = () => {
 
     if (!semester || !year || !subject || !question) {
       toast.error("Please fill all fields");
+      return;
+    }
+
+    if(question.length < 15) {
+      toast.error("Question too short.");
       return;
     }
 
@@ -93,7 +127,7 @@ const SubmitQuestion = () => {
 
       toast.success("Question Submitted Successfully");
       localStorage.setItem("lastSubmissionTime", Date.now().toString());
-      setCoolDown(120);
+      setCoolDown(COOLDOWN_TIME/1000);
 
       setSemester("");
       setYear("");
@@ -102,9 +136,9 @@ const SubmitQuestion = () => {
     } catch (err) {
       console.log(err);
       toast.error("Failed to send, Try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   if(isPageLoading) {
@@ -181,7 +215,6 @@ const SubmitQuestion = () => {
             {/* Subject */}
             <div className="space-y-2">
             <label className="text-sm font-medium">Subject</label>
-
             <Select
                 value={subject}
                 onValueChange={setSubject}
@@ -194,7 +227,6 @@ const SubmitQuestion = () => {
                     }
                 />
                 </SelectTrigger>
-
                 <SelectContent className="rounded-xl shadow-lg">
                 {subjects.map((sub) => (
                     <SelectItem key={sub} value={sub}>
