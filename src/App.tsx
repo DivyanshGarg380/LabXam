@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import SubmitQuestion from "./pages/SubmitQuestion";
 
 import Index from "./pages/Index";
@@ -64,6 +65,7 @@ const App = () => {
             <Route path='/submit' element={<SubmitQuestion />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Analytics />
         </TooltipProvider>
       </QueryClientProvider>
     </BrowserRouter>
