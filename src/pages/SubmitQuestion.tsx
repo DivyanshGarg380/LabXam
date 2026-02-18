@@ -16,9 +16,11 @@ const subject_sem: Record<string, string[]> = {
   "2": ["IOOP", "DAV"],
   "3": ["DSL", "DISL"],
   "4": ["DBSL", "OSDL", "OSL"],
+  "5": [],
+  "6": [],
 };
 
-const years = ["2025", "2026"];
+const years = ["2026"];
 const COOLDOWN_TIME = 2* 60 * 1000;
 
 const SubmitQuestion = () => {

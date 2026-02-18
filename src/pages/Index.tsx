@@ -257,7 +257,6 @@ const Index = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="2026">2026</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
                 </SelectContent>
               </Select>
             </div>
