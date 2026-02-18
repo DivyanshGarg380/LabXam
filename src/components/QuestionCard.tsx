@@ -13,7 +13,6 @@ export function QuestionCard({ number, question, section }: QuestionCardProps) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  // Copy to clipboard
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(question);
@@ -26,7 +25,6 @@ export function QuestionCard({ number, question, section }: QuestionCardProps) {
     }
   };
 
-  // Show expand button only if question is long
   const isLongQuestion = question.length > 150;
 
   return (
