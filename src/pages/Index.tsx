@@ -330,7 +330,7 @@ const Index = () => {
             </p>
 
             <p className="text-xs text-muted-foreground">
-              Built by <span className="font-medium text-foreground">Starman ⌯✈︎</span>{" "}
+              Built by <span className="font-medium text-foreground">Vidhan & Starman ⌯✈︎</span>{" "}
             </p>
           </div>
         </div>
