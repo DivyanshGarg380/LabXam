@@ -54,7 +54,6 @@ Requirements:
 8. Make the program menu-driven (user selects shots).`
           ]
         },
-
         "DSE-C": {
           year: "2026",
           questions: [
@@ -98,7 +97,6 @@ Requirements:
    - Final status from Librarian`
           ]
         },
-
         "CCE-D": {
           year: "2026",
           questions: [
@@ -123,7 +121,6 @@ Requirements:
    - Exception handling`
           ]
         },
-
         "AIML-C": {
           year: "2026",
           questions: [
@@ -148,7 +145,6 @@ Requirements:
 5. Stop after predefined number of messages.`
           ]
         },
-
         "CCE-C": {
           year: "2026",
           questions: [
@@ -192,13 +188,57 @@ Requirements:
    - Monitor reading readings.
    - Final confirmation and file statistics from Controller.`
           ]
-        }
+        },
+        "CSE-D": {
+          year: "2026",
+          questions: [
+            `Exam Answer Logging Mechanism 
+    (Multithreading + File Handling + Synchronization)
 
+    Objective:
+    Simulate an exam answer logging system where student answers are written to a file, 
+    read back, and monitored when maximum submission limit is reached.
+
+    Requirements:
+
+    1. Create shared file:
+      examlog.txt
+
+    2. Maximum limit:
+      - Only 3 students (hardcoded).
+      - Example entries:
+          "Student 1 Answer A"
+          "Student 2 Answer B"
+          "Student 3 Answer C"
+
+    3. Create 3 threads:
+
+      (a) Writer Thread:
+          - Writes answers to file using FileWriter.
+          - Increments count after each write.
+          - Notifies Reader.
+          - If count == 3 → notify Supervisor.
+
+      (b) Reader Thread:
+          - Reads full file using FileReader.
+          - Must not read while Writer is writing.
+
+      (c) Supervisor Thread:
+          - Activates when count == 3.
+          - Displays file name and file size.
+          - Prints confirmation message.
+
+    4. Synchronization:
+      - Only one thread accesses file at a time.
+      - Use synchronized, wait(), notify()/notifyAll().
+      - No partial read/write allowed.
+    `
+          ]
+        }
       }
     },
     dbsl: {
       Midsem: {
-
         "CCE-C": {
           year: "2026",
           questions: [
@@ -236,7 +276,6 @@ Requirements:
     3. Find users who have watched more movies than the average number of movies watched per user.`
           ]
         },
-
         "AIML-B": {
           year: "2026",
           questions: [
@@ -272,7 +311,6 @@ Requirements:
         - Count how many departments are assigned to each service request.`
           ]
         },
-
         "IT-A": {
           year: "2026",
           questions: [
@@ -320,7 +358,6 @@ Requirements:
         count it once as temperature sensor and once as humidity sensor.`
           ]
         }
-
       }
     }
   }
