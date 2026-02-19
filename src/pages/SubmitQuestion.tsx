@@ -106,8 +106,8 @@ const SubmitQuestion = () => {
       return;
     }
 
-    if(question.length < 15) {
-      toast.error("Question too short.");
+    if(question.length < 40) {
+      toast.error("Please enter the complete lab question (min 40 characters).");
       return;
     }
 
