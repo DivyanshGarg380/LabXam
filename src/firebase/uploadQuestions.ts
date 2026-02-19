@@ -28,10 +28,6 @@ export const uploadQuestionsToFirebase = async () => {
               year: data.year,
               questions: data.questions,
             });
-
-            console.log(
-              `Uploaded: ${semester} | ${subject} | ${evaluation} | ${section}`
-            );
           }
         }
       }
