@@ -170,8 +170,39 @@ export default function Admin() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Button onClick={handleLogin}>Sign in with Google</Button>
+      <div className="relative min-h-screen flex flex-col items-center justify-center bg-background">
+        
+       <h2 className="absolute top-20 text-4xl md:text-6xl font-black tracking-[0.5em] uppercase text-red-600 animate-pulse drop-shadow-[0_0_30px_rgba(255,0,0,1)] text-center">
+          YOU THOUGHT THAT WOULD WORK? 😼
+        </h2>
+
+        <div className="w-[380px] bg-card border border-border shadow-sm rounded-2xl p-8 space-y-6 text-center">
+          
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Admin Portal
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Sign in with your Google account to continue
+            </p>
+          </div>
+
+          <Button
+            onClick={handleLogin}
+            className="w-full h-11 flex items-center justify-center gap-3"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              className="w-5 h-5"
+              alt="Google"
+            />
+            Continue with Google
+          </Button>
+
+          <p className="text-xs text-muted-foreground">
+            Access is restricted to authorized admins only.
+          </p>
+        </div>
       </div>
     );
   }
