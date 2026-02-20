@@ -102,8 +102,14 @@ export default function Admin() {
   }, []);
 
   const handleLogin = async () => {
+    if (!auth || !provider) {
+        console.error("Firebase not configured");
+        alert("Firebase is not configured properly.");
+        return;
+    }
+
     await signInWithPopup(auth, provider);
-  };
+    };
 
   const handleLogout = () => {
     signOut(auth);
