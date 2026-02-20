@@ -30,12 +30,21 @@ const semesters = [
 ];
 
 const subjectsBySemester = {
-  "1": [],
-  "2": [],
-  "3": [],
+  "1": [
+    { value: "pps", label: "Programming for Problem Solving (PPS)" },
+  ],
+  "2": [
+    { value: "ioop", label: "Introduction to OOP (IOOP)" },
+    { value: "dav", label: "Data Analysis & Visualization (DAV)" },
+  ],
+  "3": [
+    { value: "dsl", label: "Data Structures Lab (DSL)" },
+    { value: "disl", label: "Digital Systems Lab (DISL)" },
+  ],
   "4": [
     { value: "dbsl", label: "Database Systems (DBSL)" },
     { value: "osdl", label: "Software Development Lab (OSDL)" },
+    { value: "osl", label: "Operating Systems Lab (OSL)" },
   ],
   "5": [],
   "6": [],
