@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import SubmitQuestion from "./pages/SubmitQuestion";
+import Admin from "./pages/Admin";
 
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
@@ -63,6 +64,7 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/questions" element={<Questions />} />
             <Route path='/submit' element={<SubmitQuestion />} />
+            <Route path='/admin' element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Analytics />
