@@ -272,7 +272,6 @@ const SubmitQuestion = () => {
 
                 <p className="text-xs text-muted-foreground">
                 Built by <span className="font-medium text-foreground">Vidhan & Divyansh ⌯✈︎</span>{" "}
-                — simplifying LAB EXAM prep
                 </p>
           </div>
       </div>
