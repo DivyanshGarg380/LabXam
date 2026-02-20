@@ -13,6 +13,7 @@ import {
   updateDoc,
   arrayUnion,
 } from "firebase/firestore";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-/* ================= TYPES ================= */
 
 type Subject = {
   value: string;
@@ -38,8 +38,6 @@ type EvaluationMap = {
   [semester: string]: string[];
 };
 
-/* ================= DATA ================= */
-
 const semesters = [
   { value: "1", label: "Semester 1" },
   { value: "2", label: "Semester 2" },
@@ -52,24 +50,43 @@ const semesters = [
 ];
 
 const subjectsBySemester: SubjectsMap = {
+  "1": [
+    { value: "pps", label: "Programming for Problem Solving (PPS)" },
+  ],
+  "2": [
+    { value: "ioop", label: "Introduction to OOP (IOOP)" },
+    { value: "dav", label: "Data Analysis & Visualization (DAV)" },
+  ],
+  "3": [
+    { value: "dsl", label: "Data Structures Lab (DSL)" },
+    { value: "disl", label: "Digital Systems Lab (DISL)" },
+  ],
   "4": [
     { value: "dbsl", label: "Database Systems (DBSL)" },
     { value: "osdl", label: "Software Development Lab (OSDL)" },
+    { value: "osl", label: "Operating Systems Lab (OSL)" },
   ],
+  "5": [],
+  "6": [],
 };
 
 const evaluationBySemester: EvaluationMap = {
+  "1": ["midsem", "eval-1", "eval-2", "endsem"],
+  "2": ["midsem", "eval-1", "eval-2", "endsem"],
+  "3": ["midsem", "eval-1", "eval-2", "endsem"],
   "4": ["midsem", "eval-1", "eval-2", "endsem"],
+  "5": ["midsem", "eval-1", "eval-2", "endsem"],
+  "6": ["midsem", "eval-1", "eval-2", "endsem"],
+  "7": ["midsem", "eval-1", "eval-2", "endsem"],
+  "8": ["midsem", "eval-1", "eval-2", "endsem"],
 };
 
 const evaluationLabelMap: Record<string, string> = {
   midsem: "Midsem",
-  "eval-1": "Eval-1",
-  "eval-2": "Eval-2",
+  "eval-1": "Evaluation 1",
+  "eval-2": "Evaluation 2",
   endsem: "Endsem",
 };
-
-/* ================= COMPONENT ================= */
 
 export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
@@ -82,8 +99,6 @@ export default function Admin() {
   const [evalType, setEvalType] = useState("");
   const [section, setSection] = useState("");
   const [question, setQuestion] = useState("");
-
-  /* ================= AUTH + ADMIN CHECK ================= */
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -103,8 +118,7 @@ export default function Admin() {
 
   const handleLogin = async () => {
     if (!auth || !provider) {
-        console.error("Firebase not configured");
-        alert("Firebase is not configured properly.");
+        toast.error("Firebase is not configured properly.");
         return;
     }
 
@@ -115,11 +129,9 @@ export default function Admin() {
     signOut(auth);
   };
 
-  /* ================= ADD QUESTION (ORIGINAL FORMAT) ================= */
-
   const handleAddQuestion = async () => {
     if (!semester || !subject || !year || !evalType || !section || !question) {
-      alert("Please fill all fields");
+      toast.error("Please fill all fields");
       return;
     }
 
@@ -127,19 +139,16 @@ export default function Admin() {
       const semesterLabel = `Semester ${semester}`;
       const evaluationLabel = evaluationLabelMap[evalType];
 
-      // Unique document for combination
       const docId = `${semesterLabel}_${subject}_${year}_${evaluationLabel}_${section}`;
 
       const docRef = doc(db, "questions", docId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        // Append question
         await updateDoc(docRef, {
           questions: arrayUnion(question),
         });
       } else {
-        // Create new document
         await setDoc(docRef, {
           semester: semesterLabel,
           subject,
@@ -152,14 +161,12 @@ export default function Admin() {
       }
 
       setQuestion("");
-      alert("Question added successfully!");
+      toast.success("Question added successfully!");
     } catch (error) {
       console.error(error);
-      alert("Permission denied");
+      toast.error("Permission denied");
     }
   };
-
-  /* ================= STATES ================= */
 
   if (!user) {
     return (
@@ -187,8 +194,6 @@ export default function Admin() {
       </div>
     );
   }
-
-  /* ================= ADMIN PANEL ================= */
 
   return (
     <div className="min-h-screen bg-background">
@@ -245,12 +250,14 @@ export default function Admin() {
           </Select>
 
           {/* Year */}
-          <input
-            className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm"
-            placeholder="Year"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-          />
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="h-11 rounded-xl">
+              <SelectValue placeholder="Select Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2026">2026</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Evaluation */}
           <Select
@@ -264,7 +271,7 @@ export default function Admin() {
             <SelectContent>
               {evaluationBySemester[semester]?.map((e) => (
                 <SelectItem key={e} value={e}>
-                  {e}
+                  {evaluationLabelMap[e]}
                 </SelectItem>
               ))}
             </SelectContent>
