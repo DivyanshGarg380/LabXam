@@ -173,7 +173,7 @@ export default function Admin() {
       <div className="relative min-h-screen flex flex-col items-center justify-center bg-background">
         
        <h2 className="absolute top-20 text-4xl md:text-6xl font-black tracking-[0.5em] uppercase text-red-600 animate-pulse drop-shadow-[0_0_30px_rgba(255,0,0,1)] text-center">
-          YOU THOUGHT THAT WOULD WORK? 😼
+          YOU THOUGHT THAT WOULD WORK? 😼    
         </h2>
 
         <div className="w-[380px] bg-card border border-border shadow-sm rounded-2xl p-8 space-y-6 text-center">
@@ -196,7 +196,7 @@ export default function Admin() {
               className="w-5 h-5"
               alt="Google"
             />
-            Continue with Google
+            Continue with Google   
           </Button>
 
           <p className="text-xs text-muted-foreground">
