@@ -1,16 +1,20 @@
 import { render, screen } from "@testing-library/react";
-import { QuestionCard } from "@/components/QuestionCard";
+import { QuestionCard } from "../../components/QuestionCard";
 
 describe("QuestionCard", () => {
-  it("renders question text", () => {
+
+  test("renders question number, text and section", () => {
     render(
       <QuestionCard
-        question="What is fork()?"
-        number={1}
-        section="Section A"
+        number={3}
+        question="Explain Deadlock"
+        section="Section B"
       />
     );
 
-    expect(screen.getByText("What is fork()?")).toBeInTheDocument();
+    expect(screen.getByText("Explain Deadlock")).toBeInTheDocument();
+    expect(screen.getByText(/section b/i)).toBeInTheDocument();
+    expect(screen.getByText(/3/)).toBeInTheDocument();
   });
+
 });
