@@ -32,7 +32,7 @@ describe("fetchQuestionsFromFirebase", () => {
     const mockedGetDocs = firestore.getDocs as jest.Mock;
 
     mockedGetDocs.mockResolvedValue({
-      forEach: (callback: any) => {
+      forEach: (callback: (doc: { data: () => { section: string; questions: string[] } }) => void) => {
         mockDocs.forEach(callback);
       }
     });

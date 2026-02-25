@@ -1,4 +1,6 @@
 import * as auth from "firebase/auth";
+import { Auth } from "firebase/auth";
+
 
 jest.mock("firebase/auth", () => ({
   getAuth: jest.fn(),
@@ -20,7 +22,7 @@ describe("Firebase Auth", () => {
     );
 
     await expect(
-      auth.signInWithEmailAndPassword(null as any, "a@test.com", "wrong")
+      auth.signInWithEmailAndPassword({} as Auth, "a@test.com", "wrong")
     ).rejects.toThrow("Invalid credentials");
 
   });
