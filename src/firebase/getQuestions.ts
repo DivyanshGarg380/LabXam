@@ -1,5 +1,8 @@
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./config";
+import { toast } from "sonner";
+
+const queryCache = new Map<string, { question: string; section: string }[] >(); 
 
 export const fetchQuestionsFromFirebase = async (
   semester: string,
@@ -8,6 +11,12 @@ export const fetchQuestionsFromFirebase = async (
   year: string
 ) => {
   try {
+    const cacheKey = `${semester}_${subject}_${evaluation}_${year}`;
+
+    if(queryCache.has(cacheKey)) {
+      return queryCache.get(cacheKey)!;
+    }
+
     const q = query(
       collection(db, "questions"),
       where("semester", "==", semester),
@@ -31,9 +40,11 @@ export const fetchQuestionsFromFirebase = async (
       });
     });
 
+    queryCache.set(cacheKey, result);
+
     return result;
   } catch (error) {
-    console.error("Error fetching questions:", error);
+    toast.error("Error fetching questions");
     return [];
   }
 };

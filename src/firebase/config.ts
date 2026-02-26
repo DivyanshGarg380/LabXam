@@ -1,6 +1,7 @@
 import { initializeApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth, GoogleAuthProvider } from "firebase/auth";
+import { initializeFirestore, persistentLocalCache } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -21,7 +22,9 @@ let provider: GoogleAuthProvider | null = null;
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache()
+  });
   auth = getAuth(app);
   provider = new GoogleAuthProvider();
 }
