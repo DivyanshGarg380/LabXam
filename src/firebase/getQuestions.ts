@@ -2,7 +2,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./config";
 import { toast } from "sonner";
 
-const queryCache = new Map<string, { question: string; section: string }[] >(); 
+export const queryCache = new Map<string, { question: string; section: string }[]>(); 
 
 export const fetchQuestionsFromFirebase = async (
   semester: string,
