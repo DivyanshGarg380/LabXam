@@ -1,6 +1,14 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/maintenance.html" }
+  "routes": [
+    {
+      "src": "/maintenance.html",
+      "dest": "/maintenance.html"
+    },
+    {
+      "src": "/(.*)",
+      "status": 503,
+      "dest": "/maintenance.html"
+    }
   ],
   "headers": [
     {
