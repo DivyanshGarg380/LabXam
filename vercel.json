@@ -1,15 +1,4 @@
 {
-  "routes": [
-    {
-      "src": "/maintenance.html",
-      "dest": "/maintenance.html"
-    },
-    {
-      "src": "/(.*)",
-      "status": 503,
-      "dest": "/maintenance.html"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
