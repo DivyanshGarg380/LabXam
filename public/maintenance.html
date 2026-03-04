@@ -1,49 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
 <meta charset="UTF-8">
-<meta name="robots" content="noindex, nofollow">
-
-<title>Maintenance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>LabXam — Maintenance</title>
 
 <style>
-body{
-font-family: system-ui;
-background:#0f172a;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-margin:0;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.container{
-text-align:center;
-max-width:500px;
+body {
+  background: #0a0e17;
+  color: #e5e7eb;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  position: relative;
 }
 
-h1{
-font-size:42px;
-margin-bottom:20px;
+.matrix-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.25;
+  z-index: 0;
 }
 
-p{
-color:#94a3b8;
-font-size:18px;
+.container {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: 700;
+  color: #22c55e;
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #f9fafb;
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #9ca3af;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.footer {
+  margin-top: 60px;
+  font-size: 13px;
+  color: #6b7280;
 }
 </style>
-
 </head>
 
 <body>
 
+<canvas class="matrix-bg" id="matrix"></canvas>
+
 <div class="container">
-<h1>🚧 We'll be back soon</h1>
-<p>Our website is currently undergoing maintenance.</p>
-<p>Please check again shortly.</p>
+  <div class="logo">LABXAM</div>
+  
+  <h1>We'll be back soon</h1>
+  
+  <p class="subtitle">
+    We're currently performing maintenance and upgrades.<br>
+    Thanks for your patience.
+  </p>
+  
+  <div class="status">
+    <span class="status-dot"></span>
+    System maintenance in progress
+  </div>
+  
+  <div class="footer">
+    © <span id="year"></span> LabXam
+  </div>
 </div>
+
+<script>
+// Matrix rain effect
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+const fontSize = 14;
+const columns = canvas.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(10, 14, 23, 0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = '#22c55e';
+  ctx.font = fontSize + 'px monospace';
+  
+  for (let i = 0; i < drops.length; i++) {
+    const text = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    
+    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+      drops[i] = 0;
+    }
+    drops[i]++;
+  }
+}
+
+setInterval(drawMatrix, 35);
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// Set year
+document.getElementById('year').textContent = new Date().getFullYear();
+</script>
 
 </body>
 </html>
