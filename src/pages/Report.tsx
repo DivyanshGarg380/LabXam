@@ -34,6 +34,7 @@ export default function Report() {
       await addDoc(collection(db, "reports"), {
         message,
         createdAt: serverTimestamp(),
+        resolved: false,
       });
 
       setMessage("");
@@ -88,7 +89,6 @@ export default function Report() {
             </Button>
 
         </div>
-
       </div>
     </div>
   );

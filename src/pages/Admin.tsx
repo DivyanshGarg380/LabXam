@@ -14,8 +14,9 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import { toast } from "sonner";
-
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 
 
 type Subject = {
@@ -92,6 +94,11 @@ export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
+  const [reports, setReports] = useState<
+    { id: string; message: string; resolved: boolean }[]
+  >([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+
   // Form states
   const [semester, setSemester] = useState("");
   const [subject, setSubject] = useState("");
@@ -107,7 +114,12 @@ export default function Admin() {
       if (u?.email) {
         const adminRef = doc(db, "admins", u.email);
         const adminSnap = await getDoc(adminRef);
-        setIsAdmin(adminSnap.exists());
+        const adminAcess = adminSnap.exists();
+        setIsAdmin(adminAcess);
+
+        if(adminAcess) {
+          loadReports();
+        }
       } else {
         setIsAdmin(false);
       }
@@ -123,7 +135,7 @@ export default function Admin() {
     }
 
     await signInWithPopup(auth, provider);
-    };
+  };
 
   const handleLogout = () => {
     signOut(auth);
@@ -165,6 +177,49 @@ export default function Admin() {
     } catch (error) {
       console.error(error);
       toast.error("Permission denied");
+    }
+  };
+
+  const loadReports = async () => {
+    try {
+      const q = query(
+        collection(db, "reports"),
+        where("resolved", "==", false),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(q);
+
+      const data: { id: string; message: string; resolved: boolean }[] = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+
+        data.push({
+          id: docSnap.id,
+          message: d.message,
+          resolved: d.resolved ?? false,
+        });
+      });
+
+      setReports(data);
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to load reports");
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  const resolveReport = async (id: string) => {
+    try {
+      const ref = doc(db, "reports", id);
+
+      await updateDoc(ref, { resolved: true });
+
+      setReports((prev) => prev.filter((r) => r.id !== id));
+
+      toast.success("Report resolved");
+    } catch (err) {
+      toast.error("Failed to resolve report");
     }
   };
 
@@ -213,15 +268,15 @@ export default function Admin() {
         <p className="text-muted-foreground">Checking access...</p>
       </div>
     );
-  }
+  } 
 
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <h2 className="text-xl font-semibold">Access Denied</h2>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
+        <h2 className="text-xl font-semibold">Access Denied </h2>
+        <Link to="/" className="text-sm text-white-500 hover:text-white-700">
+          Redirect back to Home 😂
+        </Link>
       </div>
     );
   }
@@ -328,6 +383,37 @@ export default function Admin() {
           <Button className="w-full h-11" onClick={handleAddQuestion}>
             Add Question
           </Button>
+          {/* Reports */}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-card space-y-4">
+            <h2 className="text-xl font-bold">Reports</h2>
+
+            {loadingReports ? (
+              <div className="flex justify-center py-6">
+                <div className="h-6 w-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : reports.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No reports</p>
+            ) : (
+              <div className="space-y-3">
+                {reports.map((r) => (
+                  <div
+                    key={r.id}
+                    className="border border-border rounded-lg p-3 flex justify-between items-center"
+                  >
+                    <span className="text-sm">{r.message}</span>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => resolveReport(r.id)}
+                    >
+                      Resolve
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
