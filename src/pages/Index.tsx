@@ -26,7 +26,6 @@ const semesters = [
   { value: "5", label: "Semester 5" },
   { value: "6", label: "Semester 6" },
   { value: "7", label: "Semester 7" },
-  { value: "8", label: "Semester 8" },
 ];
 
 const subjectsBySemester = {
@@ -49,7 +48,6 @@ const subjectsBySemester = {
   "5": [],
   "6": [],
   "7": [],
-  "8": [],
 };
 
 const evaluationBySemester = {

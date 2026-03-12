@@ -18,6 +18,7 @@ const subject_sem: Record<string, string[]> = {
   "4": ["DBSL", "OSDL", "OSL"],
   "5": [],
   "6": [],
+  "7": [],
 };
 
 const years = ["2026"];
@@ -244,7 +245,7 @@ const SubmitQuestion = () => {
             <label className="text-sm font-medium">Question</label>
             <textarea
                 className="w-full min-h-[150px] rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                placeholder="Enter the exam question with all necessary details and mention your class and section."
+                placeholder="Enter the complete Lab Question here. Please be discriptive and include all necessary details with your section in the last."
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
             />
