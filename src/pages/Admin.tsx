@@ -417,6 +417,7 @@ export default function Admin() {
               <SelectValue placeholder="Select Year" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="2025">2025</SelectItem>
               <SelectItem value="2026">2026</SelectItem>
             </SelectContent>
           </Select>
