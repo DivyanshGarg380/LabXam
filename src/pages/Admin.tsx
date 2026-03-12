@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { auth, provider, db } from "@/firebase/config";
+import { deleteQuestion } from "@/firebase/deleteQuestion";
 import {
   signInWithPopup,
   onAuthStateChanged,
@@ -12,6 +13,10 @@ import {
   setDoc,
   updateDoc,
   arrayUnion,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 import { toast } from "sonner";
 
@@ -23,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 
 type Subject = {
   value: string;
@@ -38,6 +42,11 @@ type EvaluationMap = {
   [semester: string]: string[];
 };
 
+type QuestionItem = {
+  text: string;
+  docId: string;
+};
+
 const semesters = [
   { value: "1", label: "Semester 1" },
   { value: "2", label: "Semester 2" },
@@ -50,9 +59,7 @@ const semesters = [
 ];
 
 const subjectsBySemester: SubjectsMap = {
-  "1": [
-    { value: "pps", label: "Programming for Problem Solving (PPS)" },
-  ],
+  "1": [{ value: "pps", label: "Programming for Problem Solving (PPS)" }],
   "2": [
     { value: "ioop", label: "Introduction to OOP (IOOP)" },
     { value: "dav", label: "Data Analysis & Visualization (DAV)" },
@@ -92,13 +99,13 @@ export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  // Form states
   const [semester, setSemester] = useState("");
   const [subject, setSubject] = useState("");
   const [year, setYear] = useState("");
   const [evalType, setEvalType] = useState("");
   const [section, setSection] = useState("");
   const [question, setQuestion] = useState("");
+  const [questionsList, setQuestionsList] = useState<QuestionItem[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -118,15 +125,77 @@ export default function Admin() {
 
   const handleLogin = async () => {
     if (!auth || !provider) {
-        toast.error("Firebase is not configured properly.");
-        return;
+      toast.error("Firebase is not configured properly.");
+      return;
     }
 
     await signInWithPopup(auth, provider);
-    };
+  };
 
   const handleLogout = () => {
     signOut(auth);
+  };
+
+  const handleDeleteQuestion = async (item: QuestionItem) => {
+    try {
+      await deleteQuestion(item.docId, item.text);
+
+      const newList = questionsList.filter(
+        (q) => !(q.text === item.text && q.docId === item.docId)
+      );
+
+      setQuestionsList(newList);
+
+      toast.success("Question deleted");
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+  const fetchQuestions = async () => {
+    if (!semester || !subject || !year || !evalType) {
+      toast.error("Select filters first");
+      return;
+    }
+
+    try {
+      const semesterLabel = `Semester ${semester}`;
+      const evaluationLabel = evaluationLabelMap[evalType];
+
+      const q = query(
+        collection(db, "questions"),
+        where("semester", "==", semesterLabel),
+        where("subject", "==", subject),
+        where("year", "==", year),
+        where("evaluation", "==", evaluationLabel)
+      );
+
+      const snapshot = await getDocs(q);
+
+      const allQuestions: QuestionItem[] = [];
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (data.questions) {
+          data.questions.forEach((question: string) => {
+            allQuestions.push({
+              text: question,
+              docId: docSnap.id,
+            });
+          });
+        }
+      });
+
+      setQuestionsList(allQuestions);
+
+      if (allQuestions.length === 0) {
+        toast.error("No questions found");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load questions");
+    }
   };
 
   const handleAddQuestion = async () => {
@@ -171,13 +240,11 @@ export default function Admin() {
   if (!user) {
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center bg-background">
-        
-       <h2 className="absolute top-20 text-4xl md:text-6xl font-black tracking-[0.5em] uppercase text-red-600 animate-pulse drop-shadow-[0_0_30px_rgba(255,0,0,1)] text-center">
+        <h2 className="absolute top-20 text-4xl md:text-6xl font-black tracking-[0.5em] uppercase text-red-600 animate-pulse drop-shadow-[0_0_30px_rgba(255,0,0,1)] text-center">
           YOU THOUGHT THAT WOULD WORK? 😼
         </h2>
 
         <div className="w-[380px] bg-card border border-border shadow-sm rounded-2xl p-8 space-y-6 text-center">
-          
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold tracking-tight">
               Admin Portal
@@ -191,11 +258,7 @@ export default function Admin() {
             onClick={handleLogin}
             className="w-full h-11 flex items-center justify-center gap-3"
           >
-            <img
-              src="/google.webp"
-              className="w-5 h-5"
-              alt="Google"
-            />
+            <img src="/google.webp" className="w-5 h-5" alt="Google" />
             Continue with Google
           </Button>
 
@@ -241,7 +304,6 @@ export default function Admin() {
             </Button>
           </div>
 
-          {/* Semester */}
           <Select
             value={semester}
             onValueChange={(value) => {
@@ -262,7 +324,6 @@ export default function Admin() {
             </SelectContent>
           </Select>
 
-          {/* Subject */}
           <Select
             value={subject}
             onValueChange={setSubject}
@@ -280,7 +341,6 @@ export default function Admin() {
             </SelectContent>
           </Select>
 
-          {/* Year */}
           <Select value={year} onValueChange={setYear}>
             <SelectTrigger className="h-11 rounded-xl">
               <SelectValue placeholder="Select Year" />
@@ -290,7 +350,6 @@ export default function Admin() {
             </SelectContent>
           </Select>
 
-          {/* Evaluation */}
           <Select
             value={evalType}
             onValueChange={setEvalType}
@@ -308,7 +367,6 @@ export default function Admin() {
             </SelectContent>
           </Select>
 
-          {/* Section */}
           <input
             className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm"
             placeholder="Section"
@@ -316,7 +374,6 @@ export default function Admin() {
             onChange={(e) => setSection(e.target.value)}
           />
 
-          {/* Question */}
           <textarea
             className="w-full rounded-xl border border-input bg-background p-3 text-sm"
             placeholder="Enter Question"
@@ -328,6 +385,33 @@ export default function Admin() {
           <Button className="w-full h-11" onClick={handleAddQuestion}>
             Add Question
           </Button>
+
+          <Button variant="secondary" className="w-full" onClick={fetchQuestions}>
+            Load Questions
+          </Button>
+
+          {questionsList.length > 0 && (
+            <div className="space-y-3 pt-4">
+              <h2 className="font-semibold">Existing Questions</h2>
+
+              {questionsList.map((item, index) => (
+                <div
+                  key={index}
+                  className="border border-border rounded-xl p-3 flex justify-between gap-3"
+                >
+                  <p className="text-sm flex-1">{item.text}</p>
+
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteQuestion(item)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
