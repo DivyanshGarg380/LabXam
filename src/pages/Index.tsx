@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Monitor, Moon, Sun } from "lucide-react";
+import { Link } from "react-router-dom";
 
 
 const semesters = [
@@ -173,7 +174,7 @@ const Index = () => {
         {/* Selection Panel */}
         <div className="max-w-xl mx-auto">
           <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-card">
-            {/* Step 1: Semester */}
+            {/* Semester */}
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-3">
                 <h2 className="text-base font-semibold text-foreground">
@@ -202,7 +203,7 @@ const Index = () => {
               </Select>
             </div>
 
-            {/* Step 2: Subject */}
+            {/* Subject */}
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-3">
                 <h2 className="text-base font-semibold text-foreground">
@@ -241,7 +242,7 @@ const Index = () => {
               </Select>
             </div>
 
-            {/* Step 3: Year */}
+            {/* Year */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <h2 className="text-base font-semibold text-foreground">
@@ -268,7 +269,7 @@ const Index = () => {
               </Select>
             </div>
 
-            {/* Step 4: Evaluation Type */}
+            {/* Evaluation Type */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <h2 className="text-base font-semibold text-foreground">
@@ -332,13 +333,26 @@ const Index = () => {
 
           {/* Footer */}
           <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
+
             <p className="text-sm text-muted-foreground">
-              For the students of <span className="font-medium text-foreground">MIT Manipal</span>
+              For the students of{" "}
+              <span className="font-medium text-foreground">MIT Manipal</span>
             </p>
 
             <p className="text-xs text-muted-foreground">
-              Built by <span className="font-medium text-foreground">Vidhan & Divyansh ⌯✈︎</span>{" "}
+              Built by{" "}
+              <span className="font-medium text-foreground">
+                Vidhan & Divyansh 
+              </span>
+              {" • "}
+              <Link
+                to="/report"
+                className="hover:text-foreground transition underline-offset-4 hover:underline"
+              >
+                Report an issue
+              </Link>
             </p>
+
           </div>
         </div>
       </div>
