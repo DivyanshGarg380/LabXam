@@ -59,7 +59,6 @@ const Questions = () => {
 
       setAllQuestions(data);
 
-      // keep your existing small delay effect feel
       setTimeout(() => {
         setIsLoading(false);
       }, 500);

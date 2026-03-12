@@ -42,7 +42,7 @@ This removes the need to manually edit the static TypeScript data file and enabl
 
 ---
 
-##  Firebase Integration
+##  Firebase Integration  
 
 The project now uses Firebase as the backend.
 

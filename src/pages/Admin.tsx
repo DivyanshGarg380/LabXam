@@ -17,10 +17,12 @@ import {
   query,
   where,
   getDocs,
+  orderBy
 } from "firebase/firestore";
 import { toast } from "sonner";
-
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -28,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 
 type Subject = {
   value: string;
@@ -99,6 +102,12 @@ export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
+  const [reports, setReports] = useState<
+    { id: string; message: string; resolved: boolean }[]
+  >([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+
+  // Form states
   const [semester, setSemester] = useState("");
   const [subject, setSubject] = useState("");
   const [year, setYear] = useState("");
@@ -114,7 +123,12 @@ export default function Admin() {
       if (u?.email) {
         const adminRef = doc(db, "admins", u.email);
         const adminSnap = await getDoc(adminRef);
-        setIsAdmin(adminSnap.exists());
+        const adminAcess = adminSnap.exists();
+        setIsAdmin(adminAcess);
+
+        if(adminAcess) {
+          loadReports();
+        }
       } else {
         setIsAdmin(false);
       }
@@ -237,6 +251,49 @@ export default function Admin() {
     }
   };
 
+  const loadReports = async () => {
+    try {
+      const q = query(
+        collection(db, "reports"),
+        where("resolved", "==", false),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(q);
+
+      const data: { id: string; message: string; resolved: boolean }[] = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+
+        data.push({
+          id: docSnap.id,
+          message: d.message,
+          resolved: d.resolved ?? false,
+        });
+      });
+
+      setReports(data);
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to load reports");
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  const resolveReport = async (id: string) => {
+    try {
+      const ref = doc(db, "reports", id);
+
+      await updateDoc(ref, { resolved: true });
+
+      setReports((prev) => prev.filter((r) => r.id !== id));
+
+      toast.success("Report resolved");
+    } catch (err) {
+      toast.error("Failed to resolve report");
+    }
+  };
+
   if (!user) {
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center bg-background">
@@ -258,8 +315,12 @@ export default function Admin() {
             onClick={handleLogin}
             className="w-full h-11 flex items-center justify-center gap-3"
           >
-            <img src="/google.webp" className="w-5 h-5" alt="Google" />
-            Continue with Google
+            <img
+              src="/google.webp"
+              className="w-5 h-5"
+              alt="Google"
+            />
+            Continue with Google   
           </Button>
 
           <p className="text-xs text-muted-foreground">
@@ -276,15 +337,15 @@ export default function Admin() {
         <p className="text-muted-foreground">Checking access...</p>
       </div>
     );
-  }
+  } 
 
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <h2 className="text-xl font-semibold">Access Denied</h2>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
+        <h2 className="text-xl font-semibold">Access Denied </h2>
+        <Link to="/" className="text-sm text-white-500 hover:text-white-700">
+          Redirect back to Home 😂
+        </Link>
       </div>
     );
   }
@@ -385,6 +446,7 @@ export default function Admin() {
           <Button className="w-full h-11" onClick={handleAddQuestion}>
             Add Question
           </Button>
+          
 
           <Button variant="secondary" className="w-full" onClick={fetchQuestions}>
             Load Questions
