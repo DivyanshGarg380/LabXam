@@ -99,8 +99,8 @@ const evaluationBySemester: EvaluationMap = {
 
 const evaluationLabelMap: Record<string, string> = {
   midsem: "Midsem",
-  "eval-1": "Evaluation 1",
-  "eval-2": "Evaluation 2",
+  "eval-1": "Internal Evaluation 1",
+  "eval-2": "Internal Evaluation 2",
   endsem: "Endsem",
 };
 
