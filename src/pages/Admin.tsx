@@ -31,6 +31,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Trash2 } from "lucide-react";
+
 
 type Subject = {
   value: string;
@@ -58,7 +66,6 @@ const semesters = [
   { value: "5", label: "Semester 5" },
   { value: "6", label: "Semester 6" },
   { value: "7", label: "Semester 7" },
-  { value: "8", label: "Semester 8" },
 ];
 
 const subjectsBySemester: SubjectsMap = {
@@ -88,7 +95,6 @@ const evaluationBySemester: EvaluationMap = {
   "5": ["midsem", "eval-1", "eval-2", "endsem"],
   "6": ["midsem", "eval-1", "eval-2", "endsem"],
   "7": ["midsem", "eval-1", "eval-2", "endsem"],
-  "8": ["midsem", "eval-1", "eval-2", "endsem"],
 };
 
 const evaluationLabelMap: Record<string, string> = {
@@ -106,6 +112,8 @@ export default function Admin() {
     { id: string; message: string; resolved: boolean }[]
   >([]);
   const [loadingReports, setLoadingReports] = useState(true);
+
+  const [openDialog, setOpenDialog] = useState(false);
 
   // Form states
   const [semester, setSemester] = useState("");
@@ -126,9 +134,9 @@ export default function Admin() {
         const adminAcess = adminSnap.exists();
         setIsAdmin(adminAcess);
 
-        if(adminAcess) {
-          loadReports();
-        }
+        // if(adminAcess) {
+        //   loadReports();
+        // }
       } else {
         setIsAdmin(false);
       }
@@ -168,7 +176,7 @@ export default function Admin() {
 
   const fetchQuestions = async () => {
     if (!semester || !subject || !year || !evalType) {
-      toast.error("Select filters first");
+      toast.error("Select necessary fields");
       return;
     }
 
@@ -205,9 +213,10 @@ export default function Admin() {
 
       if (allQuestions.length === 0) {
         toast.error("No questions found");
+      } else {
+        setOpenDialog(true);
       }
     } catch (error) {
-      console.error(error);
       toast.error("Failed to load questions");
     }
   };
@@ -246,7 +255,6 @@ export default function Admin() {
       setQuestion("");
       toast.success("Question added successfully!");
     } catch (error) {
-      console.error(error);
       toast.error("Permission denied");
     }
   };
@@ -273,7 +281,6 @@ export default function Admin() {
 
       setReports(data);
     } catch (err) {
-      console.log(err);
       toast.error("Failed to load reports");
     } finally {
       setLoadingReports(false);
@@ -365,6 +372,7 @@ export default function Admin() {
             </Button>
           </div>
 
+          {/* Semester */}
           <Select
             value={semester}
             onValueChange={(value) => {
@@ -384,7 +392,8 @@ export default function Admin() {
               ))}
             </SelectContent>
           </Select>
-
+          
+          {/* Subject */}
           <Select
             value={subject}
             onValueChange={setSubject}
@@ -401,7 +410,8 @@ export default function Admin() {
               ))}
             </SelectContent>
           </Select>
-
+          
+          {/* Year */}
           <Select value={year} onValueChange={setYear}>
             <SelectTrigger className="h-11 rounded-xl">
               <SelectValue placeholder="Select Year" />
@@ -410,7 +420,8 @@ export default function Admin() {
               <SelectItem value="2026">2026</SelectItem>
             </SelectContent>
           </Select>
-
+          
+          {/* Evaluation Type */}
           <Select
             value={evalType}
             onValueChange={setEvalType}
@@ -427,7 +438,8 @@ export default function Admin() {
               ))}
             </SelectContent>
           </Select>
-
+          
+          {/* Section */}
           <input
             className="w-full h-10 rounded-xl border border-input bg-background px-3 text-sm"
             placeholder="Section"
@@ -435,6 +447,7 @@ export default function Admin() {
             onChange={(e) => setSection(e.target.value)}
           />
 
+          {/* Question */}
           <textarea
             className="w-full rounded-xl border border-input bg-background p-3 text-sm"
             placeholder="Enter Question"
@@ -451,29 +464,35 @@ export default function Admin() {
           <Button variant="secondary" className="w-full" onClick={fetchQuestions}>
             Load Questions
           </Button>
+          
+          {/* Load prev questions (Deletion purposes) */}
+          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Existing Questions</DialogTitle>
+              </DialogHeader>
 
-          {questionsList.length > 0 && (
-            <div className="space-y-3 pt-4">
-              <h2 className="font-semibold">Existing Questions</h2>
-
-              {questionsList.map((item, index) => (
-                <div
-                  key={index}
-                  className="border border-border rounded-xl p-3 flex justify-between gap-3"
-                >
-                  <p className="text-sm flex-1">{item.text}</p>
-
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteQuestion(item)}
+              <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
+                {questionsList.map((item, index) => (
+                  <div
+                    key={index}
+                    className="border border-border rounded-xl p-3 flex justify-between gap-3"
                   >
-                    Delete
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+                    <p className="text-sm flex-1">{item.text}</p>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                      onClick={() => handleDeleteQuestion(item)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
