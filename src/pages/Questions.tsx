@@ -63,7 +63,7 @@ const Questions = () => {
 
       if(!data || data.length === 0) {
         setIsLoading(false);
-        redirectHome("Questions not found.");
+        redirectHome("Questions not found. Redirecting to home...");
         return;
       }
 
