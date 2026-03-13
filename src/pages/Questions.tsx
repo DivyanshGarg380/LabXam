@@ -43,6 +43,10 @@ const Questions = () => {
   const subjectKey = subject ? normalizeSubject(subject) : "";
   const evalKey = evalType ? normalizeEvaluation(evalType) : "";
 
+  if(!semesterKey || !subjectKey || !evalKey || !year) {
+    redirectHome("Invalid parameters.");
+  }
+
   // Fetch questions from Firebase
   useEffect(() => {
     const loadQuestions = async () => {
@@ -56,6 +60,12 @@ const Questions = () => {
         evalKey,
         year
       );
+
+      if(!data || data.length === 0) {
+        setIsLoading(false);
+        redirectHome("Questions not found.");
+        return;
+      }
 
       setAllQuestions(data);
 
