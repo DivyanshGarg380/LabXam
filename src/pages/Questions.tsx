@@ -47,7 +47,7 @@ const Questions = () => {
     redirectHome("Invalid parameters.");
   }
 
-  // Fetch questions from Firebase
+  // Fetch questions from Firebase 
   useEffect(() => {
     const loadQuestions = async () => {
       if (!semesterKey || !subjectKey || !evalKey || !year) return;
