@@ -11,6 +11,7 @@ import Report from "./pages/Report"
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
 import NotFound from "./pages/NotFound";
+import AdminStatus from "./pages/AdminStatus";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,7 @@ const App = () => {
             <Route path="/questions" element={<Questions />} />
             <Route path='/submit' element={<SubmitQuestion />} />
             <Route path='/admin' element={<Admin />} />
+            <Route path="/admin/status" element={<AdminStatus />} />
             <Route path ="/report" element={<Report />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

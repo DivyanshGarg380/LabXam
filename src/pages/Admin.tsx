@@ -20,7 +20,6 @@ import {
   orderBy
 } from "firebase/firestore";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
@@ -333,7 +332,15 @@ export default function Admin() {
           <p className="text-xs text-muted-foreground">
             Access is restricted to authorized admins only.
           </p>
+
+          <Link
+            to="/"
+            className="text-sm text-muted-foreground hover:text-foreground pt-10"
+          >
+              ← Back to Home
+          </Link>
         </div>
+        
       </div>
     );
   }
@@ -366,10 +373,19 @@ export default function Admin() {
               <h1 className="text-2xl font-bold">Admin Panel</h1>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
+            {/* System Status */}
+            <div className="flex items-center gap-2">
+              <Link to="/admin/status">
+                <Button variant="secondary" size="sm">
+                  System Status
+                </Button>
+              </Link>
 
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              Logout
-            </Button>
+              {/* Logout */}
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
           </div>
 
           {/* Semester */}
