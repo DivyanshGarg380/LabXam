@@ -13,7 +13,7 @@ const Questions = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [allQuestions, setAllQuestions] = useState<
-    { question: string; section: string }[]
+    { question: string; section: string; year: string }[]
   >([]);
 
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const Questions = () => {
       toast.error(message);
       setTimeout(() => {
         navigate("/", { replace: true });
-      }, 2000);
+      }, 5500);
     },
     [navigate]
   );
@@ -42,9 +42,11 @@ const Questions = () => {
   const subjectKey = subject ? normalizeSubject(subject) : "";
   const evalKey = evalType ? normalizeEvaluation(evalType) : "";
 
-  if(!semesterKey || !subjectKey || !evalKey) {
-    redirectHome("Invalid parameters.");
-  }
+  useEffect(() => {
+    if (!semesterKey || !subjectKey || !evalKey) {
+      redirectHome("Invalid parameters. Redirecting to home...");
+    }
+  }, [semesterKey, subjectKey, evalKey, redirectHome]);
 
   // Fetch questions from Firebase 
   useEffect(() => {

@@ -21,7 +21,7 @@ const subject_sem: Record<string, string[]> = {
   "7": [],
 };
 
-const years = ["2026"];
+const years = ["2025","2026"];
 const COOLDOWN_TIME = 2* 60 * 1000;
 
 const SubmitQuestion = () => {
@@ -260,7 +260,7 @@ const SubmitQuestion = () => {
               {loading
                 ? "Sending..."
                 : cooldown
-                ? `Wait ${cooldown}s`
+                ? `Thank you , Wait ${cooldown}s`
                 : "Send Question"}
             </button>
           </div>

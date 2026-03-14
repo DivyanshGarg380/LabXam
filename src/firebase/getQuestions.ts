@@ -2,7 +2,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./config";
 import { toast } from "sonner";
 
-export const queryCache = new Map<string, { question: string; section: string }[]>(); 
+export const queryCache = new Map<string, { data: { question: string; section: string; year: string }[]; timestamp: number }>(); 
 
 export const fetchQuestionsFromFirebase = async (
   semester: string,
@@ -12,8 +12,9 @@ export const fetchQuestionsFromFirebase = async (
   try {
     const cacheKey = `${semester}_${subject}_${evaluation}`;
 
-    if(queryCache.has(cacheKey)) {
-      return queryCache.get(cacheKey)!;
+    const cached = queryCache.get(cacheKey);
+    if(cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+      return cached.data;
     }
 
     const q = query(
@@ -30,6 +31,8 @@ export const fetchQuestionsFromFirebase = async (
     snapshot.forEach((doc) => {
       const data = doc.data();
 
+      if(!data.questions || !Array.isArray(data.questions)) return;
+
       data.questions.forEach((q: string) => {
         result.push({
           question: q,
@@ -41,7 +44,10 @@ export const fetchQuestionsFromFirebase = async (
 
     result.sort((a, b) => Number(b.year) - Number(a.year));
 
-    queryCache.set(cacheKey, result);
+    queryCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now(),
+    });
 
     return result;
   } catch (error) {
