@@ -7,9 +7,10 @@ interface QuestionCardProps {
   number: number;
   question: string;
   section: string;
+  year: string;
 }
 
-export function QuestionCard({ number, question, section }: QuestionCardProps) {
+export function QuestionCard({ number, question, section, year }: QuestionCardProps) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -42,7 +43,7 @@ export function QuestionCard({ number, question, section }: QuestionCardProps) {
           <div className="flex flex-col gap-1 pt-1">
             {/* Section */}
             <span className="text-xs font-bold text-muted-foreground">
-              {section}
+              {year} • {section}
             </span>
 
             {/* Question Text */}

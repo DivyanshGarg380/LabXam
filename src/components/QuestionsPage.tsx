@@ -7,10 +7,10 @@ interface QuestionsPageProps {
   semester: string;
   subject: string;
   evaluationType: string;
-  year: string;
   questions?: {
     question: string;
     section: string;
+    year: string;
   }[];
   onBack?: () => void;
 }
@@ -19,7 +19,6 @@ export function QuestionsPage({
   semester,
   subject,
   evaluationType,
-  year,
   questions = [],
   onBack,
 }: QuestionsPageProps) {
@@ -71,7 +70,7 @@ export function QuestionsPage({
         {/* Questions List */}
         {questions.length > 0 ? (
           <div className="space-y-4 pt-2">
-           {questions.map(({ question, section }, index) => (
+           {questions.map(({ question, section, year }, index) => (
               <div
                 key={`${index}-${question.slice(0, 20)}`}
                 style={{ animationDelay: `${index * 50}ms` }}
@@ -80,6 +79,7 @@ export function QuestionsPage({
                   number={index + 1}
                   question={question}
                   section={section}
+                  year={year}
                 />
               </div>
             ))}

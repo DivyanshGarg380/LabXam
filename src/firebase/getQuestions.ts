@@ -8,10 +8,9 @@ export const fetchQuestionsFromFirebase = async (
   semester: string,
   subject: string,
   evaluation: string,
-  year: string
 ) => {
   try {
-    const cacheKey = `${semester}_${subject}_${evaluation}_${year}`;
+    const cacheKey = `${semester}_${subject}_${evaluation}`;
 
     if(queryCache.has(cacheKey)) {
       return queryCache.get(cacheKey)!;
@@ -22,12 +21,11 @@ export const fetchQuestionsFromFirebase = async (
       where("semester", "==", semester),
       where("subject", "==", subject),
       where("evaluation", "==", evaluation),
-      where("year", "==", year)
     );
 
     const snapshot = await getDocs(q);
 
-    const result: { question: string; section: string }[] = [];
+    const result: { question: string; section: string; year: string }[] = [];
 
     snapshot.forEach((doc) => {
       const data = doc.data();
@@ -36,9 +34,12 @@ export const fetchQuestionsFromFirebase = async (
         result.push({
           question: q,
           section: data.section,
+          year: data.year,
         });
       });
     });
+
+    result.sort((a, b) => Number(b.year) - Number(a.year));
 
     queryCache.set(cacheKey, result);
 

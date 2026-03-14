@@ -74,7 +74,7 @@ const Index = () => {
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedEval, setSelectedEval] = useState("");
-  const [selectYear, setSelectYear] = useState("");
+
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -187,7 +187,6 @@ const Index = () => {
                   setSelectedSemester(value);
                   setSelectedSubject("");
                   setSelectedEval("");
-                  setSelectYear("");
                 }}
               >
                 <SelectTrigger className="w-full h-12 rounded-xl bg-background">
@@ -242,34 +241,6 @@ const Index = () => {
               </Select>
             </div>
 
-            {/* Year */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-base font-semibold text-foreground">
-                  Select Year
-                </h2>
-              </div>
-              <Select
-                value={selectYear}
-                onValueChange={setSelectYear}
-                disabled={!selectedSemester || !selectedSubject}
-              >
-                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
-                  <SelectValue
-                    placeholder={
-                      !selectedSemester || !selectedSubject
-                        ? "Select semester and subject first" 
-                        : "Choose year"
-                    }
-                  />  
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2026">2026</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Evaluation Type */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-3">
@@ -312,12 +283,12 @@ const Index = () => {
 
             {/* Action Button */}
             <Button
-              disabled={!selectedSemester || !selectedSubject || !selectedEval || !selectYear || isLoading}
+              disabled={!selectedSemester || !selectedSubject || !selectedEval || isLoading}
               className="w-full h-12 text-base font-semibold rounded-xl"
               onClick={() => {
                 setIsLoading(true);
                 setTimeout(() => {
-                  navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&year=${selectYear}&eval=${selectedEval}`);
+                  navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&eval=${selectedEval}`);
                 }, 500);
               }}
             >

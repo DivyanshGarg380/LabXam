@@ -20,7 +20,6 @@ const Questions = () => {
 
   const semester = searchParams.get("sem");
   const subject = searchParams.get("subject");
-  const year = searchParams.get("year");
   const evalType = searchParams.get("eval");
 
   const redirectHome = useCallback(
@@ -34,23 +33,23 @@ const Questions = () => {
   );
 
   useEffect(() => {
-    if (!semester || !subject || !year || !evalType) {
+    if (!semester || !subject || !evalType) {
       redirectHome("Missing required query parameters.");
     }
-  }, [semester, subject, year, evalType, redirectHome]);
+  }, [semester, subject, evalType, redirectHome]);
 
   const semesterKey = semester ? normalizeSemester(semester) : "";
   const subjectKey = subject ? normalizeSubject(subject) : "";
   const evalKey = evalType ? normalizeEvaluation(evalType) : "";
 
-  if(!semesterKey || !subjectKey || !evalKey || !year) {
+  if(!semesterKey || !subjectKey || !evalKey) {
     redirectHome("Invalid parameters.");
   }
 
   // Fetch questions from Firebase 
   useEffect(() => {
     const loadQuestions = async () => {
-      if (!semesterKey || !subjectKey || !evalKey || !year) return;
+      if (!semesterKey || !subjectKey || !evalKey) return;
 
       setIsLoading(true);
 
@@ -58,7 +57,6 @@ const Questions = () => {
         semesterKey,
         subjectKey,
         evalKey,
-        year
       );
 
       if(!data || data.length === 0) {
@@ -75,7 +73,7 @@ const Questions = () => {
     };
 
     loadQuestions();
-  }, [semesterKey, subjectKey, evalKey, year]);
+  }, [semesterKey, subjectKey, evalKey]);
 
   return isLoading ? (
     <div className="min-h-screen flex items-center justify-center">
@@ -91,7 +89,6 @@ const Questions = () => {
       semester={semesterKey}
       subject={subjectKey}
       evaluationType={evalKey}
-      year={year ?? ""}
       questions={allQuestions}
       onBack={() => navigate("/", { replace: true })}
     />
