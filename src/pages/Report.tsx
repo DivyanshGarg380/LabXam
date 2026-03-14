@@ -77,7 +77,7 @@ export default function Report() {
 
         <div className="flex flex-col gap-3">
             <Button className="w-full h-11" disabled onClick={handleSubmit}>
-                Send Report
+                Feature coming soon!
             </Button>
 
             <Button
