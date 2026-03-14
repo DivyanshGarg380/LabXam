@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 
 const subject_sem: Record<string, string[]> = {
@@ -267,13 +268,25 @@ const SubmitQuestion = () => {
 
           {/* Footer */}
           <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
-                <p className="text-sm text-muted-foreground">
-                For the students of <span className="font-medium text-foreground">MIT Manipal</span>
-                </p>
 
-                <p className="text-xs text-muted-foreground">
-                Built by <span className="font-medium text-foreground">Vidhan & Divyansh ⌯✈︎</span>{" "}
-                </p>
+            <p className="text-sm text-muted-foreground">
+              For the students of{" "}
+              <span className="font-medium text-foreground">MIT Manipal</span>
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+              Built by{" "}
+              <span className="font-medium text-foreground">
+                Vidhan & Divyansh 
+              </span>
+              {" • "}
+              <Link
+                to="/report"
+                className="hover:text-foreground transition underline-offset-4 hover:underline"
+              >
+                Report an issue
+              </Link>
+            </p>
           </div>
       </div>
     </div>
