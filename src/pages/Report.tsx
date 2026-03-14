@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { deleteOldResolvedReports } from "@/firebase/report";
 
 export default function Report() {
   const [message, setMessage] = useState("");
@@ -18,6 +19,10 @@ export default function Report() {
     }, 400);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    deleteOldResolvedReports();
   }, []);
 
   const handleSubmit = async () => {

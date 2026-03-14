@@ -133,9 +133,9 @@ export default function Admin() {
         const adminAcess = adminSnap.exists();
         setIsAdmin(adminAcess);
 
-        // if(adminAcess) {
-        //   loadReports();
-        // }
+        if(adminAcess) {
+          loadReports();
+        }
       } else {
         setIsAdmin(false);
       }
@@ -510,6 +510,67 @@ export default function Admin() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Reports Section */}
+          <div className="bg-card border border-border rounded-2xl shadow-card mt-6">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div className="space-y-0.5">
+                <h2 className="text-lg font-semibold tracking-tight">
+                  User Reports
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Issues submitted by users
+                </p>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {reports.length} active
+              </div>
+            </div>
+            <div className="p-4">
+              {loadingReports ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="h-6 w-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : reports.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <p className="text-sm font-medium">
+                    No active reports
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    All issues have been resolved
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                  {reports.map((r) => (
+                    <div
+                      key={r.id}
+                      className="group flex items-start gap-4 border border-border rounded-xl p-4 transition-colors hover:bg-muted/40"
+                    >
+                      <div className="w-1.5 h-8 bg-muted rounded-full mt-1" />
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm leading-relaxed">
+                          {r.message}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground">
+                          Report ID: {r.id.slice(0, 6)}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 opacity-70 group-hover:opacity-100 transition"
+                        onClick={() => resolveReport(r.id)}
+                      >
+                        Resolve
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
