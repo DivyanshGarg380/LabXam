@@ -31,8 +31,6 @@ export const fetchQuestionsFromFirebase = async (
     snapshot.forEach((doc) => {
       const data = doc.data();
 
-      console.log("DOC DATA", data);
-
       if(!data.questions || !Array.isArray(data.questions)) return;
 
       data.questions.forEach((q: string) => {
