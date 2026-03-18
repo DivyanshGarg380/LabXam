@@ -8,11 +8,17 @@ interface QuestionCardProps {
   question: string;
   section: string;
   year: string;
+  uploadedAt: number;
 }
 
-export function QuestionCard({ number, question, section, year }: QuestionCardProps) {
+export function QuestionCard({ number, question, section, year, uploadedAt }: QuestionCardProps) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
+  const isRecent = (uploadedAt: number) => {
+    return Date.now() - uploadedAt < 24 * 60 * 60 * 1000;
+  }
+
 
   const handleCopy = async () => {
     try {
@@ -42,6 +48,11 @@ export function QuestionCard({ number, question, section, year }: QuestionCardPr
           {/* Section + Question */}
           <div className="flex flex-col gap-1 pt-1">
             {/* Section */}
+            {isRecent(uploadedAt) && (
+              <span className="text-xs text-green-500 font-semibold">
+                Recently Uploaded
+              </span>
+            )}
             <span className="text-xs font-bold text-muted-foreground">
               {year} • {section}
             </span>

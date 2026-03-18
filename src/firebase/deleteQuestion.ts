@@ -17,7 +17,7 @@ export const deleteQuestion = async (
   );
 
   await updateDoc(docRef, {
-    questions: updatedQuestions,
+    questions: updatedQuestions, 
   });
 
   return updatedQuestions;

@@ -1,6 +1,7 @@
 import { db } from "./config";
 import { collection, addDoc } from "firebase/firestore";
 import { questionsDB } from "@/data/questions";
+import { queryCache } from "./getQuestions";
 
 export const uploadQuestionsToFirebase = async () => {
   try {
@@ -27,6 +28,7 @@ export const uploadQuestionsToFirebase = async () => {
               section,
               year: data.year,
               questions: data.questions,
+              uploadedAt: Date.now(),
             });
 
             console.log(
@@ -38,6 +40,7 @@ export const uploadQuestionsToFirebase = async () => {
     }
 
     console.log("All questions uploaded successfully!");
+    queryCache.clear();
   } catch (error) {
     console.error("Upload failed:", error);
   }

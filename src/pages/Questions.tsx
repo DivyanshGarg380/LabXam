@@ -13,7 +13,7 @@ const Questions = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [allQuestions, setAllQuestions] = useState<
-    { question: string; section: string; year: string }[]
+    { question: string; section: string; year: string, uploadedAt: number }[]
   >([]);
 
   const navigate = useNavigate();

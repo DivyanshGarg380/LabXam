@@ -2,7 +2,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./config";
 import { toast } from "sonner";
 
-export const queryCache = new Map<string, { data: { question: string; section: string; year: string }[]; timestamp: number }>(); 
+export const queryCache = new Map<string, { data: { question: string; section: string; year: string, uploadedAt: number }[]; timestamp: number }>(); 
 
 export const fetchQuestionsFromFirebase = async (
   semester: string,
@@ -13,9 +13,9 @@ export const fetchQuestionsFromFirebase = async (
     const cacheKey = `${semester}_${subject}_${evaluation}`;
 
     const cached = queryCache.get(cacheKey);
-    if(cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
-      return cached.data;
-    }
+    // if(cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+    //   return cached.data;
+    // }
 
     const q = query(
       collection(db, "questions"),
@@ -26,10 +26,12 @@ export const fetchQuestionsFromFirebase = async (
 
     const snapshot = await getDocs(q);
 
-    const result: { question: string; section: string; year: string }[] = [];
+    const result: { question: string; section: string; year: string; uploadedAt: number }[] = [];
 
     snapshot.forEach((doc) => {
       const data = doc.data();
+
+      console.log("DOC DATA", data);
 
       if(!data.questions || !Array.isArray(data.questions)) return;
 
@@ -38,11 +40,23 @@ export const fetchQuestionsFromFirebase = async (
           question: q,
           section: data.section,
           year: data.year,
+          uploadedAt: data.createdAt?.seconds ?
+            data.createdAt.seconds * 1000 : 0,
         });
       });
     });
 
-    result.sort((a, b) => Number(b.year) - Number(a.year));
+    const isRecent = (t: number) =>
+      Date.now() - t < 24 * 60 * 60 * 1000;
+
+    result.sort((a, b) => {
+      const rA = isRecent(a.uploadedAt);
+      const rB = isRecent(b.uploadedAt);
+
+      if (rA !== rB) return rB ? 1 : -1;
+
+      return Number(b.year) - Number(a.year);
+    });
 
     queryCache.set(cacheKey, {
       data: result,

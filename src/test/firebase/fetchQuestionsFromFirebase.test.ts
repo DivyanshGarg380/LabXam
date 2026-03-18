@@ -46,12 +46,17 @@ describe("fetchQuestionsFromFirebase", () => {
       "Sem1",
       "OS",
       "Midsem",
-      "2024"
     );
 
     expect(result).toEqual([
-      { question: "Q1", section: "Section A" },
-      { question: "Q2", section: "Section A" }
+      expect.objectContaining({
+        question: "Q1",
+        section: "Section A",
+      }),
+      expect.objectContaining({
+        question: "Q2",
+        section: "Section A",
+      }),
     ]);
   });
 
@@ -65,7 +70,6 @@ describe("fetchQuestionsFromFirebase", () => {
       "Sem1",
       "OS",
       "Midsem",
-      "2024"
     );
 
     expect(result).toEqual([]);
