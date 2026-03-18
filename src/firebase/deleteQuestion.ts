@@ -1,5 +1,6 @@
 import { db } from "./config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { queryCache } from "./getQuestions";
 
 export const deleteQuestion = async (
   docId: string,
@@ -19,6 +20,6 @@ export const deleteQuestion = async (
   await updateDoc(docRef, {
     questions: updatedQuestions, 
   });
-
+  queryCache.clear();
   return updatedQuestions;
 };

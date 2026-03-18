@@ -13,9 +13,9 @@ export const fetchQuestionsFromFirebase = async (
     const cacheKey = `${semester}_${subject}_${evaluation}`;
 
     const cached = queryCache.get(cacheKey);
-    // if(cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
-    //   return cached.data;
-    // }
+    if(cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+      return cached.data;
+    }
 
     const q = query(
       collection(db, "questions"),
