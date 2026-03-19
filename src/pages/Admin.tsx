@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { auth, provider, db } from "@/firebase/config";
 import { deleteQuestion } from "@/firebase/deleteQuestion";
+import { updateQuestion } from "@/firebase/updateQuestion";
 import {
   signInWithPopup,
   onAuthStateChanged,
@@ -36,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 
 
 type Subject = {
@@ -55,6 +56,8 @@ type EvaluationMap = {
 type QuestionItem = {
   text: string;
   docId: string;
+  section: string;         // fix #5
+  id: string;              // fix #6
 };
 
 const semesters = [
@@ -107,9 +110,7 @@ export default function Admin() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  const [reports, setReports] = useState<
-    { id: string; message: string; resolved: boolean }[]
-  >([]);
+  const [reports, setReports] = useState<{ id: string; message: string; resolved: boolean }[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -122,6 +123,10 @@ export default function Admin() {
   const [section, setSection] = useState("");
   const [question, setQuestion] = useState("");
   const [questionsList, setQuestionsList] = useState<QuestionItem[]>([]);
+
+  // Edit states
+  const [editingItem, setEditingItem] = useState<QuestionItem | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -161,15 +166,32 @@ export default function Admin() {
     try {
       await deleteQuestion(item.docId, item.text);
 
-      const newList = questionsList.filter(
-        (q) => !(q.text === item.text && q.docId === item.docId)
-      );
+      const newList = questionsList.filter((q) => q.id !== item.id); // fix #6
 
       setQuestionsList(newList);
 
       toast.success("Question deleted");
     } catch {
       toast.error("Delete failed");
+    }
+  };
+
+  const handleUpdateQuestion = async () => {
+    if (!editingItem || !editText.trim()) return;
+    try {
+      await updateQuestion(editingItem.docId, editingItem.text, editText);
+      setQuestionsList((prev) =>
+        prev.map((q) =>
+          q.id === editingItem.id // fix #6
+            ? { ...q, text: editText }
+            : q
+        )
+      );
+      setEditingItem(null);
+      setEditText("");
+      toast.success("Question updated");
+    } catch {
+      toast.error("Update failed");
     }
   };
 
@@ -199,10 +221,12 @@ export default function Admin() {
         const data = docSnap.data();
 
         if (data.questions) {
-          data.questions.forEach((question: string) => {
+          data.questions.forEach((question: string, index: number) => {
             allQuestions.push({
               text: question,
               docId: docSnap.id,
+              section: data.section,             // fix #5
+              id: `${docSnap.id}_${index}`,      // fix #6
             });
           });
         }
@@ -229,6 +253,7 @@ export default function Admin() {
     try {
       const semesterLabel = `Semester ${semester}`;
       const evaluationLabel = evaluationLabelMap[evalType];
+      const normalizedQuestion = question.trim().replace(/\s+/g, " "); // fix #3
 
       const docId = `${semesterLabel}_${subject}_${year}_${evaluationLabel}_${section}`;
 
@@ -237,7 +262,7 @@ export default function Admin() {
 
       if (docSnap.exists()) {
         await updateDoc(docRef, {
-          questions: arrayUnion(question),
+          questions: arrayUnion(normalizedQuestion), // fix #3
         });
       } else {
         await setDoc(docRef, {
@@ -246,13 +271,14 @@ export default function Admin() {
           year,
           evaluation: evaluationLabel,
           section,
-          questions: [question],
+          questions: [normalizedQuestion], // fix #3
           createdAt: new Date(),
         });
       }
 
       setQuestion("");
       toast.success("Question added successfully!");
+      await fetchQuestions(); // fix #7
     } catch (error) {
       toast.error("Permission denied");
     }
@@ -263,7 +289,7 @@ export default function Admin() {
       const q = query(
         collection(db, "reports"),
         where("resolved", "==", false),
-        orderBy("createdAt", "desc")
+        orderBy("createdAt", "desc") // requires composite index in Firestore console (fix #2)
       );
       const snapshot = await getDocs(q);
 
@@ -482,34 +508,74 @@ export default function Admin() {
             Load Questions
           </Button>
           
-          {/* Load prev questions (Deletion purposes) */}
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Existing Questions</DialogTitle>
-              </DialogHeader>
+        {/* Load prev questions (Deletion purposes) */}
 
-              <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
-                {questionsList.map((item, index) => (
-                  <div
-                    key={index}
-                    className="border border-border rounded-xl p-3 flex justify-between gap-3"
-                  >
-                    <p className="text-sm flex-1">{item.text}</p>
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Existing Questions</DialogTitle>
+            </DialogHeader>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                      onClick={() => handleDeleteQuestion(item)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
+            <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
+              {questionsList.map((item) => (
+                <div
+                  key={item.id}
+                  className="border border-border rounded-xl p-4 flex flex-col gap-3 bg-muted/20"
+                >
+                  {editingItem?.id === item.id ? (
+                    <>
+                      <textarea
+                        className="w-full rounded-xl border border-input bg-background p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                        rows={4}
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-4"
+                          onClick={() => setEditingItem(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-8 px-4"
+                          onClick={handleUpdateQuestion}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between gap-3">
+                      <p className="text-sm flex-1 leading-relaxed pt-1">{item.text}</p>
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-lg"
+                          onClick={() => { setEditingItem(item); setEditText(item.text); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg"
+                          onClick={() => handleDeleteQuestion(item)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
           {/* Reports Section */}
           <div className="bg-card border border-border rounded-2xl shadow-card mt-6">
