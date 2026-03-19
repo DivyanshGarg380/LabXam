@@ -305,17 +305,25 @@ const Index = () => {
 
           {/* Footer */}
           <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
-
-            <p className="text-sm text-muted-foreground">
-              For the students of{" "}
-              <span className="font-medium text-foreground">MIT Manipal</span>
-            </p>
-
             <p className="text-xs text-muted-foreground">
               Built by{" "}
-              <span className="font-medium text-foreground">
-                Vidhan & Divyansh 
-              </span>
+              <a
+                href="https://github.com/Vidhan-152"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground hover:underline underline-offset-4 transition"
+              >
+                Vidhan
+              </a>
+              {" & "}
+              <a
+                href="https://github.com/DivyanshGarg380"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground hover:underline underline-offset-4 transition"
+              >
+                Divyansh
+              </a>
               {" • "}
               <Link
                 to="/report"
@@ -324,7 +332,6 @@ const Index = () => {
                 Report an issue
               </Link>
             </p>
-
           </div>
         </div>
       </div>
