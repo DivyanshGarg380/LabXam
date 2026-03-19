@@ -305,6 +305,11 @@ const Index = () => {
 
           {/* Footer */}
           <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              For the students of{" "}
+              <span className="font-medium text-foreground">MIT Manipal</span>
+            </p>
+
             <p className="text-xs text-muted-foreground">
               Built by{" "}
               <a
