@@ -139,34 +139,34 @@ function FieldGroup({ semester, setSemester, subject, setSubject, year, setYear,
 }
 
 export default function Admin() {
-  const [user,        setUser]        = useState<User | null>(null);
-  const [isAdmin,     setIsAdmin]     = useState<boolean | null>(null);
-  const [activeView,  setActiveView]  = useState<View>("dashboard");
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [activeView, setActiveView] = useState<View>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [dbOk,  setDbOk]  = useState(true);
+  const [dbOk, setDbOk] = useState(true);
 
-  const [reports,        setReports]        = useState<{ id: string; message: string; resolved: boolean }[]>([]);
+  const [reports, setReports] = useState<{ id: string; message: string; resolved: boolean }[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
 
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
 
   const [semester, setSemester] = useState("");
   const [subject,  setSubject]  = useState("");
-  const [year,     setYear]     = useState("");
+  const [year, setYear] = useState("");
   const [evalType, setEvalType] = useState("");
 
-  const [section,  setSection]  = useState("");
+  const [section, setSection]  = useState("");
   const [question, setQuestion] = useState("");
 
-  const [openDialog,    setOpenDialog]    = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const [questionsList, setQuestionsList] = useState<QuestionItem[]>([]);
   const [editingIndex,  setEditingIndex]  = useState<number | null>(null);
-  const [editText,      setEditText]      = useState("");
+  const [editText, setEditText] = useState("");
   const [searchSection, setSearchSection] = useState("");
-  const [searchYear,    setSearchYear]    = useState("");
-  const [searchEval,    setSearchEval]    = useState("");
+  const [searchYear, setSearchYear] = useState("");
+  const [searchEval, setSearchEval] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
