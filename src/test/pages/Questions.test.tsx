@@ -13,6 +13,12 @@ jest.mock("sonner", () => ({
   }
 }));
 
+jest.mock("@/utils/normalize", () => ({
+  normalizeSemester: jest.fn(() => "Semester 3"),
+  normalizeSubject: jest.fn(() => "os"),
+  normalizeEvaluation: jest.fn(() => "Midsem"),
+}));
+
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
   useSearchParams: () => [
