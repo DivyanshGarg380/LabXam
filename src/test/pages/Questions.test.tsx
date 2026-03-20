@@ -37,11 +37,11 @@ import Questions from "../../pages/Questions";
 import { fetchQuestionsFromFirebase } from "@/firebase/getQuestions";
 
 describe("Questions Page", () => {
-
   const mockedFetch = fetchQuestionsFromFirebase as jest.Mock;
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
   test("Shows loading text initially", () => {
@@ -66,15 +66,28 @@ describe("Questions Page", () => {
     );
   });
 
-  test("Handles empty questions array", async () => {
-    mockedFetch.mockResolvedValue([]);
+  test("Redirects when no questions are returned", async () => {
+  jest.useFakeTimers();
 
-    render(<Questions />);
+  const mockNavigate = jest.fn();
 
-    await waitFor(
-      () => expect(screen.queryByText(/fetching questions/i)).not.toBeInTheDocument(),
-      { timeout: 3000 }
-    );
+  jest.spyOn(require("react-router-dom"), "useNavigate")
+      .mockReturnValue(mockNavigate);
+
+  mockedFetch.mockResolvedValue([]);
+
+  render(<Questions />);
+
+  // Wait for fetch to complete
+  await waitFor(() => {
+    expect(mockedFetch).toHaveBeenCalled();
   });
 
+  // Run the 5500ms timeout
+  jest.advanceTimersByTime(5500);
+
+  expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+
+  jest.useRealTimers();
+});
 });
