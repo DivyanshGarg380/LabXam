@@ -28,70 +28,87 @@ const COOLDOWN_TIME = 2 * 60 * 1000;
 const validateWithAI = async (
   question: string
 ): Promise<{ valid: boolean; reason: string }> => {
-  const response = await fetch(
-    "/api/nvidia",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_NVIDIA_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "meta/llama-3.3-70b-instruct",
-        max_tokens: 256,
-        messages: [
-          {
-            role: "user",
-            content: `You are a STRICT validator for a university lab exam question submission portal for MIT Manipal students.
+  
+  const response = await fetch("/api/nvidia", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "meta/llama3-70b-instruct",
+      max_tokens: 256,
+      messages: [
+        {
+          role: "user",
+          content: `You are a STRICT validator for a university lab exam question submission portal for MIT Manipal students.
 
-Your job is to REJECT anything that is not clearly a proper lab exam question.
+  Your job is to REJECT anything that is not clearly a proper lab exam question.
 
-A submission is VALID ONLY IF ALL of the following are true:
-- It is a clear programming/technical lab question from fields like:
-  C, C++, Java, Python, SQL, Data Structures, Operating Systems, DBMS
-- It explicitly asks to:
-  write a program, implement, design, develop, simulate, or solve something
-- It contains meaningful technical detail (inputs, outputs, constraints, logic, or description)
-- It is at least 40+ characters and clearly understandable
-- It looks like something that could appear in a real lab exam
+  A submission is VALID ONLY IF ALL of the following are true:
+  - It is a clear programming/technical lab question from fields like:
+    C, C++, Java, Python, SQL, Data Structures, Operating Systems, DBMS
+  - It explicitly asks to:
+    write a program, implement, design, develop, simulate, or solve something
+  - It contains meaningful technical detail (inputs, outputs, constraints, logic, or description)
+  - It is at least 40+ characters and clearly understandable
+  - It looks like something that could appear in a real lab exam
 
-STRICT REJECTION RULES (very important):
-Mark as INVALID if ANY of the following is true:
-- Too short, vague, or incomplete
-- Does NOT contain an action (write/implement/design/etc.)
-- Is theoretical only (like definitions or explanations)
-- Is random text, spam, or copied garbage
-- Is conversational (e.g., "hi", "hello", "pls help")
-- Is not related to programming/technical lab work
-- Contains abusive or irrelevant content
-- Looks AI-generated but lacks concrete task details
-- Missing key structure (no clear task or objective)
+  STRICT REJECTION RULES (very important):
+  Mark as INVALID if ANY of the following is true:
+  - Too short, vague, or incomplete
+  - Does NOT contain an action (write/implement/design/etc.)
+  - Is theoretical only (like definitions or explanations)
+  - Is random text, spam, or copied garbage
+  - Is conversational (e.g., "hi", "hello", "pls help")
+  - Is not related to programming/technical lab work
+  - Contains abusive or irrelevant content
+  - Looks AI-generated but lacks concrete task details
+  - Missing key structure (no clear task or objective)
 
-Be EXTREMELY STRICT. When in doubt, REJECT.
+  Be EXTREMELY STRICT. When in doubt, REJECT.
 
-Submitted text:
-"${question}"
+  Submitted text:
+  "${question}"
 
-Respond ONLY in this exact JSON format, no extra text:
+  Respond ONLY in this exact JSON format, no extra text:
 
-{"valid": true, "reason": "Valid lab question"}
+  {"valid": true, "reason": "Valid lab question"}
 
-OR
+  OR
 
-{"valid": false, "reason": "Clear reason why it is invalid"}`,
-          },
-        ],
-      }),
-    }
-  );
+  {"valid": false, "reason": "Clear reason why it is invalid"}`,
+        },
+      ],
+    }),
+  });
 
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content ?? "";
+  if (!response.ok) {
+    const text = await response.text();
+    console.error("API ERROR:", text);
+    throw new Error("API failed");
+  }
+
+  const text = await response.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error("INVALID JSON:", text);
+    throw new Error("Invalid JSON response");
+  }
+
+  const aiText = data.choices?.[0]?.message?.content ?? "";
+
+  if (!data.choices || !data.choices[0]) {
+    throw new Error("Invalid AI response structure");
+  }
 
   try {
-    const clean = text.replace(/```json|```/g, "").trim();
+    const clean = aiText.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
   } catch {
+    console.error("AI RESPONSE INVALID:", aiText);
     return { valid: true, reason: "Could not validate, allowing submission" };
   }
 };
@@ -180,8 +197,9 @@ const SubmitQuestion = () => {
         toast.error(`Invalid submission: ${reason}`);
         return;
       }
-    } catch {
+    } catch (err) {
       toast.error("Validation failed, please try again.");
+      console.log(err);
       return;
     } finally {
       setValidating(false);
