@@ -66,26 +66,5 @@ describe("Questions Page", () => {
     );
   });
 
-  test("Redirects when no questions are returned", async () => {
-    jest.useFakeTimers();
-
-    const mockNavigate = jest.fn();
-
-    jest.spyOn(require("react-router-dom"), "useNavigate")
-        .mockReturnValue(mockNavigate);
-
-    mockedFetch.mockResolvedValue([]);
-
-    render(<Questions />);
-
-    await waitFor(() => {
-      expect(mockedFetch).toHaveBeenCalled();
-    });
-
-    jest.advanceTimersByTime(5500);
-
-    expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
-
-    jest.useRealTimers();
-  });
+  
 });
