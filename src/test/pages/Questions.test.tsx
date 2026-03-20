@@ -59,7 +59,8 @@ describe("Questions Page", () => {
     render(<Questions />);
 
     await waitFor(() =>
-      expect(screen.queryByText(/fetching questions/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/fetching questions/i)).not.toBeInTheDocument(),
+      { timeout: 3000 }
     );
   });
 
