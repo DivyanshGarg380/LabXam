@@ -122,7 +122,7 @@ export default function Report() {
               // disabled={submitting}
               disabled
             >
-              {submitting ? "Submitting…" : "Submit Report"}
+              {submitting ? "Submitting…" : "Feature Coming Soon!"}
             </Button>
 
             <Button

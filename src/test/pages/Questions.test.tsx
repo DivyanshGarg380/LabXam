@@ -65,6 +65,4 @@ describe("Questions Page", () => {
       expect(screen.getByText("Q1")).toBeInTheDocument()
     );
   });
-
-  
 });
