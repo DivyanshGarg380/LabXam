@@ -75,7 +75,7 @@ const Questions = () => {
     };
 
     loadQuestions();
-  }, [semesterKey, subjectKey, evalKey]);
+  }, [semesterKey, subjectKey, evalKey, redirectHome]);
 
   return isLoading ? (
     <div className="min-h-screen flex items-center justify-center">

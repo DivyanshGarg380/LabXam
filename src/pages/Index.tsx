@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import { trackPageView } from "@/firebase/metric";
 
 const semesters = [
   { value: "1", label: "Semester 1" },
@@ -77,6 +77,10 @@ const Index = () => {
 
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    trackPageView();
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
