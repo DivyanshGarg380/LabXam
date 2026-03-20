@@ -263,7 +263,7 @@ export default function Admin() {
   const fetchQuestions = async () => {
     if (!semester || !subject) { toast.error("Select at least semester and subject"); return; }
     try {
-      let constraints: any[] = [
+      const constraints: Parameters<typeof query>[1][] = [
         where("semester", "==", `Semester ${semester}`),
         where("subject",  "==", subject),
       ];
@@ -322,7 +322,7 @@ export default function Admin() {
 
   const startEdit  = (item: QuestionItem, index: number) => { setEditingIndex(index); setEditText(item.text); };
   const cancelEdit = () => setEditingIndex(null);
-
+  
   const resolveReport = async (id: string) => {
     try {
       await updateDoc(doc(db, "reports", id), { resolved: true });
