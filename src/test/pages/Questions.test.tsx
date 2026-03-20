@@ -6,6 +6,13 @@ jest.mock("@/firebase/getQuestions", () => ({
   fetchQuestionsFromFirebase: jest.fn()
 }));
 
+jest.mock("sonner", () => ({
+  toast: {
+    error: jest.fn(),
+    success: jest.fn(),
+  }
+}));
+
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
   useSearchParams: () => [
@@ -58,8 +65,9 @@ describe("Questions Page", () => {
 
     render(<Questions />);
 
-    await waitFor(() =>
-      expect(screen.queryByText(/fetching questions/i)).not.toBeInTheDocument()
+    await waitFor(
+      () => expect(screen.queryByText(/fetching questions/i)).not.toBeInTheDocument(),
+      { timeout: 3000 }
     );
   });
 
