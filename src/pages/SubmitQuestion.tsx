@@ -22,6 +22,13 @@ const subject_sem: Record<string, string[]> = {
   "7": [],
 };
 
+const evaluationLabels = {
+  midsem: "Midsem",
+  "eval-1": "Internal Evaluation 1",
+  "eval-2": "Internal Evaluation 2",
+  endsem: "Endsem",
+};
+
 const years = ["2025", "2026"];
 const COOLDOWN_TIME = 2 * 60 * 1000;
 
@@ -129,6 +136,29 @@ const SubmitQuestion = () => {
   const subjects = subject_sem[semester] || [];
 
   const [section, setSection] = useState("");
+  const [evaluationType, setEvaluationType] = useState("");
+
+  const MAX_VALIDATION_ATTEMPTS = 3;
+  const VALIDATION_WINDOW = 60 * 1000;
+
+  const checkValidationRateLimit = (): { allowed: boolean; waitSeconds: number } => {
+    const raw = localStorage.getItem("validationAttempts");
+    const now = Date.now();
+
+    let attempts: number[] = raw ? JSON.parse(raw) : [];
+
+    attempts = attempts.filter((t) => now - t < VALIDATION_WINDOW);
+
+    if (attempts.length >= MAX_VALIDATION_ATTEMPTS) {
+      const oldest = attempts[0];
+      const waitSeconds = Math.ceil((VALIDATION_WINDOW - (now - oldest)) / 1000);
+      return { allowed: false, waitSeconds };
+    }
+
+    attempts.push(now);
+    localStorage.setItem("validationAttempts", JSON.stringify(attempts));
+    return { allowed: true, waitSeconds: 0 };
+  };
 
   useEffect(() => {
     if (cooldown === null) return;
@@ -183,7 +213,7 @@ const SubmitQuestion = () => {
       }
     }
 
-    if (!semester || !year || !subject || !question || !section) {
+    if (!semester || !year || !subject || !question || !section || !evaluationType) {
       toast.error("Please fill all fields");
       return;
     }
@@ -195,7 +225,14 @@ const SubmitQuestion = () => {
       return;
     }
 
+    const {allowed, waitSeconds } = checkValidationRateLimit();
+    if(!allowed) {
+      toast.error(`Too many attempts. Please wait ${waitSeconds}s before trying again.`);
+      return;
+    }
+
     setValidating(true);
+
     try {
       const { valid, reason } = await validateWithAI(question);
       if (!valid) {
@@ -217,6 +254,7 @@ const SubmitQuestion = () => {
         year,
         subject: subject.toLowerCase(),
         section: section.trim().toUpperCase(),
+        evaluationType,
         question: normalizedQuestion,
         submittedAt: serverTimestamp(),
         status: "pending",
@@ -233,6 +271,7 @@ const SubmitQuestion = () => {
       setSubject("");
       setQuestion("");
       setSection("");
+      setEvaluationType("");
     } catch {
       toast.error("Failed to submit, try again.");
     } finally {
@@ -345,6 +384,23 @@ const SubmitQuestion = () => {
                 onChange={(e) => setSection(e.target.value)}
                 maxLength={7}
               />
+          </div>
+
+          {/* Evaluation Type */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Evaluation Type</label>
+            <Select value={evaluationType} onValueChange={setEvaluationType}>
+              <SelectTrigger className="rounded-xl">
+                <SelectValue placeholder="Select Evaluation Type" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl shadow-lg">
+                {Object.entries(evaluationLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Question */}
