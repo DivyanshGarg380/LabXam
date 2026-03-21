@@ -277,10 +277,10 @@ export default function Admin() {
 
   const handleApprovePending = async (item: PendingItem) => {
     try {
-      toast.info("Fill in section and evaluation fields in Add Data tab, then approve.");
       const semLabel  = item.semester;
-      const evalLabel = "Midsem";
-      const docId     = `${semLabel}_${item.subject}_${item.year}_${evalLabel}_Approved`;
+      const evalLabel = evaluationLabelMap[item.evaluationType] ?? item.evaluationType;
+      const section   = item.section;
+      const docId     = `${semLabel}_${item.subject}_${item.year}_${evalLabel}_${section}`;
       const docRef    = doc(db, "questions", docId);
       const docSnap   = await getDoc(docRef);
 
@@ -288,13 +288,13 @@ export default function Admin() {
         await updateDoc(docRef, { questions: arrayUnion(item.question) });
       } else {
         await setDoc(docRef, {
-          semester: semLabel,
-          subject: item.subject,
-          year: item.year,
+          semester:   semLabel,
+          subject:    item.subject,
+          year:       item.year,
           evaluation: evalLabel,
-          section: "Approved",
-          questions: [item.question],
-          createdAt: new Date(),
+          section,
+          questions:  [item.question],
+          createdAt:  new Date(),
         });
       }
 
@@ -302,7 +302,7 @@ export default function Admin() {
       setPendingList((prev) => prev.filter((p) => p.id !== item.id));
       await incrementQuestionCount();
       setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
-      const msg = `Admin approved a pending question from ${semLabel} — ${item.subject}`;
+      const msg = `Admin approved a pending question from ${semLabel} — ${item.subject} (${evalLabel}, §${section})`;
       await logActivity(msg);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       toast.success("Question approved and added!");
