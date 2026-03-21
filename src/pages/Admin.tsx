@@ -157,6 +157,7 @@ function FieldGroup({ semester, setSemester, subject, setSubject, year, setYear,
       <Select value={year} onValueChange={setYear}>
         <SelectTrigger className="h-10 rounded-lg text-sm"><SelectValue placeholder="Year" /></SelectTrigger>
         <SelectContent>
+          <SelectItem value="2024">2024</SelectItem>
           <SelectItem value="2025">2025</SelectItem>
           <SelectItem value="2026">2026</SelectItem>
         </SelectContent>
@@ -730,6 +731,7 @@ export default function Admin() {
                       <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="All Years" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Years</SelectItem>
+                        <SelectItem value="2024">2024</SelectItem>
                         <SelectItem value="2025">2025</SelectItem>
                         <SelectItem value="2026">2026</SelectItem>
                       </SelectContent>
