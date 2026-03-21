@@ -581,10 +581,10 @@ export default function Admin() {
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { label: "Total Questions",   value: stats?.totalQuestions ?? "—", sub: "across all semesters" },
-                  { label: "Total Views",       value: stats?.totalViews     ?? "—", sub: "student page visits"  },
-                  { label: "Unique Users",      value: stats?.uniqueUsers    ?? "—", sub: "distinct browsers"    },
-                  { label: "Active Evaluators", value: stats?.activeEvals    ?? "—", sub: "evals with questions" },
+                  { label: "Total Questions",    value: stats?.totalQuestions ?? "—", sub: "across all semesters" },
+                  { label: "Active Evaluators",  value: stats?.activeEvals    ?? "—", sub: "evals with questions" },
+                  { label: "Pending Submissions",value: pendingList.length,           sub: "awaiting your review" },
+                  { label: "Open Reports",       value: reports.length,               sub: "unresolved issues"    },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-card border border-border rounded-xl p-4 space-y-1">
                     <p className="text-xs text-muted-foreground">{stat.label}</p>

@@ -7,6 +7,7 @@ import {
   increment,
   collection,
   getDocs,
+  deleteDoc,
 } from "firebase/firestore";
 
 const STATS_REF = () => doc(db, "counters", "stats");
@@ -53,7 +54,8 @@ export const fetchActualQuestionCount = async (): Promise<number> => {
     const snap = await getDocs(collection(db, "questions"));
     let count = 0;
     snap.forEach((d) => {
-      const qs = d.data().evaluation;
+      const data = d.data();
+      const qs = data.questions;
       if (Array.isArray(qs)) count += qs.length;
     });
     return count;
@@ -83,6 +85,23 @@ export type DashboardStats = {
   activeEvals:    number;
 };
 
+export const cleanUpEmptyDocs = async (): Promise<number> => {
+  try {
+   const snap = await getDocs(collection(db, "questions"));
+    const deletes: Promise<void>[] = [];
+    snap.forEach((d) => {
+      const qs = d.data().questions;
+      if (!Array.isArray(qs) || qs.length === 0) {
+        deletes.push(deleteDoc(doc(db, "questions", d.id)));
+      }
+    });
+    await Promise.all(deletes);
+    return deletes.length;
+  } catch {
+    return 0;
+  }
+};
+
 export const fetchDashboardStats = async (): Promise<DashboardStats> => {
   await ensureStatsDoc();
   const [snap, activeEvals, totalQuestions] = await Promise.all([
@@ -90,6 +109,8 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
     fetchActiveEvaluatorCount(),
     fetchActualQuestionCount(),
   ]);
+
+  await cleanUpEmptyDocs();
 
   const data = snap.exists() ? snap.data() : {};
   await updateDoc(STATS_REF(), { totalQuestions });
