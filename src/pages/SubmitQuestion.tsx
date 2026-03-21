@@ -215,7 +215,7 @@ const SubmitQuestion = () => {
       await addDoc(collection(db, "pending"), {
         semester: `Semester ${semester}`,
         year,
-        subject,
+        subject: subject.toLowerCase(),
         section: section.trim().toUpperCase(),
         question: normalizedQuestion,
         submittedAt: serverTimestamp(),

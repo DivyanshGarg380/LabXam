@@ -66,6 +66,7 @@ type PendingItem   = {
   year: string;
   subject: string;
   question: string;
+  section: string;
   status: string;
   submittedAt: Date | null;
 };
@@ -258,6 +259,7 @@ export default function Admin() {
           year: raw.year ?? "",
           subject: raw.subject ?? "",
           question: raw.question ?? "",
+          section: raw.section ?? "",
           status: raw.status ?? "pending",
           submittedAt: raw.submittedAt?.toDate?.() ?? null,
         });
@@ -273,11 +275,9 @@ export default function Admin() {
 
   const handleApprovePending = async (item: PendingItem) => {
     try {
-      // Need section and evalType from admin — prompt inline
       toast.info("Fill in section and evaluation fields in Add Data tab, then approve.");
-      // For now, store directly with available data
       const semLabel  = item.semester;
-      const evalLabel = "Midsem"; // default, can be improved
+      const evalLabel = "Midsem";
       const docId     = `${semLabel}_${item.subject}_${item.year}_${evalLabel}_Approved`;
       const docRef    = doc(db, "questions", docId);
       const docSnap   = await getDoc(docRef);
@@ -826,6 +826,9 @@ export default function Admin() {
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">
                           {item.subject}
                         </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">
+                          {item.section}
+                        </span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">
                           {item.year}
                         </span>
@@ -904,7 +907,6 @@ export default function Admin() {
               </SectionCard>
             </>
           )}
-
         </main>
       </div>
     </div>
