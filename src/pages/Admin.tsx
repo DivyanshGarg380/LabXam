@@ -67,6 +67,7 @@ type PendingItem   = {
   subject: string;
   question: string;
   section: string;
+  evaluationType: string;
   status: string;
   submittedAt: Date | null;
 };
@@ -260,6 +261,7 @@ export default function Admin() {
           subject: raw.subject ?? "",
           question: raw.question ?? "",
           section: raw.section ?? "",
+          evaluationType: raw.evaluationType ?? "",
           status: raw.status ?? "pending",
           submittedAt: raw.submittedAt?.toDate?.() ?? null,
         });
@@ -826,9 +828,14 @@ export default function Admin() {
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">
                           {item.subject}
                         </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-xs font-medium">
                           {item.section}
                         </span>
+                        {item.evaluationType && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 text-xs font-medium">
+                            {evaluationLabelMap[item.evaluationType] ?? item.evaluationType}
+                          </span>
+                        )}
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">
                           {item.year}
                         </span>
