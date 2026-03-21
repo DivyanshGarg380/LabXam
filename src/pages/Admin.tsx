@@ -22,6 +22,7 @@ import {
   addDoc,
   serverTimestamp,
   limit,
+  deleteDoc,
 } from "firebase/firestore";
 import {
   fetchDashboardStats,
@@ -46,19 +47,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Trash2, LogOut, PlusCircle, List, Flag,
+  Trash2, LogOut, PlusCircle, Flag,
   ChevronRight, Pencil, Check, X,
   LayoutDashboard, Search, Menu, Activity,
   Database, Server, AlertCircle, BookOpen,
+  Clock, CheckCircle, XCircle,
 } from "lucide-react";
 
 type Subject       = { value: string; label: string };
 type SubjectsMap   = { [semester: string]: Subject[] };
 type EvaluationMap = { [semester: string]: string[] };
 type QuestionItem  = { text: string; docId: string; section: string; year: string; evaluation: string };
-type View          = "dashboard" | "add" | "manage" | "reports";
+type View          = "dashboard" | "add" | "manage" | "reports" | "pending";
 type ActivityEntry = { id: string; message: string; timestamp: Date | null };
-
+type PendingItem   = {
+  id: string;
+  semester: string;
+  year: string;
+  subject: string;
+  question: string;
+  status: string;
+  submittedAt: Date | null;
+};
 
 const semesters = Array.from({ length: 7 }, (_, i) => ({
   value: String(i + 1),
@@ -152,6 +162,9 @@ export default function Admin() {
 
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
 
+  const [pendingList, setPendingList] = useState<PendingItem[]>([]);
+  const [loadingPending, setLoadingPending] = useState(true);
+
   const [semester, setSemester] = useState("");
   const [subject,  setSubject]  = useState("");
   const [year, setYear] = useState("");
@@ -179,6 +192,7 @@ export default function Admin() {
           loadReports();
           loadActivity();
           loadStats();
+          loadPending();
         }
       } else {
         setIsAdmin(false);
@@ -192,7 +206,6 @@ export default function Admin() {
     await signInWithPopup(auth, provider);
   };
   const handleLogout = () => signOut(auth);
-
 
   const loadStats = async () => {
     try {
@@ -229,6 +242,83 @@ export default function Admin() {
       toast.error("Failed to load reports");
     } finally {
       setLoadingReports(false);
+    }
+  };
+
+  const loadPending = async () => {
+    setLoadingPending(true);
+    try {
+      const snap = await getDocs(collection(db, "pending"));
+      const data: PendingItem[] = [];
+      snap.forEach((d) => {
+        const raw = d.data();
+        data.push({
+          id: d.id,
+          semester: raw.semester ?? "",
+          year: raw.year ?? "",
+          subject: raw.subject ?? "",
+          question: raw.question ?? "",
+          status: raw.status ?? "pending",
+          submittedAt: raw.submittedAt?.toDate?.() ?? null,
+        });
+      });
+      data.sort((a, b) => (b.submittedAt?.getTime() ?? 0) - (a.submittedAt?.getTime() ?? 0));
+      setPendingList(data);
+    } catch {
+      toast.error("Failed to load pending questions");
+    } finally {
+      setLoadingPending(false);
+    }
+  };
+
+  const handleApprovePending = async (item: PendingItem) => {
+    try {
+      // Need section and evalType from admin — prompt inline
+      toast.info("Fill in section and evaluation fields in Add Data tab, then approve.");
+      // For now, store directly with available data
+      const semLabel  = item.semester;
+      const evalLabel = "Midsem"; // default, can be improved
+      const docId     = `${semLabel}_${item.subject}_${item.year}_${evalLabel}_Approved`;
+      const docRef    = doc(db, "questions", docId);
+      const docSnap   = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        await updateDoc(docRef, { questions: arrayUnion(item.question) });
+      } else {
+        await setDoc(docRef, {
+          semester: semLabel,
+          subject: item.subject,
+          year: item.year,
+          evaluation: evalLabel,
+          section: "Approved",
+          questions: [item.question],
+          createdAt: new Date(),
+        });
+      }
+
+      await deleteDoc(doc(db, "pending", item.id));
+      setPendingList((prev) => prev.filter((p) => p.id !== item.id));
+      await incrementQuestionCount();
+      setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
+      const msg = `Admin approved a pending question from ${semLabel} — ${item.subject}`;
+      await logActivity(msg);
+      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      toast.success("Question approved and added!");
+    } catch {
+      toast.error("Approval failed");
+    }
+  };
+
+  const handleRejectPending = async (item: PendingItem) => {
+    try {
+      await deleteDoc(doc(db, "pending", item.id));
+      setPendingList((prev) => prev.filter((p) => p.id !== item.id));
+      const msg = `Admin rejected a pending question from ${item.semester} — ${item.subject}`;
+      await logActivity(msg);
+      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      toast.success("Question rejected and removed");
+    } catch {
+      toast.error("Rejection failed");
     }
   };
 
@@ -322,7 +412,7 @@ export default function Admin() {
 
   const startEdit  = (item: QuestionItem, index: number) => { setEditingIndex(index); setEditText(item.text); };
   const cancelEdit = () => setEditingIndex(null);
-  
+
   const resolveReport = async (id: string) => {
     try {
       await updateDoc(doc(db, "reports", id), { resolved: true });
@@ -339,6 +429,11 @@ export default function Admin() {
   const formatTime = (date: Date | null) => {
     if (!date) return "";
     return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return "—";
+    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   };
 
   if (!user) {
@@ -387,6 +482,7 @@ export default function Admin() {
     { id: "dashboard", label: "Dashboard",       icon: <LayoutDashboard className="h-4 w-4" /> },
     { id: "add",       label: "Add Data",         icon: <PlusCircle      className="h-4 w-4" /> },
     { id: "manage",    label: "Manage Questions", icon: <BookOpen        className="h-4 w-4" /> },
+    { id: "pending",   label: "Pending",          icon: <Clock           className="h-4 w-4" />, badge: pendingList.length || undefined },
     { id: "reports",   label: "Reports",          icon: <Flag            className="h-4 w-4" />, badge: reports.length || undefined },
   ];
 
@@ -472,6 +568,7 @@ export default function Admin() {
 
         {/* Content */}
         <main className="flex-1 px-4 sm:px-6 py-6 space-y-6 overflow-auto">
+
           {/* DASHBOARD */}
           {activeView === "dashboard" && (
             <>
@@ -480,13 +577,12 @@ export default function Admin() {
                 <p className="text-sm text-muted-foreground mt-0.5">Manage questions and resolve user reports</p>
               </div>
 
-              {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { label: "Total Questions",    value: stats?.totalQuestions  ?? "—", sub: "across all semesters" },
-                  { label: "Total Views",        value: stats?.totalViews      ?? "—", sub: "student page visits"  },
-                  { label: "Unique Users",       value: stats?.uniqueUsers     ?? "—", sub: "distinct browsers"    },
-                  { label: "Active Evaluators",  value: stats?.activeEvals     ?? "—", sub: "evals with questions" },
+                  { label: "Total Questions",   value: stats?.totalQuestions ?? "—", sub: "across all semesters" },
+                  { label: "Total Views",       value: stats?.totalViews     ?? "—", sub: "student page visits"  },
+                  { label: "Unique Users",      value: stats?.uniqueUsers    ?? "—", sub: "distinct browsers"    },
+                  { label: "Active Evaluators", value: stats?.activeEvals    ?? "—", sub: "evals with questions" },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-card border border-border rounded-xl p-4 space-y-1">
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -496,7 +592,6 @@ export default function Admin() {
                 ))}
               </div>
 
-              {/* System health */}
               <div className="bg-card border border-border rounded-xl p-5 space-y-4">
                 <h2 className="text-sm font-semibold">System Health / Status</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -517,7 +612,6 @@ export default function Admin() {
                 </div>
               </div>
 
-              {/* Activity log */}
               <div className="bg-card border border-border rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-semibold">Activity / Recent Actions</h2>
@@ -694,6 +788,80 @@ export default function Admin() {
                   })()}
                 </DialogContent>
               </Dialog>
+            </>
+          )}
+
+          {/* PENDING */}
+          {activeView === "pending" && (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-bold">Pending Questions</h1>
+                  <p className="text-sm text-muted-foreground mt-0.5">Review and approve or reject student submissions</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={loadPending} className="text-xs">
+                  Refresh
+                </Button>
+              </div>
+
+              {loadingPending ? (
+                <div className="flex justify-center py-20">
+                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : pendingList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center gap-2">
+                  <span className="text-3xl">✅</span>
+                  <p className="text-sm font-medium">All clear</p>
+                  <p className="text-xs text-muted-foreground">No pending submissions to review</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {pendingList.map((item) => (
+                    <div key={item.id} className="border border-border rounded-xl bg-card p-4 space-y-3 flex flex-col">
+                      {/* Parameters */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-xs font-medium">
+                          {item.semester}
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">
+                          {item.subject}
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">
+                          {item.year}
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-500 text-xs font-medium">
+                          <Clock className="h-3 w-3 mr-1" /> Pending
+                        </span>
+                      </div>
+
+                      {/* Question */}
+                      <p className="text-sm leading-relaxed flex-1">{item.question}</p>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-1 border-t border-border">
+                        <p className="text-xs text-muted-foreground">{formatDate(item.submittedAt)}</p>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs gap-1 text-red-500 hover:text-red-500 hover:bg-red-500/10"
+                            onClick={() => handleRejectPending(item)}
+                          >
+                            <XCircle className="h-3.5 w-3.5" /> Reject
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => handleApprovePending(item)}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" /> Approve
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 

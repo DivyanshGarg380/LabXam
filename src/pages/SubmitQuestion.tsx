@@ -26,16 +26,15 @@ const years = ["2025", "2026"];
 const COOLDOWN_TIME = 2 * 60 * 1000;
 
 const validateWithAI = async (
-  question: string
+  question: string,
 ): Promise<{ valid: boolean; reason: string }> => {
-  
   const response = await fetch("/api/nvidia", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "meta/llama3-70b-instruct",
+      model: "meta/llama-3.3-70b-instruct",
       max_tokens: 256,
       messages: [
         {
@@ -76,11 +75,18 @@ const validateWithAI = async (
 
   OR
 
-  {"valid": false, "reason": "Clear reason why it is invalid"}`,
+{"valid": false, "reason": "Clear reason why it is invalid"}`,
         },
       ],
     }),
   });
+
+  if (!response.ok) {
+    return {
+      valid: false,
+      reason: "Validation service unavailable, please try again.",
+    };
+  }
 
   if (!response.ok) {
     const text = await response.text();
@@ -108,8 +114,7 @@ const validateWithAI = async (
     const clean = aiText.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
   } catch {
-    console.error("AI RESPONSE INVALID:", aiText);
-    return { valid: true, reason: "Could not validate, allowing submission" };
+    return { valid: false, reason: "Validation failed, please try again." };
   }
 };
 
@@ -185,7 +190,7 @@ const SubmitQuestion = () => {
 
     if (question.length < 40) {
       toast.error(
-        "Please enter the complete lab question (min 40 characters)."
+        "Please enter the complete lab question (min 40 characters).",
       );
       return;
     }
@@ -218,7 +223,7 @@ const SubmitQuestion = () => {
       });
 
       toast.success(
-        "Question submitted! It will be reviewed before publishing."
+        "Question submitted! It will be reviewed before publishing.",
       );
       localStorage.setItem("lastSubmissionTime", Date.now().toString());
       setCoolDown(COOLDOWN_TIME / 1000);
@@ -343,19 +348,17 @@ const SubmitQuestion = () => {
             {validating
               ? "Validating question..."
               : loading
-              ? "Submitting..."
-              : cooldown
-              ? `Thank you, Wait ${cooldown}s`
-              : "Send Question"}
+                ? "Submitting..."
+                : cooldown
+                  ? `Thank you, Wait ${cooldown}s`
+                  : "Send Question"}
           </button>
         </div>
 
         <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
           <p className="text-sm text-muted-foreground">
             For the students of{" "}
-            <span className="font-medium text-foreground">
-              MIT Manipal
-            </span>
+            <span className="font-medium text-foreground">MIT Manipal</span>
           </p>
           <p className="text-xs text-muted-foreground">
             Built by{" "}
