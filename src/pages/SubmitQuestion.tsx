@@ -28,70 +28,69 @@ const COOLDOWN_TIME = 2 * 60 * 1000;
 const validateWithAI = async (
   question: string,
 ): Promise<{ valid: boolean; reason: string }> => {
-  const response = await fetch("/api/nvidia", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "meta/llama-3.3-70b-instruct",
-      max_tokens: 256,
-      messages: [
-        {
-          role: "user",
-          content: `You are a STRICT validator for a university lab exam question submission portal for MIT Manipal students.
-
-  Your job is to REJECT anything that is not clearly a proper lab exam question.
-
-  A submission is VALID ONLY IF ALL of the following are true:
-  - It is a clear programming/technical lab question from fields like:
-    C, C++, Java, Python, SQL, Data Structures, Operating Systems, DBMS
-  - It explicitly asks to:
-    write a program, implement, design, develop, simulate, or solve something
-  - It contains meaningful technical detail (inputs, outputs, constraints, logic, or description)
-  - It is at least 40+ characters and clearly understandable
-  - It looks like something that could appear in a real lab exam
-
-  STRICT REJECTION RULES (very important):
-  Mark as INVALID if ANY of the following is true:
-  - Too short, vague, or incomplete
-  - Does NOT contain an action (write/implement/design/etc.)
-  - Is theoretical only (like definitions or explanations)
-  - Is random text, spam, or copied garbage
-  - Is conversational (e.g., "hi", "hello", "pls help")
-  - Is not related to programming/technical lab work
-  - Contains abusive or irrelevant content
-  - Looks AI-generated but lacks concrete task details
-  - Missing key structure (no clear task or objective)
-
-  Be EXTREMELY STRICT. When in doubt, REJECT.
-
-  Submitted text:
-  "${question}"
-
-  Respond ONLY in this exact JSON format, no extra text:
-
-  {"valid": true, "reason": "Valid lab question"}
-
-  OR
-
-{"valid": false, "reason": "Clear reason why it is invalid"}`,
+  let response : Response;
+    try {
+      response = await fetch("/api/nvidia", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    return {
-      valid: false,
-      reason: "Validation service unavailable, please try again.",
-    };
-  }
+        body: JSON.stringify({
+          model: "meta/llama3-70b-instruct",
+          max_tokens: 256,
+          messages: [
+            {
+              role: "user",
+              content: `You are a STRICT validator for a university lab exam question submission portal for MIT Manipal students.
+  
+      Your job is to REJECT anything that is not clearly a proper lab exam question.
+  
+      A submission is VALID ONLY IF ALL of the following are true:
+      - It is a clear programming/technical lab question from fields like:
+        C, C++, Java, Python, SQL, Data Structures, Operating Systems, DBMS
+      - It explicitly asks to:
+        write a program, implement, design, develop, simulate, or solve something
+      - It contains meaningful technical detail (inputs, outputs, constraints, logic, or description)
+      - It is at least 40+ characters and clearly understandable
+      - It looks like something that could appear in a real lab exam
+  
+      STRICT REJECTION RULES (very important):
+      Mark as INVALID if ANY of the following is true:
+      - Too short, vague, or incomplete
+      - Does NOT contain an action (write/implement/design/etc.)
+      - Is theoretical only (like definitions or explanations)
+      - Is random text, spam, or copied garbage
+      - Is conversational (e.g., "hi", "hello", "pls help")
+      - Is not related to programming/technical lab work
+      - Contains abusive or irrelevant content
+      - Looks AI-generated but lacks concrete task details
+      - Missing key structure (no clear task or objective)
+  
+      Be EXTREMELY STRICT. When in doubt, REJECT.
+  
+      Submitted text:
+      "${question}"
+  
+      Respond ONLY in this exact JSON format, no extra text:
+  
+      {"valid": true, "reason": "Valid lab question"}
+  
+      OR
+  
+    {"valid": false, "reason": "Clear reason why it is invalid"}`,
+            },
+          ],
+        }),
+      });
+    } catch (error) {
+      console.log("Network error calling /api/nvidia:", error);
+      return { valid: false, reason: "Validation service unavailable, please try again."};
+    }
 
   if (!response.ok) {
     const text = await response.text();
-    console.error("API ERROR:", text);
-    throw new Error("API failed");
+    console.error("API error:", response.status, text);
+    return { valid: false, reason: "Validation service unavailable, please try again." };
   }
 
   const text = await response.text();
@@ -100,18 +99,17 @@ const validateWithAI = async (
   try {
     data = JSON.parse(text);
   } catch {
-    console.error("INVALID JSON:", text);
+    console.error("Invalid JSON from API:", text);
     throw new Error("Invalid JSON response");
   }
 
-  const aiText = data.choices?.[0]?.message?.content ?? "";
-
-  if (!data.choices || !data.choices[0]) {
-    throw new Error("Invalid AI response structure");
+  if (!data.choices?.[0]?.message?.content) {
+    console.error("Unexpected API response shape:", data);
+    return { valid: false, reason: "Validation failed, please try again." };
   }
 
   try {
-    const clean = aiText.replace(/```json|```/g, "").trim();
+    const clean = data.choices[0].message.content.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
   } catch {
     return { valid: false, reason: "Validation failed, please try again." };
@@ -129,6 +127,8 @@ const SubmitQuestion = () => {
   const [cooldown, setCoolDown] = useState<number | null>(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const subjects = subject_sem[semester] || [];
+
+  const [section, setSection] = useState("");
 
   useEffect(() => {
     if (cooldown === null) return;
@@ -183,7 +183,7 @@ const SubmitQuestion = () => {
       }
     }
 
-    if (!semester || !year || !subject || !question) {
+    if (!semester || !year || !subject || !question || !section) {
       toast.error("Please fill all fields");
       return;
     }
@@ -204,7 +204,6 @@ const SubmitQuestion = () => {
       }
     } catch (err) {
       toast.error("Validation failed, please try again.");
-      console.log(err);
       return;
     } finally {
       setValidating(false);
@@ -217,6 +216,7 @@ const SubmitQuestion = () => {
         semester: `Semester ${semester}`,
         year,
         subject,
+        section: section.trim().toUpperCase(),
         question: normalizedQuestion,
         submittedAt: serverTimestamp(),
         status: "pending",
@@ -232,6 +232,7 @@ const SubmitQuestion = () => {
       setYear("");
       setSubject("");
       setQuestion("");
+      setSection("");
     } catch {
       toast.error("Failed to submit, try again.");
     } finally {
@@ -269,6 +270,7 @@ const SubmitQuestion = () => {
             Submit Exam Question
           </h1>
 
+          {/* Semester */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Semester</label>
             <Select
@@ -289,7 +291,8 @@ const SubmitQuestion = () => {
               </SelectContent>
             </Select>
           </div>
-
+          
+          {/* Year */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Year</label>
             <Select value={year} onValueChange={setYear}>
@@ -305,7 +308,8 @@ const SubmitQuestion = () => {
               </SelectContent>
             </Select>
           </div>
-
+          
+          {/* Subject */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Subject</label>
             <Select
@@ -328,8 +332,22 @@ const SubmitQuestion = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div> 
+
+          {/* Section */}
+          <div className="space-y-2">
+              <label className="text-sm font-medium">Section</label>
+              <input
+                type="text"
+                className="w-full h-11 rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Enter your section"
+                value={section}
+                onChange={(e) => setSection(e.target.value)}
+                maxLength={7}
+              />
           </div>
 
+          {/* Question */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Question</label>
             <textarea
@@ -340,6 +358,7 @@ const SubmitQuestion = () => {
             />
           </div>
 
+          {/* Send Question */}
           <button
             onClick={sendQuestion}
             disabled={isSubmitting || cooldown !== null}
@@ -354,7 +373,8 @@ const SubmitQuestion = () => {
                   : "Send Question"}
           </button>
         </div>
-
+        
+        {/* Footer */}
         <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
           <p className="text-sm text-muted-foreground">
             For the students of{" "}
