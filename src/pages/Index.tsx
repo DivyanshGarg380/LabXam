@@ -53,15 +53,14 @@ const subjectsBySemester = {
     { value: "madl", label: "Mobile Application Development Lab (MADL)"},
     { value: "ndlp", label: "Network Design and Programming Lab (NDLP)"}
   ],
-  "7": [],
 };
 
 const evaluationBySemester = {
   "1": ["midsem", "endsem"],
-  "2": ["midsem", "eval-1", "endsem"],
-  "3": ["midsem", "eval-1", "eval-2", "endsem"],
-  "4": ["midsem", "eval-1", "eval-2", "endsem"],
-  "5": ["midsem", "eval-1", "endsem"],
+  "2": ["midsem", "endsem"],
+  "3": ["midsem", "endsem"],
+  "4": ["midsem", "eval-1", "endsem"],
+  "5": ["midsem", "endsem"],
   "6": ["midsem", "endsem"],
   "7": ["midsem", "endsem"],
   "8": ["midsem", "endsem"],

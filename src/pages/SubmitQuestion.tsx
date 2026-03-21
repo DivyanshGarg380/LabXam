@@ -13,12 +13,28 @@ import { db } from "@/firebase/config";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const subject_sem: Record<string, string[]> = {
-  "1": ["PPS"],
-  "2": ["IOOP", "DAV"],
-  "3": ["DSL", "DISL"],
-  "4": ["DBSL", "OSDL", "OSL"],
-  "5": ["ESDL", "ISL"],
-  "6": ["MADL", "NDLP"],
+  "1": ["Programming for Problem Solving (PPS)"],
+  "2": [
+    "Introduction to OOP (IOOP)",
+    "Data Analysis & Visualization (DAV)"
+  ],
+  "3": [
+    "Data Structures Lab (DSL)",
+    "Digital Systems Lab (DISL)"
+  ],
+  "4": [
+    "Database Systems (DBSL)",
+    "Software Development Lab (OSDL)",
+    "Operating Systems Lab (OSL)"
+  ],
+  "5": [
+    "Information Security Lab (ISL)",
+    "Embedded Systems Design Lab (ESDL)"
+  ],
+  "6": [
+    "Mobile Application Development Lab (MADL)",
+    "Network Design and Programming Lab (NDLP)"
+  ],
 };
 
 const evaluationLabels = {

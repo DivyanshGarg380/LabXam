@@ -72,17 +72,36 @@ type PendingItem   = {
   submittedAt: Date | null;
 };
 
-const semesters = Array.from({ length: 7 }, (_, i) => ({
+const semesters = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
   label: `Semester ${i + 1}`,
 }));
 
 const subjectsBySemester: SubjectsMap = {
-  "1": [{ value: "pps",  label: "Programming for Problem Solving (PPS)" }],
-  "2": [{ value: "ioop", label: "Introduction to OOP (IOOP)" }, { value: "dav", label: "Data Analysis & Visualization (DAV)" }],
-  "3": [{ value: "dsl",  label: "Data Structures Lab (DSL)" }, { value: "disl", label: "Digital Systems Lab (DISL)" }],
-  "4": [{ value: "dbsl", label: "Database Systems (DBSL)" }, { value: "osdl", label: "Software Development Lab (OSDL)" }, { value: "osl", label: "Operating Systems Lab (OSL)" }],
-  "5": [], "6": [], "7": [],
+  "1": [
+    { value: "pps", label: "Programming for Problem Solving (PPS)" },
+  ],
+  "2": [
+    { value: "ioop", label: "Introduction to OOP (IOOP)" },
+    { value: "dav", label: "Data Analysis & Visualization (DAV)" },
+  ],
+  "3": [
+    { value: "dsl", label: "Data Structures Lab (DSL)" },
+    { value: "disl", label: "Digital Systems Lab (DISL)" },
+  ],
+  "4": [
+    { value: "dbsl", label: "Database Systems (DBSL)" },
+    { value: "osdl", label: "Software Development Lab (OSDL)" },
+    { value: "osl", label: "Operating Systems Lab (OSL)" },
+  ],
+  "5": [
+    { value: "isl", label: "Information Security Lab (ISL)" },
+    { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" },
+  ],
+  "6": [
+    { value: "madl", label: "Mobile Application Development Lab (MADL)" },
+    { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
+  ],
 };
 
 const evaluationBySemester: EvaluationMap = Object.fromEntries(
