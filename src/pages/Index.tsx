@@ -26,7 +26,6 @@ const semesters = [
   { value: "4", label: "Semester 4" },
   { value: "5", label: "Semester 5" },
   { value: "6", label: "Semester 6" },
-  { value: "7", label: "Semester 7" },
 ];
 
 const subjectsBySemester = {
@@ -46,8 +45,14 @@ const subjectsBySemester = {
     { value: "osdl", label: "Software Development Lab (OSDL)" },
     { value: "osl", label: "Operating Systems Lab (OSL)" },
   ],
-  "5": [],
-  "6": [],
+  "5": [
+    { value: "isl", label: "Information Security Lab (ISL)"},
+    { value: "esdl", label: "Embedded Systems Design Lab (ESDL)"}
+  ],
+  "6": [
+    { value: "madl", label: "Mobile Application Development Lab (MADL)"},
+    { value: "ndlp", label: "Network Design and Programming Lab (NDLP)"}
+  ],
   "7": [],
 };
 

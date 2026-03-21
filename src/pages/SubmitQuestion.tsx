@@ -17,9 +17,8 @@ const subject_sem: Record<string, string[]> = {
   "2": ["IOOP", "DAV"],
   "3": ["DSL", "DISL"],
   "4": ["DBSL", "OSDL", "OSL"],
-  "5": [],
-  "6": [],
-  "7": [],
+  "5": ["ESDL", "ISL"],
+  "6": ["MADL", "NDLP"],
 };
 
 const evaluationLabels = {
@@ -29,7 +28,7 @@ const evaluationLabels = {
   endsem: "Endsem",
 };
 
-const years = ["2025", "2026"];
+const years = ["2024", "2025", "2026"];
 const COOLDOWN_TIME = 2 * 60 * 1000;
 
 const validateWithAI = async (
@@ -327,6 +326,8 @@ const SubmitQuestion = () => {
                 <SelectItem value="2">Semester 2</SelectItem>
                 <SelectItem value="3">Semester 3</SelectItem>
                 <SelectItem value="4">Semester 4</SelectItem>
+                <SelectItem value="5">Semester 5</SelectItem>
+                <SelectItem value="6">Semester 6</SelectItem>
               </SelectContent>
             </Select>
           </div>
