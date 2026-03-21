@@ -91,7 +91,11 @@ export const cleanUpEmptyDocs = async (): Promise<number> => {
     const deletes: Promise<void>[] = [];
     snap.forEach((d) => {
       const qs = d.data().questions;
-      if (!Array.isArray(qs) || qs.length === 0) {
+      const isEmptyDoc = !Array.isArray(qs) || qs.length === 0;
+      const isMalformedId = !d.id.startsWith("Semester");
+
+      if(isEmptyDoc || isMalformedId) {
+        console.warn("Flagged for cleanup: ", d.id);
         deletes.push(deleteDoc(doc(db, "questions", d.id)));
       }
     });
