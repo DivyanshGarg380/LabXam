@@ -324,7 +324,7 @@ export default function Admin() {
       setPendingList((prev) => prev.filter((p) => p.id !== item.id));
       await incrementQuestionCount();
       setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
-      const msg = `Admin approved a pending question from ${semLabel} — ${item.subject} (${evalLabel}, §${section})`;
+      const msg = `${user.email.replace(/@.*/, "")} approved a pending question from ${semLabel} — ${item.subject} (${evalLabel}, §${section})`;
       await logActivity(msg);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       toast.success("Question approved and added!");
@@ -337,7 +337,7 @@ export default function Admin() {
     try {
       await deleteDoc(doc(db, "pending", item.id));
       setPendingList((prev) => prev.filter((p) => p.id !== item.id));
-      const msg = `Admin rejected a pending question from ${item.semester} — ${item.subject}`;
+      const msg = `${user.email.replace(/@.*/, "")} rejected a pending question from ${item.semester} — ${item.subject}`;
       await logActivity(msg);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       toast.success("Question rejected and removed");
@@ -405,7 +405,7 @@ export default function Admin() {
     try {
       await deleteQuestion(item.docId, item.text);
       setQuestionsList((prev) => prev.filter((q) => !(q.text === item.text && q.docId === item.docId)));
-      const msg = `Admin deleted a question from ${item.docId}`;
+      const msg = `${user.email.replace(/@.*/, "")} deleted a question from ${item.docId}`;
       await logActivity(msg);
       await decrementQuestionCount();
       setStats((prev) => prev ? { ...prev, totalQuestions: Math.max(0, prev.totalQuestions - 1) } : prev);
@@ -424,7 +424,7 @@ export default function Admin() {
       await updateDoc(ref, { questions: arrayRemove(item.text) });
       await updateDoc(ref, { questions: arrayUnion(editText.trim()) });
       setQuestionsList((prev) => prev.map((q, i) => i === index ? { ...q, text: editText.trim() } : q));
-      const msg = `Admin edited a question in ${item.docId}`;
+      const msg = `${user.email.replace(/@.*/, "")} edited a question in ${item.docId}`;
       await logActivity(msg);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       setEditingIndex(null);
@@ -441,7 +441,7 @@ export default function Admin() {
     try {
       await updateDoc(doc(db, "reports", id), { resolved: true });
       setReports((prev) => prev.filter((r) => r.id !== id));
-      const msg = `Report #${id.slice(0, 6)} resolved by admin`;
+      const msg = `Report #${id.slice(0, 6)} resolved by ${user.email.replace(/@.*/, "")}`;
       await logActivity(msg);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       toast.success("Report resolved");
