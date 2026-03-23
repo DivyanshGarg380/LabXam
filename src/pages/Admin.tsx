@@ -362,7 +362,7 @@ export default function Admin() {
       } else {
         await setDoc(docRef, { semester: semLabel, subject, year, evaluation: evalLabel, section, questions: [question], createdAt: new Date() });
       }
-      const msg = `Admin added a question in ${semLabel} — ${subject} (${evalLabel}, §${section})`;
+      const msg = `${user.email.replace(/@.*/, "")} added a question in ${semLabel} — ${subject} (${evalLabel}, ${section})`;
       await logActivity(msg);
       await incrementQuestionCount();
       setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
