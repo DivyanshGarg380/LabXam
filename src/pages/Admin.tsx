@@ -101,6 +101,7 @@ const subjectsBySemester: SubjectsMap = {
   "6": [
     { value: "madl", label: "Mobile Application Development Lab (MADL)" },
     { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
+    { value: "cd", label: "Compiler Design (CD)"}
   ],
 };
 
