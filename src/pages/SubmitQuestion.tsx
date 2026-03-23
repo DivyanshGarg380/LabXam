@@ -34,7 +34,8 @@ const subject_sem: Record<string, string[]> = {
   "6": [
     "Mobile Application Development Lab (MADL)",
     "Network Design and Programming Lab (NDLP)",
-    "Compiler Design (CD)"
+    "Compiler Design (CD)",
+    "Web Programming (WP)"
   ],
 };
 
