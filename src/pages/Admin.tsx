@@ -101,8 +101,8 @@ const subjectsBySemester: SubjectsMap = {
   "6": [
     { value: "madl", label: "Mobile Application Development Lab (MADL)" },
     { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
-    { value: "cd", label: "Compiler Design (CD)"},
-    { value: "wp", label: "Web Programming (Wp)"}
+    { value: "cd", label: "Compiler Design Lab (CDL)"},
+    { value: "wp", label: "Web Programming Lab (WPL)"}
   ],
 };
 
@@ -229,6 +229,7 @@ export default function Admin() {
     if (!auth || !provider) { toast.error("Firebase is not configured properly."); return; }
     await signInWithPopup(auth, provider);
   };
+  
   const handleLogout = () => signOut(auth);
 
   const loadStats = async () => {
