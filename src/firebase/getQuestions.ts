@@ -38,8 +38,7 @@ export const fetchQuestionsFromFirebase = async (
           question: q,
           section: data.section,
           year: data.year,
-          uploadedAt: data.createdAt?.seconds ?
-            data.createdAt.seconds * 1000 : 0,
+          uploadedAt: data.uploadedAt || 0,
         });
       });
     });
