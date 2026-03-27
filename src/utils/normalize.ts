@@ -1,6 +1,6 @@
 import { EvaluationType } from "@/data/questions";
 
-export const normalizeSemester = (sem: string) => `Semester ${sem}`;
+export const normalizeSemester = (sem: string) => sem;
 
 export const normalizeEvaluation = (evalType: string) => {
     if(evalType === "midsem") return "Midsem";

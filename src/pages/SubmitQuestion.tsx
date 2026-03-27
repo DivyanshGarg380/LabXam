@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { db } from "@/api/config";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { apiFetch } from "@/api/config"; // ← only import what actually exists
 
 const subject_sem: Record<string, string[]> = {
   "1": ["Programming for Problem Solving (PPS)"],
@@ -256,7 +255,7 @@ const SubmitQuestion = () => {
         toast.error(`Invalid submission: ${reason}`);
         return;
       }
-    } catch (err) {
+    } catch {
       toast.error("Validation failed, please try again.");
       return;
     } finally {
@@ -266,16 +265,24 @@ const SubmitQuestion = () => {
     setLoading(true);
     try {
       const normalizedQuestion = question.trim().replace(/\s+/g, " ");
-      await addDoc(collection(db, "pending"), {
-        semester: `Semester ${semester}`,
-        year,
-        subject: subject.toLowerCase(),
-        section: section.trim().toUpperCase(),
-        evaluationType,
-        question: normalizedQuestion,
-        submittedAt: serverTimestamp(),
-        status: "pending",
+
+      // ── Replaced Firebase addDoc with a plain REST call to your MySQL backend ──
+      const res = await apiFetch("/submissions/", {
+        method: "POST",
+        body: JSON.stringify({
+          semester:        `Semester ${semester}`,
+          year,
+          subject:         subject.toLowerCase(),
+          section:         section.trim().toUpperCase(),
+          evaluation_type: evaluationType,
+          question:        normalizedQuestion,
+        }),
       });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "Submission failed");
+      }
 
       toast.success(
         "Question submitted! It will be reviewed before publishing.",
@@ -289,8 +296,9 @@ const SubmitQuestion = () => {
       setQuestion("");
       setSection("");
       setEvaluationType("");
-    } catch {
-      toast.error("Failed to submit, try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to submit, try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
