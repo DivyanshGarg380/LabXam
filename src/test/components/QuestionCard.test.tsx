@@ -9,6 +9,8 @@ describe("QuestionCard", () => {
         number={3}
         question="Explain Deadlock"
         section="Section B"
+        year="2024"
+        uploadedAt={Date.now() - 100000}
       />
     );
 

@@ -8,9 +8,13 @@ describe("QuestionsPage", () => {
         semester="sem3"
         subject="os"
         evaluationType="midsem"
-        year="2024"
         questions={[
-          { question: "What is fork()?", section: "SectionA" },
+          {
+            question: "What is fork()?",
+            section: "SectionA",
+            year: "2024",
+            uploadedAt: Date.now(),
+          },
         ]}
         onBack={() => {}}
       />
