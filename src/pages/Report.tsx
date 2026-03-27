@@ -7,7 +7,7 @@ import {
   deleteOldResolvedReports,
   sendReport,
   fetchMyReports,
-} from "@/firebase/report";
+} from "@/api/report";
 import { CheckCircle2, Clock, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 

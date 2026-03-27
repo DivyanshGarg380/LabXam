@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { db } from "@/firebase/config";
+import { db } from "@/api/config";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const subject_sem: Record<string, string[]> = {

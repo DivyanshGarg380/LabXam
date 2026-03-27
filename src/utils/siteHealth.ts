@@ -1,5 +1,5 @@
 import { getDocs, collection } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db } from "../api/config";
 import { doc, getDoc } from "firebase/firestore";
 
 export type ServiceStatus = {

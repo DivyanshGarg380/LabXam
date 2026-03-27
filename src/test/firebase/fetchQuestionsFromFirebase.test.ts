@@ -3,8 +3,8 @@ jest.mock("@/firebase/config", () => ({
 }));
 
 import * as firestore from "firebase/firestore";
-import { fetchQuestionsFromFirebase } from "@/firebase/getQuestions";
-import { queryCache } from "@/firebase/getQuestions";
+import { fetchQuestionsFromFirebase } from "@/api/getQuestions";
+import { queryCache } from "@/api/getQuestions";
 
 jest.mock("firebase/firestore", () => ({
   collection: jest.fn(),

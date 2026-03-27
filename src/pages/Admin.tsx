@@ -1,50 +1,16 @@
 import { useEffect, useState } from "react";
-import { auth, provider, db } from "@/firebase/config";
-import { deleteQuestion } from "@/firebase/deleteQuestion";
-import {
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut,
-  User,
-} from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  limit,
-  deleteDoc,
-} from "firebase/firestore";
-import {
-  fetchDashboardStats,
-  incrementQuestionCount,
-  decrementQuestionCount,
-  type DashboardStats,
-} from "@/firebase/metric";
+import { login, logout, getMe, type AdminUser } from "@/api/auth";
+import { fetchDashboardStats, type DashboardStats } from "@/api/metric";
+import { fetchActivity, type ActivityEntry } from "@/api/activity";
+import { fetchQuestionSets, addQuestion, deleteQuestion, editQuestion, type QuestionSet } from "@/api/questions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Trash2, LogOut, PlusCircle, Flag,
@@ -54,22 +20,15 @@ import {
   Clock, CheckCircle, XCircle,
 } from "lucide-react";
 
-type Subject       = { value: string; label: string };
-type SubjectsMap   = { [semester: string]: Subject[] };
-type EvaluationMap = { [semester: string]: string[] };
-type QuestionItem  = { text: string; docId: string; section: string; year: string; evaluation: string };
-type View          = "dashboard" | "add" | "manage" | "reports" | "pending";
-type ActivityEntry = { id: string; message: string; timestamp: Date | null };
-type PendingItem   = {
-  id: string;
-  semester: string;
-  year: string;
-  subject: string;
-  question: string;
-  section: string;
-  evaluationType: string;
-  status: string;
-  submittedAt: Date | null;
+type View = "dashboard" | "add" | "manage" | "reports" | "pending";
+
+type QuestionItem = {
+  text:       string;
+  setId:      number;
+  section:    string;
+  year:       string;
+  evaluation: string;
+  allInSet:   { question_text: string }[];
 };
 
 const semesters = Array.from({ length: 6 }, (_, i) => ({
@@ -77,36 +36,16 @@ const semesters = Array.from({ length: 6 }, (_, i) => ({
   label: `Semester ${i + 1}`,
 }));
 
-const subjectsBySemester: SubjectsMap = {
-  "1": [
-    { value: "pps", label: "Programming for Problem Solving (PPS)" },
-  ],
-  "2": [
-    { value: "ioop", label: "Introduction to OOP (IOOP)" },
-    { value: "dav", label: "Data Analysis & Visualization (DAV)" },
-  ],
-  "3": [
-    { value: "dsl", label: "Data Structures Lab (DSL)" },
-    { value: "disl", label: "Digital Systems Lab (DISL)" },
-  ],
-  "4": [
-    { value: "dbsl", label: "Database Systems (DBSL)" },
-    { value: "osdl", label: "Software Development Lab (OSDL)" },
-    { value: "osl", label: "Operating Systems Lab (OSL)" },
-  ],
-  "5": [
-    { value: "isl", label: "Information Security Lab (ISL)" },
-    { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" },
-  ],
-  "6": [
-    { value: "madl", label: "Mobile Application Development Lab (MADL)" },
-    { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
-    { value: "cd", label: "Compiler Design Lab (CDL)"},
-    { value: "wp", label: "Web Programming Lab (WPL)"}
-  ],
+const subjectsBySemester: Record<string, { value: string; label: string }[]> = {
+  "1": [{ value: "pps",  label: "Programming for Problem Solving (PPS)" }],
+  "2": [{ value: "ioop", label: "Introduction to OOP (IOOP)" }, { value: "dav", label: "Data Analysis & Visualization (DAV)" }],
+  "3": [{ value: "dsl",  label: "Data Structures Lab (DSL)" }, { value: "disl", label: "Digital Systems Lab (DISL)" }],
+  "4": [{ value: "dbsl", label: "Database Systems (DBSL)" }, { value: "osdl", label: "Software Development Lab (OSDL)" }, { value: "osl", label: "Operating Systems Lab (OSL)" }],
+  "5": [{ value: "isl",  label: "Information Security Lab (ISL)" }, { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" }],
+  "6": [{ value: "madl", label: "Mobile Application Development Lab (MADL)" }, { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" }, { value: "cd", label: "Compiler Design Lab (CDL)" }, { value: "wp", label: "Web Programming Lab (WPL)" }],
 };
 
-const evaluationBySemester: EvaluationMap = Object.fromEntries(
+const evaluationBySemester: Record<string, string[]> = Object.fromEntries(
   Array.from({ length: 7 }, (_, i) => [String(i + 1), ["midsem", "eval-1", "eval-2", "endsem"]])
 );
 
@@ -115,12 +54,6 @@ const evaluationLabelMap: Record<string, string> = {
   "eval-1": "Internal Evaluation 1",
   "eval-2": "Internal Evaluation 2",
   endsem:   "Endsem",
-};
-
-const logActivity = async (message: string) => {
-  try {
-    await addDoc(collection(db, "activityLog"), { message, createdAt: serverTimestamp() });
-  } catch { /* Never breaks production */ }
 };
 
 function SectionCard({ title, description, action, children }: {
@@ -172,65 +105,100 @@ function FieldGroup({ semester, setSemester, subject, setSubject, year, setYear,
   );
 }
 
+// ─── Login Screen ────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }: { onLogin: (user: AdminUser) => void }) {
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading]   = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) { toast.error("Enter email and password"); return; }
+    setLoading(true);
+    const user = await login(email, password);
+    setLoading(false);
+    if (user) onLogin(user);
+  };
+
+  return (
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-background">
+      <h2 className="absolute top-20 text-4xl md:text-6xl font-black tracking-[0.5em] uppercase text-red-600 animate-pulse drop-shadow-[0_0_30px_rgba(255,0,0,1)] text-center px-4">
+        YOU THOUGHT THAT WOULD WORK? 😼
+      </h2>
+      <div className="w-[380px] bg-card border border-border shadow-sm rounded-2xl p-8 space-y-5 text-center">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Admin Portal</h1>
+          <p className="text-sm text-muted-foreground">Sign in to continue</p>
+        </div>
+        <div className="space-y-3 text-left">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <Button className="w-full h-11" onClick={handleLogin} disabled={loading}>
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Signing in…
+            </span>
+          ) : "Sign In"}
+        </Button>
+        <p className="text-xs text-muted-foreground">Access is restricted to authorized admins only.</p>
+        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground pt-2 block">← Back to Home</Link>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Admin Component ─────────────────────────────────────────────────────
 export default function Admin() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [user, setUser]           = useState<AdminUser | null>(null);
+  const [checking, setChecking]   = useState(true);
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [dbOk, setDbOk] = useState(true);
-
-  const [reports, setReports] = useState<{ id: string; message: string; resolved: boolean }[]>([]);
-  const [loadingReports, setLoadingReports] = useState(true);
-
+  const [stats, setStats]   = useState<DashboardStats | null>(null);
+  const [dbOk,  setDbOk]   = useState(true);
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
-
-  const [pendingList, setPendingList] = useState<PendingItem[]>([]);
-  const [loadingPending, setLoadingPending] = useState(true);
 
   const [semester, setSemester] = useState("");
   const [subject,  setSubject]  = useState("");
-  const [year, setYear] = useState("");
+  const [year,     setYear]     = useState("");
   const [evalType, setEvalType] = useState("");
-
-  const [section, setSection]  = useState("");
+  const [section,  setSection]  = useState("");
   const [question, setQuestion] = useState("");
 
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openDialog,    setOpenDialog]    = useState(false);
   const [questionsList, setQuestionsList] = useState<QuestionItem[]>([]);
   const [editingIndex,  setEditingIndex]  = useState<number | null>(null);
-  const [editText, setEditText] = useState("");
+  const [editText,      setEditText]      = useState("");
   const [searchSection, setSearchSection] = useState("");
-  const [searchYear, setSearchYear] = useState("");
-  const [searchEval, setSearchEval] = useState("");
+  const [searchYear,    setSearchYear]    = useState("");
+  const [searchEval,    setSearchEval]    = useState("");
 
+  // Check if already logged in on mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+    getMe().then((u) => {
       setUser(u);
-      if (u?.email) {
-        const adminSnap = await getDoc(doc(db, "admins", u.email));
-        const ok = adminSnap.exists();
-        setIsAdmin(ok);
-        if (ok) {
-          loadReports();
-          loadActivity();
-          loadStats();
-          loadPending();
-        }
-      } else {
-        setIsAdmin(false);
+      setChecking(false);
+      if (u) {
+        loadStats();
+        loadActivity();
       }
     });
-    return unsubscribe;
   }, []);
-
-  const handleLogin  = async () => {
-    if (!auth || !provider) { toast.error("Firebase is not configured properly."); return; }
-    await signInWithPopup(auth, provider);
-  };
-  
-  const handleLogout = () => signOut(auth);
 
   const loadStats = async () => {
     try {
@@ -243,156 +211,69 @@ export default function Admin() {
   };
 
   const loadActivity = async () => {
-    try {
-      const q    = query(collection(db, "activityLog"), orderBy("createdAt", "desc"), limit(8));
-      const snap = await getDocs(q);
-      const entries: ActivityEntry[] = [];
-      snap.forEach((d) => entries.push({
-        id: d.id,
-        message: d.data().message,
-        timestamp: d.data().createdAt?.toDate?.() ?? null,
-      }));
-      setActivity(entries);
-    } catch { /* Never breaks production */ }
+    const entries = await fetchActivity(8);
+    setActivity(entries);
   };
 
-  const loadReports = async () => {
-    try {
-      const q    = query(collection(db, "reports"), where("resolved", "==", false), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      const data: { id: string; message: string; resolved: boolean }[] = [];
-      snap.forEach((d) => data.push({ id: d.id, message: d.data().message, resolved: d.data().resolved ?? false }));
-      setReports(data);
-    } catch {
-      toast.error("Failed to load reports");
-    } finally {
-      setLoadingReports(false);
-    }
+  const handleLogin = (u: AdminUser) => {
+    setUser(u);
+    loadStats();
+    loadActivity();
   };
 
-  const loadPending = async () => {
-    setLoadingPending(true);
-    try {
-      const snap = await getDocs(collection(db, "pending"));
-      const data: PendingItem[] = [];
-      snap.forEach((d) => {
-        const raw = d.data();
-        data.push({
-          id: d.id,
-          semester: raw.semester ?? "",
-          year: raw.year ?? "",
-          subject: raw.subject ?? "",
-          question: raw.question ?? "",
-          section: raw.section ?? "",
-          evaluationType: raw.evaluationType ?? "",
-          status: raw.status ?? "pending",
-          submittedAt: raw.submittedAt?.toDate?.() ?? null,
-        });
-      });
-      data.sort((a, b) => (b.submittedAt?.getTime() ?? 0) - (a.submittedAt?.getTime() ?? 0));
-      setPendingList(data);
-    } catch {
-      toast.error("Failed to load pending questions");
-    } finally {
-      setLoadingPending(false);
-    }
-  };
-
-  const handleApprovePending = async (item: PendingItem) => {
-    try {
-      const semLabel  = item.semester;
-      const evalLabel = evaluationLabelMap[item.evaluationType] ?? item.evaluationType;
-      const section   = item.section;
-      const docId     = `${semLabel}_${item.subject}_${item.year}_${evalLabel}_${section}`;
-      const docRef    = doc(db, "questions", docId);
-      const docSnap   = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        await updateDoc(docRef, { questions: arrayUnion(item.question) });
-      } else {
-        await setDoc(docRef, {
-          semester:   semLabel,
-          subject:    item.subject,
-          year:       item.year,
-          evaluation: evalLabel,
-          section,
-          questions:  [item.question],
-          createdAt:  new Date(),
-        });
-      }
-
-      await deleteDoc(doc(db, "pending", item.id));
-      setPendingList((prev) => prev.filter((p) => p.id !== item.id));
-      await incrementQuestionCount();
-      setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
-      const msg = `${user.email.replace(/@.*/, "")} approved a pending question from ${semLabel} — ${item.subject} (${evalLabel}, §${section})`;
-      await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
-      toast.success("Question approved and added!");
-    } catch {
-      toast.error("Approval failed");
-    }
-  };
-
-  const handleRejectPending = async (item: PendingItem) => {
-    try {
-      await deleteDoc(doc(db, "pending", item.id));
-      setPendingList((prev) => prev.filter((p) => p.id !== item.id));
-      const msg = `${user.email.replace(/@.*/, "")} rejected a pending question from ${item.semester} — ${item.subject}`;
-      await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
-      toast.success("Question rejected and removed");
-    } catch {
-      toast.error("Rejection failed");
-    }
+  const handleLogout = () => {
+    logout();
+    setUser(null);
+    setStats(null);
+    setActivity([]);
   };
 
   const handleAddQuestion = async () => {
     if (!semester || !subject || !year || !evalType || !section || !question) {
       toast.error("Please fill all fields"); return;
     }
-    try {
-      const semLabel  = `Semester ${semester}`;
-      const evalLabel = evaluationLabelMap[evalType];
-      const docId     = `${semLabel}_${subject}_${year}_${evalLabel}_${section}`;
-      const docRef    = doc(db, "questions", docId);
-      const docSnap   = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        await updateDoc(docRef, { questions: arrayUnion(question) });
-      } else {
-        await setDoc(docRef, { semester: semLabel, subject, year, evaluation: evalLabel, section, questions: [question], createdAt: new Date() });
-      }
-      const msg = `${user.email.replace(/@.*/, "")} added a question in ${semLabel} — ${subject} (${evalLabel}, ${section})`;
-      await logActivity(msg);
-      await incrementQuestionCount();
-      setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+    const evalLabel = evaluationLabelMap[evalType];
+    const ok = await addQuestion({
+      semester: `Semester ${semester}`,
+      subject,
+      evaluation: evalLabel,
+      section,
+      year,
+      question,
+    });
+    if (ok) {
       setQuestion("");
       toast.success("Question added successfully!");
-    } catch {
-      toast.error("Permission denied");
+      loadStats();
+      loadActivity();
     }
   };
 
-  const fetchQuestions = async () => {
+  const fetchQuestionsForManage = async () => {
     if (!semester || !subject) { toast.error("Select at least semester and subject"); return; }
     try {
-      const constraints: Parameters<typeof query>[1][] = [
-        where("semester", "==", `Semester ${semester}`),
-        where("subject",  "==", subject),
-      ];
-      if (year)     constraints.push(where("year",       "==", year));
-      if (evalType) constraints.push(where("evaluation", "==", evaluationLabelMap[evalType]));
-
-      const snap = await getDocs(query(collection(db, "questions"), ...constraints));
-      const all: QuestionItem[] = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        (data.questions ?? []).forEach((q: string) =>
-          all.push({ text: q, docId: d.id, section: data.section ?? "", year: data.year ?? "", evaluation: data.evaluation ?? "" })
-        );
+      const evalLabel = evalType ? evaluationLabelMap[evalType] : undefined;
+      const sets: QuestionSet[] = await fetchQuestionSets({
+        semester: `Semester ${semester}`,
+        subject,
+        ...(evalLabel ? { evaluation: evalLabel } : {}),
+        ...(year ? { year } : {}),
       });
+
+      const all: QuestionItem[] = [];
+      sets.forEach((s) => {
+        s.questions.forEach((q) => {
+          all.push({
+            text:       q.question_text,
+            setId:      s.id,
+            section:    s.section,
+            year:       s.year,
+            evaluation: s.evaluation,
+            allInSet:   s.questions,
+          });
+        });
+      });
+
       setQuestionsList(all);
       setSearchSection(""); setSearchYear(""); setSearchEval("");
       if (all.length === 0) toast.error("No questions found");
@@ -403,51 +284,28 @@ export default function Admin() {
   };
 
   const handleDeleteQuestion = async (item: QuestionItem) => {
-    try {
-      await deleteQuestion(item.docId, item.text);
-      setQuestionsList((prev) => prev.filter((q) => !(q.text === item.text && q.docId === item.docId)));
-      const msg = `${user.email.replace(/@.*/, "")} deleted a question from ${item.docId}`;
-      await logActivity(msg);
-      await decrementQuestionCount();
-      setStats((prev) => prev ? { ...prev, totalQuestions: Math.max(0, prev.totalQuestions - 1) } : prev);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+    const ok = await deleteQuestion(item.setId, item.text, item.allInSet);
+    if (ok) {
+      setQuestionsList((prev) =>
+        prev.filter((q) => !(q.text === item.text && q.setId === item.setId))
+      );
       toast.success("Question deleted");
-    } catch {
-      toast.error("Delete failed");
+      loadStats();
+      loadActivity();
     }
   };
 
   const handleEditSave = async (item: QuestionItem, index: number) => {
     if (!editText.trim()) { toast.error("Question cannot be empty"); return; }
     if (editText.trim() === item.text) { setEditingIndex(null); return; }
-    try {
-      const ref = doc(db, "questions", item.docId);
-      await updateDoc(ref, { questions: arrayRemove(item.text) });
-      await updateDoc(ref, { questions: arrayUnion(editText.trim()) });
-      setQuestionsList((prev) => prev.map((q, i) => i === index ? { ...q, text: editText.trim() } : q));
-      const msg = `${user.email.replace(/@.*/, "")} edited a question in ${item.docId}`;
-      await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+    const ok = await editQuestion(item.setId, item.text, editText.trim(), item.allInSet);
+    if (ok) {
+      setQuestionsList((prev) =>
+        prev.map((q, i) => i === index ? { ...q, text: editText.trim() } : q)
+      );
       setEditingIndex(null);
       toast.success("Question updated");
-    } catch {
-      toast.error("Update failed");
-    }
-  };
-
-  const startEdit  = (item: QuestionItem, index: number) => { setEditingIndex(index); setEditText(item.text); };
-  const cancelEdit = () => setEditingIndex(null);
-
-  const resolveReport = async (id: string) => {
-    try {
-      await updateDoc(doc(db, "reports", id), { resolved: true });
-      setReports((prev) => prev.filter((r) => r.id !== id));
-      const msg = `Report #${id.slice(0, 6)} resolved by ${user.email.replace(/@.*/, "")}`;
-      await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
-      toast.success("Report resolved");
-    } catch {
-      toast.error("Failed to resolve report");
+      loadActivity();
     }
   };
 
@@ -456,34 +314,8 @@ export default function Admin() {
     return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "—";
-    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-  };
-
-  if (!user) {
-    return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center bg-background">
-        <h2 className="absolute top-20 text-4xl md:text-6xl font-black tracking-[0.5em] uppercase text-red-600 animate-pulse drop-shadow-[0_0_30px_rgba(255,0,0,1)] text-center px-4">
-          YOU THOUGHT THAT WOULD WORK? 😼
-        </h2>
-        <div className="w-[380px] bg-card border border-border shadow-sm rounded-2xl p-8 space-y-6 text-center">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Admin Portal</h1>
-            <p className="text-sm text-muted-foreground">Sign in with your Google account to continue</p>
-          </div>
-          <Button onClick={handleLogin} className="w-full h-11 flex items-center justify-center gap-3">
-            <img src="/google.webp" className="w-5 h-5" alt="Google" />
-            Continue with Google
-          </Button>
-          <p className="text-xs text-muted-foreground">Access is restricted to authorized admins only.</p>
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground pt-10">← Back to Home</Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (isAdmin === null) {
+  // ── Auth states ──────────────────────────────────────────────────────────
+  if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3 text-muted-foreground text-sm">
@@ -494,21 +326,15 @@ export default function Admin() {
     );
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <h2 className="text-xl font-semibold">Access Denied</h2>
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">Redirect back to Home 😂</Link>
-      </div>
-    );
-  }
+  if (!user) return <LoginScreen onLogin={handleLogin} />;
 
-  const navItems: { id: View; label: string; icon: React.ReactNode; badge?: number }[] = [
+  // ── Nav ──────────────────────────────────────────────────────────────────
+  const navItems: { id: View; label: string; icon: React.ReactNode }[] = [
     { id: "dashboard", label: "Dashboard",       icon: <LayoutDashboard className="h-4 w-4" /> },
     { id: "add",       label: "Add Data",         icon: <PlusCircle      className="h-4 w-4" /> },
     { id: "manage",    label: "Manage Questions", icon: <BookOpen        className="h-4 w-4" /> },
-    { id: "pending",   label: "Pending",          icon: <Clock           className="h-4 w-4" />, badge: pendingList.length || undefined },
-    { id: "reports",   label: "Reports",          icon: <Flag            className="h-4 w-4" />, badge: reports.length || undefined },
+    { id: "pending",   label: "Pending",          icon: <Clock           className="h-4 w-4" /> },
+    { id: "reports",   label: "Reports",          icon: <Flag            className="h-4 w-4" /> },
   ];
 
   const SidebarContent = () => (
@@ -528,11 +354,6 @@ export default function Admin() {
           >
             {item.icon}
             {item.label}
-            {item.badge ? (
-              <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
-                {item.badge}
-              </span>
-            ) : null}
           </button>
         ))}
       </nav>
@@ -570,7 +391,6 @@ export default function Admin() {
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
@@ -591,7 +411,6 @@ export default function Admin() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 px-4 sm:px-6 py-6 space-y-6 overflow-auto">
 
           {/* DASHBOARD */}
@@ -604,10 +423,10 @@ export default function Admin() {
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { label: "Total Questions",    value: stats?.totalQuestions ?? "—", sub: "across all semesters" },
-                  { label: "Active Evaluators",  value: stats?.activeEvals    ?? "—", sub: "evals with questions" },
-                  { label: "Pending Submissions",value: pendingList.length,           sub: "awaiting your review" },
-                  { label: "Open Reports",       value: reports.length,               sub: "unresolved issues"    },
+                  { label: "Total Questions",     value: stats?.totalQuestions     ?? "—", sub: "across all semesters" },
+                  { label: "Active Evaluators",   value: stats?.active_evaluators  ?? "—", sub: "evals with questions" },
+                  { label: "Pending Submissions", value: stats?.pending_submissions ?? "—", sub: "awaiting your review" },
+                  { label: "Open Reports",        value: stats?.open_reports       ?? "—", sub: "unresolved issues"    },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-card border border-border rounded-xl p-4 space-y-1">
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -645,7 +464,7 @@ export default function Admin() {
                   </button>
                 </div>
                 {activity.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-6 text-center">No recent activity yet — actions will appear here</p>
+                  <p className="text-xs text-muted-foreground py-6 text-center">No recent activity yet</p>
                 ) : (
                   <div className="space-y-3">
                     {activity.map((a) => (
@@ -679,7 +498,7 @@ export default function Admin() {
                 />
                 <input
                   className="mt-1 w-full h-10 rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="Section (e.g. A, B, C)"
+                  placeholder="Section (e.g. CCE-A, IT-B)"
                   value={section}
                   onChange={(e) => setSection(e.target.value)}
                 />
@@ -711,7 +530,9 @@ export default function Admin() {
                   year={year}         setYear={setYear}
                   evalType={evalType} setEvalType={setEvalType}
                 />
-                <Button variant="secondary" className="w-full mt-1" onClick={fetchQuestions}>Load Questions</Button>
+                <Button variant="secondary" className="w-full mt-1" onClick={fetchQuestionsForManage}>
+                  Load Questions
+                </Button>
               </SectionCard>
 
               <Dialog open={openDialog} onOpenChange={(open) => { setOpenDialog(open); if (!open) setEditingIndex(null); }}>
@@ -777,7 +598,7 @@ export default function Admin() {
                                     rows={3} value={editText} onChange={(e) => setEditText(e.target.value)} autoFocus
                                   />
                                   <div className="flex gap-2 justify-end">
-                                    <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-muted-foreground" onClick={cancelEdit}>
+                                    <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-muted-foreground" onClick={() => setEditingIndex(null)}>
                                       <X className="h-3.5 w-3.5" /> Cancel
                                     </Button>
                                     <Button size="sm" className="h-7 text-xs gap-1" onClick={() => handleEditSave(item, questionsList.indexOf(item))}>
@@ -797,10 +618,12 @@ export default function Admin() {
                                     </div>
                                   </div>
                                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => startEdit(item, questionsList.indexOf(item))}>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                      onClick={() => { setEditingIndex(questionsList.indexOf(item)); setEditText(item.text); }}>
                                       <Pencil className="h-3.5 w-3.5" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-500/10" onClick={() => handleDeleteQuestion(item)}>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                      onClick={() => handleDeleteQuestion(item)}>
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
                                   </div>
@@ -817,124 +640,34 @@ export default function Admin() {
             </>
           )}
 
-          {/* PENDING */}
+          {/* PENDING — not in MySQL backend yet, show placeholder */}
           {activeView === "pending" && (
             <>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-xl font-bold">Pending Questions</h1>
-                  <p className="text-sm text-muted-foreground mt-0.5">Review and approve or reject student submissions</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={loadPending} className="text-xs">
-                  Refresh
-                </Button>
+              <div>
+                <h1 className="text-xl font-bold">Pending Questions</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">Review and approve or reject student submissions</p>
               </div>
-
-              {loadingPending ? (
-                <div className="flex justify-center py-20">
-                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : pendingList.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center gap-2">
-                  <span className="text-3xl">✅</span>
-                  <p className="text-sm font-medium">All clear</p>
-                  <p className="text-xs text-muted-foreground">No pending submissions to review</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {pendingList.map((item) => (
-                    <div key={item.id} className="border border-border rounded-xl bg-card p-4 space-y-3 flex flex-col">
-                      {/* Parameters */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-xs font-medium">
-                          {item.semester}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">
-                          {item.subject}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-xs font-medium">
-                          {item.section}
-                        </span>
-                        {item.evaluationType && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 text-xs font-medium">
-                            {evaluationLabelMap[item.evaluationType] ?? item.evaluationType}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">
-                          {item.year}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-500 text-xs font-medium">
-                          <Clock className="h-3 w-3 mr-1" /> Pending
-                        </span>
-                      </div>
-
-                      {/* Question */}
-                      <p className="text-sm leading-relaxed flex-1">{item.question}</p>
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-1 border-t border-border">
-                        <p className="text-xs text-muted-foreground">{formatDate(item.submittedAt)}</p>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-xs gap-1 text-red-500 hover:text-red-500 hover:bg-red-500/10"
-                            onClick={() => handleRejectPending(item)}
-                          >
-                            <XCircle className="h-3.5 w-3.5" /> Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="h-7 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => handleApprovePending(item)}
-                          >
-                            <CheckCircle className="h-3.5 w-3.5" /> Approve
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-col items-center justify-center py-20 text-center gap-2">
+                <span className="text-3xl">✅</span>
+                <p className="text-sm font-medium">All clear</p>
+                <p className="text-xs text-muted-foreground">Pending submissions feature coming soon</p>
+              </div>
             </>
           )}
 
-          {/* REPORTS */}
+          {/* REPORTS — not in MySQL backend yet, show placeholder */}
           {activeView === "reports" && (
             <>
               <div>
                 <h1 className="text-xl font-bold">Reports</h1>
                 <p className="text-sm text-muted-foreground mt-0.5">Unresolved issues submitted by users</p>
               </div>
-              <SectionCard
-                title="User Reports"
-                action={<span className="text-xs text-muted-foreground">{reports.length} active</span>}
-              >
-                {loadingReports ? (
-                  <div className="flex justify-center py-10">
-                    <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : reports.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
-                    <span className="text-2xl">✅</span>
-                    <p className="text-sm font-medium">All clear</p>
-                    <p className="text-xs text-muted-foreground">No unresolved reports</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {reports.map((r) => (
-                      <div key={r.id} className="group flex items-start gap-3 border border-border rounded-lg p-3.5 hover:bg-muted/40 transition-colors">
-                        <div className="flex-1 space-y-0.5 min-w-0">
-                          <p className="text-sm leading-relaxed">{r.message}</p>
-                          <p className="text-xs text-muted-foreground font-mono">#{r.id.slice(0, 8)}</p>
-                        </div>
-                        <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs gap-1" onClick={() => resolveReport(r.id)}>
-                          Resolve <ChevronRight className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <SectionCard title="User Reports" action={<span className="text-xs text-muted-foreground">0 active</span>}>
+                <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                  <span className="text-2xl">✅</span>
+                  <p className="text-sm font-medium">All clear</p>
+                  <p className="text-xs text-muted-foreground">Reports feature coming soon</p>
+                </div>
               </SectionCard>
             </>
           )}

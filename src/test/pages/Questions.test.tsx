@@ -34,7 +34,7 @@ jest.mock("react-router-dom", () => ({
 
 import { render, screen, waitFor } from "@testing-library/react";
 import Questions from "../../pages/Questions";
-import { fetchQuestionsFromFirebase } from "@/firebase/getQuestions";
+import { fetchQuestionsFromFirebase } from "@/api/getQuestions";
 
 describe("Questions Page", () => {
   const mockedFetch = fetchQuestionsFromFirebase as jest.Mock;
