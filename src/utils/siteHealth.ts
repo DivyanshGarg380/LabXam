@@ -1,11 +1,10 @@
-type ServiceStatus = {
+export type ServiceStatus = {
   name: string;
   status: "UP" | "DOWN";
   responseTime?: number;
 };
 
-// ✅ This function was missing — restore it
-async function checkEndpoint(url: string): Promise<ServiceStatus> {
+export async function checkEndpoint(url: string): Promise<ServiceStatus> {
   const start = performance.now();
 
   try {
@@ -25,7 +24,6 @@ async function checkEndpoint(url: string): Promise<ServiceStatus> {
   }
 }
 
-// ✅ Main function (unchanged logic)
 export async function getSiteHealth() {
   const endpoints = [
     "/",
@@ -38,9 +36,8 @@ export async function getSiteHealth() {
 
   const endpointChecks = endpoints.map((url) => checkEndpoint(url));
 
-  const results = await Promise.all([
-    ...endpointChecks
-  ]);
+  const results = await Promise.all(endpointChecks);
 
   return results;
 }
+
