@@ -18,9 +18,9 @@ export const fetchQuestions = async (
         const { data, error } = await supabase
             .from("questions")
             .select("section, year, questions, uploaded_at")
-            .eq("semester", semester)
+            .eq("semester", `Semester ${semester}`)
             .eq("subject", subject)
-            .eq("evaluation", evaluation);
+            .eq("evaluation", evaluation.charAt(0).toUpperCase() + evaluation.slice(1));
 
         if(error) {
             toast.error("Error fecthing questions");
