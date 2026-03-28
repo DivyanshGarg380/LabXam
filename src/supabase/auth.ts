@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
+
 
 export const signInWithGoogle = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
@@ -21,7 +23,9 @@ export const getSession = async () => {
   return session;
 };
 
-export const onAuthStateChange = (callback: (user: any) => void) => {
+
+
+export const onAuthStateChange = (callback: (user: User | null) => void) => {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     (_event, session) => {
       callback(session?.user ?? null);
