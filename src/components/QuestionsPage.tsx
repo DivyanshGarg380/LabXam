@@ -11,7 +11,7 @@ interface QuestionsPageProps {
     question: string;
     section: string;
     year: string;
-    uploadedAt: number;
+    uploaded_at: number;
   }[];
   onBack?: () => void;
 }
@@ -71,7 +71,7 @@ export function QuestionsPage({
         {/* Questions List */}
         {questions.length > 0 ? (
           <div className="space-y-4 pt-2">
-           {questions.map(({ question, section, year, uploadedAt}, index) => (
+           {questions.map(({ question, section, year, uploaded_at}, index) => (
               <div
                 key={`${index}-${question.slice(0, 20)}`}
                 style={{ animationDelay: `${index * 50}ms` }}
@@ -81,7 +81,7 @@ export function QuestionsPage({
                   question={question}
                   section={section}
                   year={year}
-                  uploadedAt={uploadedAt}
+                  uploadedAt={uploaded_at}
                 />
               </div>
             ))}

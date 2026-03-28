@@ -7,7 +7,7 @@ import {
   deleteOldResolvedReports,
   sendReport,
   fetchMyReports,
-} from "@/firebase/report";
+} from "@/supabase/reports";
 import { CheckCircle2, Clock, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -59,7 +59,7 @@ export default function Report() {
     if (id) {
       setMessage("");
       toast.success("Report submitted. We'll look into it :)");
-      await loadReports(); // refresh list to show new report
+      await loadReports();
     }
   };
 

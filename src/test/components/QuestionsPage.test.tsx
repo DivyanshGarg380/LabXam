@@ -13,7 +13,7 @@ describe("QuestionsPage", () => {
             question: "What is fork()?",
             section: "SectionA",
             year: "2024",
-            uploadedAt: Date.now(),
+            uploaded_at: Date.now(),
           },
         ]}
         onBack={() => {}}

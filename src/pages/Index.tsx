@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
-import { trackPageView } from "@/firebase/metric";
+import { trackPageView } from "@/supabase/metric";
 
 const semesters = [
   { value: "1", label: "Semester 1" },

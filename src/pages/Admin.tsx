@@ -1,35 +1,14 @@
 import { useEffect, useState } from "react";
-import { auth, provider, db } from "@/firebase/config";
-import { deleteQuestion } from "@/firebase/deleteQuestion";
-import {
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut,
-  User,
-} from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  limit,
-  deleteDoc,
-} from "firebase/firestore";
-import {
-  fetchDashboardStats,
-  incrementQuestionCount,
-  decrementQuestionCount,
-  type DashboardStats,
-} from "@/firebase/metric";
+import { signInWithGoogle, signOut, onAuthStateChange, isAdmin as checkIsAdmin } from "@/supabase/auth";
+import { fetchDashboardStats, type DashboardStats } from "@/supabase/metric";
+import { fetchActivityLog, logActivity } from "@/supabase/activityLog";
+import { fetchReports, resolveReport as resolveReportFn } from "@/supabase/reports";
+import { fetchPending, approvePending, rejectPending } from "@/supabase/pending";
+import { addQuestion } from "@/supabase/addQuestion";
+import { fetchAdminQuestions, type AdminQuestionItem } from "@/supabase/fetchAdminQuestions";
+import { deleteQuestion } from "@/supabase/deleteQuestion";
+import { updateQuestion } from "@/supabase/updateQuestion";
+import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -53,11 +32,12 @@ import {
   Database, Server, AlertCircle, BookOpen,
   Clock, CheckCircle, XCircle,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 type Subject       = { value: string; label: string };
 type SubjectsMap   = { [semester: string]: Subject[] };
 type EvaluationMap = { [semester: string]: string[] };
-type QuestionItem  = { text: string; docId: string; section: string; year: string; evaluation: string };
+type QuestionItem  = { text: string; rowId: string; section: string; year: string; evaluation: string };
 type View          = "dashboard" | "add" | "manage" | "reports" | "pending";
 type ActivityEntry = { id: string; message: string; timestamp: Date | null };
 type PendingItem   = {
@@ -115,12 +95,6 @@ const evaluationLabelMap: Record<string, string> = {
   "eval-1": "Internal Evaluation 1",
   "eval-2": "Internal Evaluation 2",
   endsem:   "Endsem",
-};
-
-const logActivity = async (message: string) => {
-  try {
-    await addDoc(collection(db, "activityLog"), { message, createdAt: serverTimestamp() });
-  } catch { /* Never breaks production */ }
 };
 
 function SectionCard({ title, description, action, children }: {
@@ -205,12 +179,36 @@ export default function Admin() {
   const [searchYear, setSearchYear] = useState("");
   const [searchEval, setSearchEval] = useState("");
 
+  const [authLoading, setAuthLoading] = useState(true);
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const u = session?.user ?? null;
+      setUser(u);
+
+      if (u?.email) {
+        const ok = await checkIsAdmin(u.email);
+        setIsAdmin(ok);
+        if (ok) {
+          loadReports();
+          loadActivity();
+          loadStats();
+          loadPending();
+        }
+      } else {
+        setIsAdmin(false);
+      }
+      setAuthLoading(false); 
+    };
+
+    init();
+
+    const subscription = onAuthStateChange(async (u: User | null) => {
+      if (authLoading) return; 
       setUser(u);
       if (u?.email) {
-        const adminSnap = await getDoc(doc(db, "admins", u.email));
-        const ok = adminSnap.exists();
+        const ok = await checkIsAdmin(u.email);
         setIsAdmin(ok);
         if (ok) {
           loadReports();
@@ -222,15 +220,23 @@ export default function Admin() {
         setIsAdmin(false);
       }
     });
-    return unsubscribe;
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogin  = async () => {
-    if (!auth || !provider) { toast.error("Firebase is not configured properly."); return; }
-    await signInWithPopup(auth, provider);
+    try {
+      await signInWithGoogle();
+    } catch {
+      toast.error("Sign in failed. Please try again.");
+    }
   };
-  
-  const handleLogout = () => signOut(auth);
+
+  const handleLogout = async () => {
+    await signOut();
+    setUser(null);
+    setIsAdmin(false);
+  };
 
   const loadStats = async () => {
     try {
@@ -244,24 +250,14 @@ export default function Admin() {
 
   const loadActivity = async () => {
     try {
-      const q    = query(collection(db, "activityLog"), orderBy("createdAt", "desc"), limit(8));
-      const snap = await getDocs(q);
-      const entries: ActivityEntry[] = [];
-      snap.forEach((d) => entries.push({
-        id: d.id,
-        message: d.data().message,
-        timestamp: d.data().createdAt?.toDate?.() ?? null,
-      }));
+      const entries = await fetchActivityLog();
       setActivity(entries);
     } catch { /* Never breaks production */ }
   };
 
   const loadReports = async () => {
     try {
-      const q    = query(collection(db, "reports"), where("resolved", "==", false), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      const data: { id: string; message: string; resolved: boolean }[] = [];
-      snap.forEach((d) => data.push({ id: d.id, message: d.data().message, resolved: d.data().resolved ?? false }));
+      const data = await fetchReports();
       setReports(data);
     } catch {
       toast.error("Failed to load reports");
@@ -273,23 +269,7 @@ export default function Admin() {
   const loadPending = async () => {
     setLoadingPending(true);
     try {
-      const snap = await getDocs(collection(db, "pending"));
-      const data: PendingItem[] = [];
-      snap.forEach((d) => {
-        const raw = d.data();
-        data.push({
-          id: d.id,
-          semester: raw.semester ?? "",
-          year: raw.year ?? "",
-          subject: raw.subject ?? "",
-          question: raw.question ?? "",
-          section: raw.section ?? "",
-          evaluationType: raw.evaluationType ?? "",
-          status: raw.status ?? "pending",
-          submittedAt: raw.submittedAt?.toDate?.() ?? null,
-        });
-      });
-      data.sort((a, b) => (b.submittedAt?.getTime() ?? 0) - (a.submittedAt?.getTime() ?? 0));
+      const data = await fetchPending();
       setPendingList(data);
     } catch {
       toast.error("Failed to load pending questions");
@@ -300,32 +280,15 @@ export default function Admin() {
 
   const handleApprovePending = async (item: PendingItem) => {
     try {
-      const semLabel  = item.semester;
       const evalLabel = evaluationLabelMap[item.evaluationType] ?? item.evaluationType;
-      const section   = item.section;
-      const docId     = `${semLabel}_${item.subject}_${item.year}_${evalLabel}_${section}`;
-      const docRef    = doc(db, "questions", docId);
-      const docSnap   = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        await updateDoc(docRef, { questions: arrayUnion(item.question) });
-      } else {
-        await setDoc(docRef, {
-          semester:   semLabel,
-          subject:    item.subject,
-          year:       item.year,
-          evaluation: evalLabel,
-          section,
-          questions:  [item.question],
-          createdAt:  new Date(),
-        });
-      }
-
-      await deleteDoc(doc(db, "pending", item.id));
+      const success = await approvePending(
+        { ...item, evaluationType: evalLabel },
+        item.question
+      );
+      if (!success) { toast.error("Approval failed"); return; }
       setPendingList((prev) => prev.filter((p) => p.id !== item.id));
-      await incrementQuestionCount();
       setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
-      const msg = `${user.email.replace(/@.*/, "")} approved a pending question from ${semLabel} — ${item.subject} (${evalLabel}, §${section})`;
+      const msg = `${user.email.replace(/@.*/, "")} approved a pending question from ${item.semester} — ${item.subject} (${evalLabel}, §${item.section})`;
       await logActivity(msg);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       toast.success("Question approved and added!");
@@ -336,7 +299,7 @@ export default function Admin() {
 
   const handleRejectPending = async (item: PendingItem) => {
     try {
-      await deleteDoc(doc(db, "pending", item.id));
+      await rejectPending(item.id);
       setPendingList((prev) => prev.filter((p) => p.id !== item.id));
       const msg = `${user.email.replace(/@.*/, "")} rejected a pending question from ${item.semester} — ${item.subject}`;
       await logActivity(msg);
@@ -354,18 +317,10 @@ export default function Admin() {
     try {
       const semLabel  = `Semester ${semester}`;
       const evalLabel = evaluationLabelMap[evalType];
-      const docId     = `${semLabel}_${subject}_${year}_${evalLabel}_${section}`;
-      const docRef    = doc(db, "questions", docId);
-      const docSnap   = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        await updateDoc(docRef, { questions: arrayUnion(question) });
-      } else {
-        await setDoc(docRef, { semester: semLabel, subject, year, evaluation: evalLabel, section, questions: [question], createdAt: new Date() });
-      }
+      const success = await addQuestion(semLabel, subject, evalLabel, section, year, question);
+      if (!success) { toast.error("Permission denied"); return; }
       const msg = `${user.email.replace(/@.*/, "")} added a question in ${semLabel} — ${subject} (${evalLabel}, ${section})`;
       await logActivity(msg);
-      await incrementQuestionCount();
       setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       setQuestion("");
@@ -378,21 +333,16 @@ export default function Admin() {
   const fetchQuestions = async () => {
     if (!semester || !subject) { toast.error("Select at least semester and subject"); return; }
     try {
-      const constraints: Parameters<typeof query>[1][] = [
-        where("semester", "==", `Semester ${semester}`),
-        where("subject",  "==", subject),
-      ];
-      if (year)     constraints.push(where("year",       "==", year));
-      if (evalType) constraints.push(where("evaluation", "==", evaluationLabelMap[evalType]));
-
-      const snap = await getDocs(query(collection(db, "questions"), ...constraints));
-      const all: QuestionItem[] = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        (data.questions ?? []).forEach((q: string) =>
-          all.push({ text: q, docId: d.id, section: data.section ?? "", year: data.year ?? "", evaluation: data.evaluation ?? "" })
-        );
-      });
+      const semLabel  = `Semester ${semester}`;
+      const evalLabel = evalType ? evaluationLabelMap[evalType] : undefined;
+      const data: AdminQuestionItem[] = await fetchAdminQuestions(semLabel, subject, year || undefined, evalLabel);
+      const all: QuestionItem[] = data.map((d) => ({
+        text:       d.text,
+        rowId:      d.rowId,
+        section:    d.section,
+        year:       d.year,
+        evaluation: d.evaluation,
+      }));
       setQuestionsList(all);
       setSearchSection(""); setSearchYear(""); setSearchEval("");
       if (all.length === 0) toast.error("No questions found");
@@ -404,11 +354,13 @@ export default function Admin() {
 
   const handleDeleteQuestion = async (item: QuestionItem) => {
     try {
-      await deleteQuestion(item.docId, item.text);
-      setQuestionsList((prev) => prev.filter((q) => !(q.text === item.text && q.docId === item.docId)));
-      const msg = `${user.email.replace(/@.*/, "")} deleted a question from ${item.docId}`;
+      await deleteQuestion(
+        item.rowId,
+        item.text,
+      );
+      setQuestionsList((prev) => prev.filter((q) => !(q.text === item.text && q.rowId === item.rowId)));
+      const msg = `${user.email.replace(/@.*/, "")} deleted a question from row ${item.rowId.slice(0, 8)}`;
       await logActivity(msg);
-      await decrementQuestionCount();
       setStats((prev) => prev ? { ...prev, totalQuestions: Math.max(0, prev.totalQuestions - 1) } : prev);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       toast.success("Question deleted");
@@ -421,11 +373,13 @@ export default function Admin() {
     if (!editText.trim()) { toast.error("Question cannot be empty"); return; }
     if (editText.trim() === item.text) { setEditingIndex(null); return; }
     try {
-      const ref = doc(db, "questions", item.docId);
-      await updateDoc(ref, { questions: arrayRemove(item.text) });
-      await updateDoc(ref, { questions: arrayUnion(editText.trim()) });
+      await updateQuestion(
+        item.rowId,
+        item.text,
+        editText.trim()
+      );
       setQuestionsList((prev) => prev.map((q, i) => i === index ? { ...q, text: editText.trim() } : q));
-      const msg = `${user.email.replace(/@.*/, "")} edited a question in ${item.docId}`;
+      const msg = `${user.email.replace(/@.*/, "")} edited a question in row ${item.rowId.slice(0, 8)}`;
       await logActivity(msg);
       setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
       setEditingIndex(null);
@@ -438,9 +392,9 @@ export default function Admin() {
   const startEdit  = (item: QuestionItem, index: number) => { setEditingIndex(index); setEditText(item.text); };
   const cancelEdit = () => setEditingIndex(null);
 
-  const resolveReport = async (id: string) => {
+  const handleResolveReport = async (id: string) => {
     try {
-      await updateDoc(doc(db, "reports", id), { resolved: true });
+      await resolveReportFn(id);
       setReports((prev) => prev.filter((r) => r.id !== id));
       const msg = `Report #${id.slice(0, 6)} resolved by ${user.email.replace(/@.*/, "")}`;
       await logActivity(msg);
@@ -460,6 +414,17 @@ export default function Admin() {
     if (!date) return "—";
     return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-3 text-muted-foreground text-sm">
+          <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -555,12 +520,10 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-border sticky top-0 h-screen overflow-y-auto">
         <SidebarContent />
       </aside>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
@@ -570,9 +533,7 @@ export default function Admin() {
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
         <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
           <div className="h-14 px-4 sm:px-6 flex items-center gap-3">
             <button className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors" onClick={() => setSidebarOpen(true)}>
@@ -591,10 +552,8 @@ export default function Admin() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 px-4 sm:px-6 py-6 space-y-6 overflow-auto">
 
-          {/* DASHBOARD */}
           {activeView === "dashboard" && (
             <>
               <div>
@@ -663,7 +622,6 @@ export default function Admin() {
             </>
           )}
 
-          {/* ADD QUESTION */}
           {activeView === "add" && (
             <>
               <div>
@@ -697,7 +655,6 @@ export default function Admin() {
             </>
           )}
 
-          {/* MANAGE QUESTIONS */}
           {activeView === "manage" && (
             <>
               <div>
@@ -817,7 +774,6 @@ export default function Admin() {
             </>
           )}
 
-          {/* PENDING */}
           {activeView === "pending" && (
             <>
               <div className="flex items-center justify-between">
@@ -844,50 +800,28 @@ export default function Admin() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {pendingList.map((item) => (
                     <div key={item.id} className="border border-border rounded-xl bg-card p-4 space-y-3 flex flex-col">
-                      {/* Parameters */}
                       <div className="flex flex-wrap gap-1.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-xs font-medium">
-                          {item.semester}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">
-                          {item.subject}
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-xs font-medium">
-                          {item.section}
-                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-xs font-medium">{item.semester}</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-xs font-medium uppercase">{item.subject}</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-xs font-medium">{item.section}</span>
                         {item.evaluationType && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 text-xs font-medium">
                             {evaluationLabelMap[item.evaluationType] ?? item.evaluationType}
                           </span>
                         )}
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">
-                          {item.year}
-                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">{item.year}</span>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-500 text-xs font-medium">
                           <Clock className="h-3 w-3 mr-1" /> Pending
                         </span>
                       </div>
-
-                      {/* Question */}
                       <p className="text-sm leading-relaxed flex-1">{item.question}</p>
-
-                      {/* Footer */}
                       <div className="flex items-center justify-between pt-1 border-t border-border">
                         <p className="text-xs text-muted-foreground">{formatDate(item.submittedAt)}</p>
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-xs gap-1 text-red-500 hover:text-red-500 hover:bg-red-500/10"
-                            onClick={() => handleRejectPending(item)}
-                          >
+                          <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-red-500 hover:text-red-500 hover:bg-red-500/10" onClick={() => handleRejectPending(item)}>
                             <XCircle className="h-3.5 w-3.5" /> Reject
                           </Button>
-                          <Button
-                            size="sm"
-                            className="h-7 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => handleApprovePending(item)}
-                          >
+                          <Button size="sm" className="h-7 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprovePending(item)}>
                             <CheckCircle className="h-3.5 w-3.5" /> Approve
                           </Button>
                         </div>
@@ -899,7 +833,6 @@ export default function Admin() {
             </>
           )}
 
-          {/* REPORTS */}
           {activeView === "reports" && (
             <>
               <div>
@@ -928,7 +861,7 @@ export default function Admin() {
                           <p className="text-sm leading-relaxed">{r.message}</p>
                           <p className="text-xs text-muted-foreground font-mono">#{r.id.slice(0, 8)}</p>
                         </div>
-                        <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs gap-1" onClick={() => resolveReport(r.id)}>
+                        <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs gap-1" onClick={() => handleResolveReport(r.id)}>
                           Resolve <ChevronRight className="h-3 w-3" />
                         </Button>
                       </div>
