@@ -182,6 +182,9 @@ export default function Admin() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
+    const hasCode = window.location.search.includes("code=");
+    if (!hasCode) setAuthLoading(false); 
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const u = session?.user ?? null;
       setUser(u);
@@ -198,7 +201,7 @@ export default function Admin() {
       } else {
         setIsAdmin(false);
       }
-      setAuthLoading(false);
+      setAuthLoading(false); 
     });
 
     return () => subscription.unsubscribe();
