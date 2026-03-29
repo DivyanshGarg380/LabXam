@@ -183,14 +183,11 @@ export default function Admin() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth event:", event, session?.user?.email); // 👈 temp log
 
       if (session?.user) {
         const u = session.user;
         setUser(u);
-        console.log("Checking admin for: ", u.email);
         const ok = await checkIsAdmin(u.email!);
-        console.log("Is admin:", ok);
         setIsAdmin(ok);
         if (ok) {
           loadReports();
@@ -205,8 +202,6 @@ export default function Admin() {
         setAuthLoading(false);
       }
     });
-
-    
 
     return () => subscription.unsubscribe();
   }, []);
