@@ -182,11 +182,18 @@ export default function Admin() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const hasCode = window.location.search.includes("code=");
-    if (!hasCode) setAuthLoading(false); 
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const u = session?.user ?? null;
+      if (event === "INITIAL_SESSION" && !session) {
+        // No session at all — not logged in
+        setUser(null);
+        setIsAdmin(false);
+        setAuthLoading(false);
+        return;
+      }
+
+      if (!session) return; 
+
+      const u = session.user;
       setUser(u);
 
       if (u?.email) {
@@ -197,11 +204,11 @@ export default function Admin() {
           loadActivity();
           loadStats();
           loadPending();
+        } else {
+          setIsAdmin(false);
         }
-      } else {
-        setIsAdmin(false);
       }
-      setAuthLoading(false); 
+      setAuthLoading(false);
     });
 
     return () => subscription.unsubscribe();
