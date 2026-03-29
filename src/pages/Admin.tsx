@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { signInWithGoogle, signOut, onAuthStateChange, isAdmin as checkIsAdmin } from "@/supabase/auth";
+import { signInWithGoogle, signOut, isAdmin as checkIsAdmin } from "@/supabase/auth";
 import { fetchDashboardStats, type DashboardStats } from "@/supabase/metric";
 import { fetchActivityLog, logActivity } from "@/supabase/activityLog";
 import { fetchReports, resolveReport as resolveReportFn } from "@/supabase/reports";
@@ -182,8 +182,7 @@ export default function Admin() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const u = session?.user ?? null;
       setUser(u);
 
@@ -199,26 +198,7 @@ export default function Admin() {
       } else {
         setIsAdmin(false);
       }
-      setAuthLoading(false); 
-    };
-
-    init();
-
-    const subscription = onAuthStateChange(async (u: User | null) => {
-      if (authLoading) return; 
-      setUser(u);
-      if (u?.email) {
-        const ok = await checkIsAdmin(u.email);
-        setIsAdmin(ok);
-        if (ok) {
-          loadReports();
-          loadActivity();
-          loadStats();
-          loadPending();
-        }
-      } else {
-        setIsAdmin(false);
-      }
+      setAuthLoading(false);
     });
 
     return () => subscription.unsubscribe();
