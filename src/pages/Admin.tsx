@@ -181,34 +181,48 @@ export default function Admin() {
 
   const [authLoading, setAuthLoading] = useState(true);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-
-      if (session?.user) {
-        const u = session.user;
-        setUser(u);
-        const ok = await checkIsAdmin(u.email!);
-        setIsAdmin(ok);
-        if (ok) {
-          loadReports();
-          loadActivity();
-          loadStats();
-          loadPending();
-        }
-        setAuthLoading(false);
-      } else if (!session) {
-        setUser(null);
-        setIsAdmin(false);
-        setAuthLoading(false);
+useEffect(() => {
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
+    if (session?.user) {
+      const u = session.user;
+      setUser(u);
+      const ok = await checkIsAdmin(u.email!);
+      setIsAdmin(ok);
+      if (ok) {
+        loadReports();
+        loadActivity();
+        loadStats();
+        loadPending();
       }
-    });
+      setAuthLoading(false);
+    }
+  });
 
-    return () => subscription.unsubscribe();
-  }, []);
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      const u = session.user;
+      setUser(u);
+      const ok = await checkIsAdmin(u.email!);
+      setIsAdmin(ok);
+      if (ok) {
+        loadReports();
+        loadActivity();
+        loadStats();
+        loadPending();
+      }
+    } else {
+      setUser(null);
+      setIsAdmin(false);
+    }
+    setAuthLoading(false);
+  });
 
-  const handleLogin  = async () => {
+  return () => subscription.unsubscribe();
+}, []);
+
+  const handleLogin = async () => {
     try {
-      await signInWithGoogle({ redirectTo: window.location.origin + "/admin" });
+      await signInWithGoogle();
     } catch {
       toast.error("Sign in failed. Please try again.");
     }
