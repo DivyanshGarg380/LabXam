@@ -41,10 +41,7 @@ const Questions = () => {
   const semesterKey = semester ? normalizeSemester(semester) : "";
   const subjectKey = subject ? normalizeSubject(subject) : "";
   const evalKey = evalType ? normalizeEvaluation(evalType) : "";
-
-  console.log("Params:", { semester, subject, evalType });
-  console.log("Normalized:", { semesterKey, subjectKey, evalKey });
-
+  
   useEffect(() => {
     if (!semesterKey || !subjectKey || !evalKey) {
       redirectHome("Invalid parameters. Redirecting to home...");
