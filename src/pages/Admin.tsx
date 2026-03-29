@@ -183,32 +183,25 @@ export default function Admin() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "INITIAL_SESSION" && !session) {
-        // No session at all — not logged in
-        setUser(null);
-        setIsAdmin(false);
-        setAuthLoading(false);
-        return;
-      }
-
-      if (!session) return; 
-
-      const u = session.user;
-      setUser(u);
-
-      if (u?.email) {
-        const ok = await checkIsAdmin(u.email);
+      if (event === "SIGNED_IN" && session?.user) {
+        const u = session.user;
+        setUser(u);
+        const ok = await checkIsAdmin(u.email!);
         setIsAdmin(ok);
         if (ok) {
           loadReports();
           loadActivity();
           loadStats();
           loadPending();
-        } else {
+        }
+        setAuthLoading(false);
+      } else if (event === "SIGNED_OUT" || event === "INITIAL_SESSION") {
+        if (!session) {
+          setUser(null);
           setIsAdmin(false);
+          setAuthLoading(false);
         }
       }
-      setAuthLoading(false);
     });
 
     return () => subscription.unsubscribe();
