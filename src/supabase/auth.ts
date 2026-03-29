@@ -23,8 +23,6 @@ export const getSession = async () => {
   return session;
 };
 
-
-
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     (_event, session) => {
@@ -35,11 +33,13 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
 };
 
 export const isAdmin = async (email: string): Promise<boolean> => {
+  console.log("Checking admin for: ", email);
   const { data, error } = await supabase
     .from("admins")
     .select("email")
     .eq("email", email)
     .single();
 
+  console.log("Admin check result:", { data, error });
   return !error && !!data;
 };
