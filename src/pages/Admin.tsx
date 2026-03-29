@@ -182,28 +182,30 @@ export default function Admin() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const u = session?.user ?? null;
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log("Auth event:", event, session?.user?.email); // 👈 temp log
+
+    if (session?.user) {
+      const u = session.user;
       setUser(u);
-
-      if (u?.email) {
-        const ok = await checkIsAdmin(u.email);
-        setIsAdmin(ok);
-        if (ok) {
-          loadReports();
-          loadActivity();
-          loadStats();
-          loadPending();
-        }
-      } else {
-        setIsAdmin(false);
+      const ok = await checkIsAdmin(u.email!);
+      setIsAdmin(ok);
+      if (ok) {
+        loadReports();
+        loadActivity();
+        loadStats();
+        loadPending();
       }
+      setAuthLoading(false);
+    } else if (!session) {
+      setUser(null);
+      setIsAdmin(false);
+      setAuthLoading(false);
+    }
+  });
 
-      setAuthLoading(false); // 👈 always called, no conditions
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  return () => subscription.unsubscribe();
+}, []);
 
   const handleLogin  = async () => {
     try {
