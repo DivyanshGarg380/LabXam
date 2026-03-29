@@ -183,10 +183,11 @@ export default function Admin() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        const u = session.user;
-        setUser(u);
-        const ok = await checkIsAdmin(u.email!);
+      const u = session?.user ?? null;
+      setUser(u);
+
+      if (u?.email) {
+        const ok = await checkIsAdmin(u.email);
         setIsAdmin(ok);
         if (ok) {
           loadReports();
@@ -194,14 +195,11 @@ export default function Admin() {
           loadStats();
           loadPending();
         }
-        setAuthLoading(false);
-      } else if (event === "SIGNED_OUT" || event === "INITIAL_SESSION") {
-        if (!session) {
-          setUser(null);
-          setIsAdmin(false);
-          setAuthLoading(false);
-        }
+      } else {
+        setIsAdmin(false);
       }
+
+      setAuthLoading(false); // 👈 always called, no conditions
     });
 
     return () => subscription.unsubscribe();
