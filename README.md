@@ -1,8 +1,8 @@
-# Lab Exam Questions Hub
+# LabXam
 
-A clean and intuitive web application to help students access previous year lab exam questions, organized semester-wise, subject-wise, and evaluation-wise.
+A clean, scalable, and real-time web platform that helps students access previous year lab exam questions — organized by semester, subject, year, and evaluation type.
 
-The goal of this project is to eliminate the need to search through scattered WhatsApp messages, PDFs, and shared drives before lab exams.
+The goal of this project is to eliminate the need to search through scattered WhatsApp messages, PDFs, and shared drives before lab exams by providing a centralized and structured repository.
 
 ---
 
@@ -10,177 +10,161 @@ The goal of this project is to eliminate the need to search through scattered Wh
 
 ---
 
-## 🚀 Features
+## Project Vision
 
-- Semester-based selection
-- Subject filtering based on semester
-- Evaluation-wise question listing (Midsem, Endsem)
-- Graceful handling of unavailable data
-- Clean and shareable URLs
-- Centralized and scalable question storage
-- Minimal and responsive UI
-- Rate limited ofc 😈
--  Admin Dashboard
--  Firebase Integration
--  Real-time database updates
--  Secure question management
+Students often waste hours searching for reliable lab exam questions. This platform solves that problem by:
+
+- Centralizing question data  
+- Making it structured and searchable  
+- Enabling real-time updates  
+- Supporting scalable growth across semesters and subjects  
 
 ---
 
-##  Admin Panel
+## Features
 
-A dedicated **Admin Page** allows dynamic management of questions.
+- Semester-based selection  
+- Dynamic subject filtering based on semester  
+- Evaluation-wise categorization (Midsem, Endsem)  
+- Clean, shareable query-based URLs  
+- Graceful handling of missing/unavailable data  
+- Minimal, fast, and responsive UI  
+- Centralized and scalable database  
+- Rate limiting for abuse prevention  
+- Admin dashboard for content management  
+- Real-time updates across users  
+- Secure authentication and access control  
+
+---
+
+## Admin Panel
+
+A dedicated admin dashboard allows full control over question management.
 
 ### Admin Capabilities
 
-- Add new questions
-- Select Semester → Subject → Year → Evaluation
-- Real-time updates across the app
-- Protected access using Firebase Authentication
-
-This removes the need to manually edit the static TypeScript data file and enables scalable content management.
-
----
-
-##  Firebase Integration  
-
-The project now uses Firebase as the backend.
-
-### Firebase Services Used
-
-- **Firestore Database** – Stores structured question data  
-- **Firebase Authentication** – Secures admin access  
-- **Firebase Hosting (optional)** – For deployment  
-
-### Why Firebase?
-
-- Real-time updates
-- No backend server maintenance
-- Scalable architecture
-- Secure access rules
-- Easy migration from static data to cloud database
+- Add new questions dynamically  
+- Select Semester → Subject → Year → Evaluation  
+- Real-time updates reflected instantly across the app  
+- Protected routes using authentication  
+- No need to modify static files manually  
 
 ---
 
-##  Firestore Data Structure
+## Supabase Integration
 
+The project now uses Supabase as the backend instead of Firebase.
+
+### Supabase Services Used
+
+- **PostgreSQL Database** – Structured relational data storage  
+- **Supabase Auth** – Secure admin authentication  
+- **Realtime Subscriptions** – Instant UI updates  
+- **Row Level Security (RLS)** – Fine-grained access control  
+
+---
+
+## Why Supabase?
+
+- Open-source backend (PostgreSQL-based)  
+- Better control over schema and queries  
+- Built-in real-time subscriptions  
+- Strong security via RLS policies  
+- Easier debugging and SQL visibility  
+- Scalable for production-level applications  
+
+---
+
+## Database Schema
 ```
-Semester → Subject → Year → Evaluation → Questions
+semesters
+subjects
+questions
 ```
 
-Each question document includes:
 
-- semesterId
-- subjectId
-- year
-- evaluationType
-- questionText
-- createdAt (timestamp)
+### Questions Table
+
+Each question record includes:
+
+- id  
+- semester_id (FK)  
+- subject_id (FK)  
+- year  
+- evaluation_type  
+- question_text  
+- created_at (timestamp)  
+
+---
+
+## Row Level Security (RLS)
+
+- Public users → Read-only access to questions  
+- Admin users → Insert, update, delete permissions  
+- Authentication enforced via Supabase Auth  
 
 ---
 
 ## Tech Stack
 
-- React + TypeScript
-- Tailwind CSS
-- shadcn/ui
-- React Router
-- Lucide Icons
-- Firebase (Firestore + Authentication)
-
+- React + TypeScript  
+- Tailwind CSS  
+- Supabase
+- Firebase for backup :)
 ---
 
-## Updated Project Structure
-```
-src/
-├── components/
-│   ├── QuestionsPage.tsx
-│   ├── QuestionCard.tsx
-│   ├── EmptyState.tsx
-│   └── AdminForm.tsx
-│
-├── pages/
-│   ├── Index.tsx
-│   ├── Questions.tsx
-│   ├── Admin.tsx
-│   └── NotFound.tsx
-│
-├── lib/
-│   └── firebase.ts
-│
-└── App.tsx
-└── Main.tsx
-```
+## Routing Logic
 
----
-
-##  Routing Logic
-
-The application uses clean, query-based URLs.
+The application uses clean query-based URLs.
 
 Example:
-
 ```
-questions?sem=<sem_name>&subject=<subject_name>&year=<year>&eval=<eval_type>
+/questions?sem=<sem_id>&subject=<subject_id>&year=<year>&eval=<eval_type>
 ```
 
 ### URL Parameters
 
-| Parameter | Description |
-|-----------|------------|
-| sem       | Semester ID |
-| subject   | Subject ID |
-| year      | Year |
+| Parameter | Description     |
+|---------- |-----------------|
+| sem       | Semester ID     |
+| subject   | Subject ID      |
+| year      | Year            |
 | eval      | Evaluation type |
 
-URL parameters are internally mapped to user-friendly labels before rendering.
+---
+
+## Environment Setup
+
+Create a `.env` file in the root directory:
+
+```
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+ 
 
 ---
 
-##  Firebase Setup (For Contributors)
-
-1. Create a Firebase project
-2. Enable Firestore Database
-3. Enable Authentication (Email/Password)
-4. Add environment variables
-
-Create a `.env` file:
-
-```
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-```
-
----
-
-## 🧪 Getting Started
-
-### Install dependencies
+## Getting Started
 
 ```bash
 npm install
-```
-
-### Run development server
-
-```bash
 npm run dev
+Open http:localhost:8080
 ```
 
-### Open in browser
+## Contribution Guidelines
+- Fork the repository
+- Create a new branch
+- Make your changes
+- Test thoroughly
+- Submit a Pull Request
 
-```
-http://localhost:8080
-```
+### BEFORE RAISING A PR: 
+Please ensure you do ```npm test```
 
----
+## LICENCE
+This project is open-source and available under the MIT License.
 
-## Before Raising a PR
+© 2026 Divyansh Garg and Vidhan Sachdeva. All rights reserved.
 
-```bash
-npm test
-```
