@@ -34,6 +34,8 @@ export const fetchQuestions = async (
       .eq("subject", subject)
       .eq("evaluation", evaluation);
 
+    console.log("Supabase response:", { data, error });
+
     if (error) {
       toast.error("Error fetching questions");
       return [];
