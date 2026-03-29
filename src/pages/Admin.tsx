@@ -208,7 +208,7 @@ export default function Admin() {
 
   const handleLogin  = async () => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle({ redirectTo: window.location.origin + "/admin" });
     } catch {
       toast.error("Sign in failed. Please try again.");
     }
