@@ -1,3 +1,13 @@
+type MockFn = jest.Mock;
+
+type MockQuery = {
+  select: MockFn;
+  eq: MockFn;
+  single: MockFn;
+  update: MockFn;
+  insert: MockFn;
+};
+
 import { addQuestion } from "@/supabase/addQuestion";
 import { supabase } from "@/lib/supabase";
 
@@ -8,7 +18,7 @@ jest.mock("@/lib/supabase", () => ({
 }));
 
 describe("addQuestion", () => {
-  const mockQuery = {
+  const mockQuery: MockQuery = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     single: jest.fn(),
@@ -32,8 +42,10 @@ describe("addQuestion", () => {
       error: null,
     });
 
+    const mockEq = jest.fn().mockResolvedValue({ error: null });
+
     mockQuery.update.mockReturnValue({
-      eq: jest.fn().mockResolvedValue({ error: null }),
+      eq: mockEq,
     });
 
     const res = await addQuestion(...args);

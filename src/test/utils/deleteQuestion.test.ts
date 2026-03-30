@@ -8,9 +8,21 @@ jest.mock("@/lib/supabase", () => ({
   },
 }));
 
+type SelectResponse = {
+  data: {
+    id: string;
+    questions: string[];
+  } | null;
+  error: { message: string } | null;
+};
+
+type UpdateResponse = {
+  error: { message: string } | null;
+};
+
 describe("deleteQuestion", () => {
-  let mockSelectResponse: any;
-  let mockUpdateResponse: any;
+  let mockSelectResponse: SelectResponse;
+  let mockUpdateResponse: UpdateResponse;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -19,11 +31,11 @@ describe("deleteQuestion", () => {
     (supabase.from as jest.Mock).mockImplementation(() => ({
       select: () => ({
         eq: () => ({
-          single: async () => mockSelectResponse,
+          single: async (): Promise<SelectResponse> => mockSelectResponse,
         }),
       }),
       update: () => ({
-        eq: async () => mockUpdateResponse,
+        eq: async (): Promise<UpdateResponse> => mockUpdateResponse,
       }),
     }));
   });

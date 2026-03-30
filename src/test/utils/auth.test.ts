@@ -20,6 +20,11 @@ import {
 
 import { supabase } from "@/lib/supabase";
 
+type AuthCallback = (
+  event: string,
+  session: { user: { id: string } } | null
+) => void;
+
 describe("Auth functions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -78,11 +83,10 @@ describe("Auth functions", () => {
 
   it("calls callback with user", () => {
     const mockCallback = jest.fn();
-
     const fakeSubscription = { unsubscribe: jest.fn() };
 
     (supabase.auth.onAuthStateChange as jest.Mock).mockImplementation(
-      (cb: any) => {
+      (cb: AuthCallback) => {
         cb("SIGNED_IN", { user: { id: "123" } });
         return {
           data: { subscription: fakeSubscription },
@@ -100,7 +104,7 @@ describe("Auth functions", () => {
     const mockCallback = jest.fn();
 
     (supabase.auth.onAuthStateChange as jest.Mock).mockImplementation(
-      (cb: any) => {
+      (cb: AuthCallback) => {
         cb("SIGNED_OUT", null);
         return {
           data: { subscription: {} },
