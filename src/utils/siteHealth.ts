@@ -1,73 +1,89 @@
-import { getDocs, collection } from "firebase/firestore";
-import { db } from "../firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 
 export type ServiceStatus = {
-    name: string;
-    status: "UP" | "DOWN";
-    responseTime? : number;
+  name: string;
+  status: "UP" | "DOWN";
+  responseTime?: number;
 };
 
-async function checkEndpoint(url: string): Promise<ServiceStatus> {
-    const start = performance.now();
+async function fetchWithTimeout(url: string, timeout = 5000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
 
-    try {
-        const res = await fetch(url, { method: "HEAD" });
-        const end = performance.now();
-
-        return {
-        name: url,
-        status: res.ok ? "UP" : "DOWN",
-        responseTime: Math.round(end - start),
-        };
-    } catch {
-        return {
-        name: url,
-        status: "DOWN",
-        };
-    }
+  try {
+    return await fetch(url, {
+      method: "GET",
+      signal: controller.signal,
+      cache: "no-store",
+    });
+  } finally {
+    clearTimeout(id);
+  }
 }
 
+async function checkEndpoint(url: string): Promise<ServiceStatus> {
+  const start = performance.now();
 
-async function checkFirestore(): Promise<ServiceStatus> {
   try {
-    const start = performance.now();
-
-    const ref = doc(db, "health", "ping");
-    await getDoc(ref);
-
+    const res = await fetchWithTimeout(url);
     const end = performance.now();
 
     return {
-      name: "Firestore",
+      name: url,
+      status: res.ok ? "UP" : "DOWN",
+      responseTime: Math.round(end - start),
+    };
+  } catch {
+    return {
+      name: url,
+      status: "DOWN",
+    };
+  }
+}
+
+// 🟢 Supabase health check
+async function checkSupabase(): Promise<ServiceStatus> {
+  const start = performance.now();
+
+  try {
+    // simplest lightweight query
+    const { error } = await supabase.from("health").select("*").limit(1);
+
+    const end = performance.now();
+
+    if (error) throw error;
+
+    return {
+      name: "Supabase",
       status: "UP",
       responseTime: Math.round(end - start),
     };
   } catch {
     return {
-      name: "Firestore",
+      name: "Supabase",
       status: "DOWN",
     };
   }
 }
 
 export async function getSiteHealth() {
+  const BASE_URL = window.location.origin;
+
   const endpoints = [
-    "/",
-    "/questions",
-    "/report",
-    "/admin",
-    "admin/status",
-    "/submit",
+    `${BASE_URL}/`,
+    `${BASE_URL}/questions`,
+    `${BASE_URL}/report`,
+    `${BASE_URL}/admin`,
+    `${BASE_URL}/admin/status`,
+    `${BASE_URL}/submit`,
   ];
 
   const endpointChecks = endpoints.map((url) => checkEndpoint(url));
 
   const results = await Promise.all([
     ...endpointChecks,
-    checkFirestore(),
+    checkSupabase(),
   ]);
 
   return results;
 }
-

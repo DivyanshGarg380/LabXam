@@ -1,35 +1,28 @@
 import { useEffect, useState } from "react";
-import { auth, provider, db } from "@/firebase/config";
-import { deleteQuestion } from "@/firebase/deleteQuestion";
 import {
-  signInWithPopup,
-  onAuthStateChanged,
+  signInWithGoogle,
   signOut,
-  User,
-} from "firebase/auth";
+  isAdmin as checkIsAdmin,
+} from "@/supabase/auth";
+import { fetchDashboardStats, type DashboardStats } from "@/supabase/metric";
+import { fetchActivityLog, logActivity } from "@/supabase/activityLog";
 import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  addDoc,
-  serverTimestamp,
-  limit,
-  deleteDoc,
-} from "firebase/firestore";
+  fetchReports,
+  resolveReport as resolveReportFn,
+} from "@/supabase/reports";
 import {
-  fetchDashboardStats,
-  incrementQuestionCount,
-  decrementQuestionCount,
-  type DashboardStats,
-} from "@/firebase/metric";
+  fetchPending,
+  approvePending,
+  rejectPending,
+} from "@/supabase/pending";
+import { addQuestion } from "@/supabase/addQuestion";
+import {
+  fetchAdminQuestions,
+  type AdminQuestionItem,
+} from "@/supabase/fetchAdminQuestions";
+import { deleteQuestion } from "@/supabase/deleteQuestion";
+import { updateQuestion } from "@/supabase/updateQuestion";
+import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -47,20 +40,41 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Trash2, LogOut, PlusCircle, Flag,
-  ChevronRight, Pencil, Check, X,
-  LayoutDashboard, Search, Menu, Activity,
-  Database, Server, AlertCircle, BookOpen,
-  Clock, CheckCircle, XCircle,
+  Trash2,
+  LogOut,
+  PlusCircle,
+  Flag,
+  ChevronRight,
+  Pencil,
+  Check,
+  X,
+  LayoutDashboard,
+  Search,
+  Menu,
+  Activity,
+  Database,
+  Server,
+  AlertCircle,
+  BookOpen,
+  Clock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-type Subject       = { value: string; label: string };
-type SubjectsMap   = { [semester: string]: Subject[] };
+type Subject = { value: string; label: string };
+type SubjectsMap = { [semester: string]: Subject[] };
 type EvaluationMap = { [semester: string]: string[] };
-type QuestionItem  = { text: string; docId: string; section: string; year: string; evaluation: string };
-type View          = "dashboard" | "add" | "manage" | "reports" | "pending";
+type QuestionItem = {
+  text: string;
+  rowId: string;
+  section: string;
+  year: string;
+  evaluation: string;
+};
+type View = "dashboard" | "add" | "manage" | "reports" | "pending";
 type ActivityEntry = { id: string; message: string; timestamp: Date | null };
-type PendingItem   = {
+type PendingItem = {
   id: string;
   semester: string;
   year: string;
@@ -78,9 +92,7 @@ const semesters = Array.from({ length: 6 }, (_, i) => ({
 }));
 
 const subjectsBySemester: SubjectsMap = {
-  "1": [
-    { value: "pps", label: "Programming for Problem Solving (PPS)" },
-  ],
+  "1": [{ value: "pps", label: "Programming for Problem Solving (PPS)" }],
   "2": [
     { value: "ioop", label: "Introduction to OOP (IOOP)" },
     { value: "dav", label: "Data Analysis & Visualization (DAV)" },
@@ -101,37 +113,46 @@ const subjectsBySemester: SubjectsMap = {
   "6": [
     { value: "madl", label: "Mobile Application Development Lab (MADL)" },
     { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
-    { value: "cd", label: "Compiler Design Lab (CDL)"},
-    { value: "wp", label: "Web Programming Lab (WPL)"}
+    { value: "cd", label: "Compiler Design Lab (CDL)" },
+    { value: "wp", label: "Web Programming Lab (WPL)" },
   ],
 };
 
 const evaluationBySemester: EvaluationMap = Object.fromEntries(
-  Array.from({ length: 7 }, (_, i) => [String(i + 1), ["midsem", "eval-1", "eval-2", "endsem"]])
+  Array.from({ length: 7 }, (_, i) => [
+    String(i + 1),
+    ["midsem", "eval-1", "eval-2", "endsem"],
+  ]),
 );
 
 const evaluationLabelMap: Record<string, string> = {
-  midsem:   "Midsem",
+  midsem: "Midsem",
   "eval-1": "Internal Evaluation 1",
   "eval-2": "Internal Evaluation 2",
-  endsem:   "Endsem",
+  endsem: "Endsem",
 };
 
-const logActivity = async (message: string) => {
-  try {
-    await addDoc(collection(db, "activityLog"), { message, createdAt: serverTimestamp() });
-  } catch { /* Never breaks production */ }
-};
-
-function SectionCard({ title, description, action, children }: {
-  title: string; description?: string; action?: React.ReactNode; children: React.ReactNode;
+function SectionCard({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 space-y-4">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold">{title}</h2>
-          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+          {description && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {description}
+            </p>
+          )}
         </div>
         {action}
       </div>
@@ -140,24 +161,62 @@ function SectionCard({ title, description, action, children }: {
   );
 }
 
-function FieldGroup({ semester, setSemester, subject, setSubject, year, setYear, evalType, setEvalType }: {
-  semester: string; setSemester: (v: string) => void;
-  subject: string;  setSubject:  (v: string) => void;
-  year: string;     setYear:     (v: string) => void;
-  evalType: string; setEvalType: (v: string) => void;
+function FieldGroup({
+  semester,
+  setSemester,
+  subject,
+  setSubject,
+  year,
+  setYear,
+  evalType,
+  setEvalType,
+}: {
+  semester: string;
+  setSemester: (v: string) => void;
+  subject: string;
+  setSubject: (v: string) => void;
+  year: string;
+  setYear: (v: string) => void;
+  evalType: string;
+  setEvalType: (v: string) => void;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <Select value={semester} onValueChange={(v) => { setSemester(v); setSubject(""); setEvalType(""); }}>
-        <SelectTrigger className="h-10 rounded-lg text-sm"><SelectValue placeholder="Semester" /></SelectTrigger>
-        <SelectContent>{semesters.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+      <Select
+        value={semester}
+        onValueChange={(v) => {
+          setSemester(v);
+          setSubject("");
+          setEvalType("");
+        }}
+      >
+        <SelectTrigger className="h-10 rounded-lg text-sm">
+          <SelectValue placeholder="Semester" />
+        </SelectTrigger>
+        <SelectContent>
+          {semesters.map((s) => (
+            <SelectItem key={s.value} value={s.value}>
+              {s.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
       <Select value={subject} onValueChange={setSubject} disabled={!semester}>
-        <SelectTrigger className="h-10 rounded-lg text-sm"><SelectValue placeholder="Subject" /></SelectTrigger>
-        <SelectContent>{subjectsBySemester[semester]?.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+        <SelectTrigger className="h-10 rounded-lg text-sm">
+          <SelectValue placeholder="Subject" />
+        </SelectTrigger>
+        <SelectContent>
+          {subjectsBySemester[semester]?.map((s) => (
+            <SelectItem key={s.value} value={s.value}>
+              {s.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
       <Select value={year} onValueChange={setYear}>
-        <SelectTrigger className="h-10 rounded-lg text-sm"><SelectValue placeholder="Year" /></SelectTrigger>
+        <SelectTrigger className="h-10 rounded-lg text-sm">
+          <SelectValue placeholder="Year" />
+        </SelectTrigger>
         <SelectContent>
           <SelectItem value="2024">2024</SelectItem>
           <SelectItem value="2025">2025</SelectItem>
@@ -165,8 +224,16 @@ function FieldGroup({ semester, setSemester, subject, setSubject, year, setYear,
         </SelectContent>
       </Select>
       <Select value={evalType} onValueChange={setEvalType} disabled={!semester}>
-        <SelectTrigger className="h-10 rounded-lg text-sm"><SelectValue placeholder="Evaluation Type" /></SelectTrigger>
-        <SelectContent>{evaluationBySemester[semester]?.map((e) => <SelectItem key={e} value={e}>{evaluationLabelMap[e]}</SelectItem>)}</SelectContent>
+        <SelectTrigger className="h-10 rounded-lg text-sm">
+          <SelectValue placeholder="Evaluation Type" />
+        </SelectTrigger>
+        <SelectContent>
+          {evaluationBySemester[semester]?.map((e) => (
+            <SelectItem key={e} value={e}>
+              {evaluationLabelMap[e]}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
     </div>
   );
@@ -181,7 +248,9 @@ export default function Admin() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [dbOk, setDbOk] = useState(true);
 
-  const [reports, setReports] = useState<{ id: string; message: string; resolved: boolean }[]>([]);
+  const [reports, setReports] = useState<
+    { id: string; message: string; resolved: boolean }[]
+  >([]);
   const [loadingReports, setLoadingReports] = useState(true);
 
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
@@ -190,47 +259,68 @@ export default function Admin() {
   const [loadingPending, setLoadingPending] = useState(true);
 
   const [semester, setSemester] = useState("");
-  const [subject,  setSubject]  = useState("");
+  const [subject, setSubject] = useState("");
   const [year, setYear] = useState("");
   const [evalType, setEvalType] = useState("");
 
-  const [section, setSection]  = useState("");
+  const [section, setSection] = useState("");
   const [question, setQuestion] = useState("");
 
   const [openDialog, setOpenDialog] = useState(false);
   const [questionsList, setQuestionsList] = useState<QuestionItem[]>([]);
-  const [editingIndex,  setEditingIndex]  = useState<number | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const [searchSection, setSearchSection] = useState("");
   const [searchYear, setSearchYear] = useState("");
   const [searchEval, setSearchEval] = useState("");
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u?.email) {
-        const adminSnap = await getDoc(doc(db, "admins", u.email));
-        const ok = adminSnap.exists();
-        setIsAdmin(ok);
-        if (ok) {
-          loadReports();
-          loadActivity();
-          loadStats();
-          loadPending();
-        }
-      } else {
-        setIsAdmin(false);
-      }
-    });
-    return unsubscribe;
-  }, []);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const handleLogin  = async () => {
-    if (!auth || !provider) { toast.error("Firebase is not configured properly."); return; }
-    await signInWithPopup(auth, provider);
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user) {
+          const u = session.user;
+          setUser(u);
+          const ok = await checkIsAdmin(u.email!);
+          setIsAdmin(ok);
+          if (ok) {
+            loadReports();
+            loadActivity();
+            loadStats();
+            loadPending();
+          }
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+        }
+      } catch (e) {
+        console.error("Auth init failed:", e);
+        setUser(null);
+        setIsAdmin(false);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+  const handleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch {
+      toast.error("Sign in failed. Please try again.");
+    }
   };
-  
-  const handleLogout = () => signOut(auth);
+
+  const handleLogout = async () => {
+    await signOut();
+    setUser(null);
+    setIsAdmin(false);
+  };
 
   const loadStats = async () => {
     try {
@@ -244,24 +334,16 @@ export default function Admin() {
 
   const loadActivity = async () => {
     try {
-      const q    = query(collection(db, "activityLog"), orderBy("createdAt", "desc"), limit(8));
-      const snap = await getDocs(q);
-      const entries: ActivityEntry[] = [];
-      snap.forEach((d) => entries.push({
-        id: d.id,
-        message: d.data().message,
-        timestamp: d.data().createdAt?.toDate?.() ?? null,
-      }));
+      const entries = await fetchActivityLog();
       setActivity(entries);
-    } catch { /* Never breaks production */ }
+    } catch {
+      /* Never breaks production */
+    }
   };
 
   const loadReports = async () => {
     try {
-      const q    = query(collection(db, "reports"), where("resolved", "==", false), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      const data: { id: string; message: string; resolved: boolean }[] = [];
-      snap.forEach((d) => data.push({ id: d.id, message: d.data().message, resolved: d.data().resolved ?? false }));
+      const data = await fetchReports();
       setReports(data);
     } catch {
       toast.error("Failed to load reports");
@@ -273,23 +355,7 @@ export default function Admin() {
   const loadPending = async () => {
     setLoadingPending(true);
     try {
-      const snap = await getDocs(collection(db, "pending"));
-      const data: PendingItem[] = [];
-      snap.forEach((d) => {
-        const raw = d.data();
-        data.push({
-          id: d.id,
-          semester: raw.semester ?? "",
-          year: raw.year ?? "",
-          subject: raw.subject ?? "",
-          question: raw.question ?? "",
-          section: raw.section ?? "",
-          evaluationType: raw.evaluationType ?? "",
-          status: raw.status ?? "pending",
-          submittedAt: raw.submittedAt?.toDate?.() ?? null,
-        });
-      });
-      data.sort((a, b) => (b.submittedAt?.getTime() ?? 0) - (a.submittedAt?.getTime() ?? 0));
+      const data = await fetchPending();
       setPendingList(data);
     } catch {
       toast.error("Failed to load pending questions");
@@ -300,34 +366,28 @@ export default function Admin() {
 
   const handleApprovePending = async (item: PendingItem) => {
     try {
-      const semLabel  = item.semester;
-      const evalLabel = evaluationLabelMap[item.evaluationType] ?? item.evaluationType;
-      const section   = item.section;
-      const docId     = `${semLabel}_${item.subject}_${item.year}_${evalLabel}_${section}`;
-      const docRef    = doc(db, "questions", docId);
-      const docSnap   = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        await updateDoc(docRef, { questions: arrayUnion(item.question) });
-      } else {
-        await setDoc(docRef, {
-          semester:   semLabel,
-          subject:    item.subject,
-          year:       item.year,
-          evaluation: evalLabel,
-          section,
-          questions:  [item.question],
-          createdAt:  new Date(),
-        });
+      const evalLabel =
+        evaluationLabelMap[item.evaluationType] ?? item.evaluationType;
+      const success = await approvePending(
+        { ...item, evaluationType: evalLabel },
+        item.question,
+      );
+      if (!success) {
+        toast.error("Approval failed");
+        return;
       }
-
-      await deleteDoc(doc(db, "pending", item.id));
       setPendingList((prev) => prev.filter((p) => p.id !== item.id));
-      await incrementQuestionCount();
-      setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
-      const msg = `${user.email.replace(/@.*/, "")} approved a pending question from ${semLabel} — ${item.subject} (${evalLabel}, §${section})`;
+      setStats((prev) =>
+        prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev,
+      );
+      const msg = `${user!.email!.replace(/@.*/, "")} approved a pending question from ${item.semester} — ${item.subject} (${evalLabel}, §${item.section})`;
       await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      setActivity((prev) =>
+        [
+          { id: Date.now().toString(), message: msg, timestamp: new Date() },
+          ...prev,
+        ].slice(0, 8),
+      );
       toast.success("Question approved and added!");
     } catch {
       toast.error("Approval failed");
@@ -336,11 +396,16 @@ export default function Admin() {
 
   const handleRejectPending = async (item: PendingItem) => {
     try {
-      await deleteDoc(doc(db, "pending", item.id));
+      await rejectPending(item.id);
       setPendingList((prev) => prev.filter((p) => p.id !== item.id));
-      const msg = `${user.email.replace(/@.*/, "")} rejected a pending question from ${item.semester} — ${item.subject}`;
+      const msg = `${user!.email!.replace(/@.*/, "")} rejected a pending question from ${item.semester} — ${item.subject}`;
       await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      setActivity((prev) =>
+        [
+          { id: Date.now().toString(), message: msg, timestamp: new Date() },
+          ...prev,
+        ].slice(0, 8),
+      );
       toast.success("Question rejected and removed");
     } catch {
       toast.error("Rejection failed");
@@ -349,25 +414,35 @@ export default function Admin() {
 
   const handleAddQuestion = async () => {
     if (!semester || !subject || !year || !evalType || !section || !question) {
-      toast.error("Please fill all fields"); return;
+      toast.error("Please fill all fields");
+      return;
     }
     try {
-      const semLabel  = `Semester ${semester}`;
+      const semLabel = `Semester ${semester}`;
       const evalLabel = evaluationLabelMap[evalType];
-      const docId     = `${semLabel}_${subject}_${year}_${evalLabel}_${section}`;
-      const docRef    = doc(db, "questions", docId);
-      const docSnap   = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        await updateDoc(docRef, { questions: arrayUnion(question) });
-      } else {
-        await setDoc(docRef, { semester: semLabel, subject, year, evaluation: evalLabel, section, questions: [question], createdAt: new Date() });
+      const success = await addQuestion(
+        semLabel,
+        subject,
+        evalLabel,
+        section,
+        year,
+        question,
+      );
+      if (!success) {
+        toast.error("Permission denied");
+        return;
       }
-      const msg = `${user.email.replace(/@.*/, "")} added a question in ${semLabel} — ${subject} (${evalLabel}, ${section})`;
+      const msg = `${user!.email!.replace(/@.*/, "")} added a question in ${semLabel} — ${subject} (${evalLabel}, ${section})`;
       await logActivity(msg);
-      await incrementQuestionCount();
-      setStats((prev) => prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      setStats((prev) =>
+        prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev,
+      );
+      setActivity((prev) =>
+        [
+          { id: Date.now().toString(), message: msg, timestamp: new Date() },
+          ...prev,
+        ].slice(0, 8),
+      );
       setQuestion("");
       toast.success("Question added successfully!");
     } catch {
@@ -376,25 +451,30 @@ export default function Admin() {
   };
 
   const fetchQuestions = async () => {
-    if (!semester || !subject) { toast.error("Select at least semester and subject"); return; }
+    if (!semester || !subject) {
+      toast.error("Select at least semester and subject");
+      return;
+    }
     try {
-      const constraints: Parameters<typeof query>[1][] = [
-        where("semester", "==", `Semester ${semester}`),
-        where("subject",  "==", subject),
-      ];
-      if (year)     constraints.push(where("year",       "==", year));
-      if (evalType) constraints.push(where("evaluation", "==", evaluationLabelMap[evalType]));
-
-      const snap = await getDocs(query(collection(db, "questions"), ...constraints));
-      const all: QuestionItem[] = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        (data.questions ?? []).forEach((q: string) =>
-          all.push({ text: q, docId: d.id, section: data.section ?? "", year: data.year ?? "", evaluation: data.evaluation ?? "" })
-        );
-      });
+      const semLabel = `Semester ${semester}`;
+      const evalLabel = evalType ? evaluationLabelMap[evalType] : undefined;
+      const data: AdminQuestionItem[] = await fetchAdminQuestions(
+        semLabel,
+        subject,
+        year || undefined,
+        evalLabel,
+      );
+      const all: QuestionItem[] = data.map((d) => ({
+        text: d.text,
+        rowId: d.rowId,
+        section: d.section,
+        year: d.year,
+        evaluation: d.evaluation,
+      }));
       setQuestionsList(all);
-      setSearchSection(""); setSearchYear(""); setSearchEval("");
+      setSearchSection("");
+      setSearchYear("");
+      setSearchEval("");
       if (all.length === 0) toast.error("No questions found");
       else setOpenDialog(true);
     } catch {
@@ -404,13 +484,23 @@ export default function Admin() {
 
   const handleDeleteQuestion = async (item: QuestionItem) => {
     try {
-      await deleteQuestion(item.docId, item.text);
-      setQuestionsList((prev) => prev.filter((q) => !(q.text === item.text && q.docId === item.docId)));
-      const msg = `${user.email.replace(/@.*/, "")} deleted a question from ${item.docId}`;
+      await deleteQuestion(item.rowId, item.text);
+      setQuestionsList((prev) =>
+        prev.filter((q) => !(q.text === item.text && q.rowId === item.rowId)),
+      );
+      const msg = `${user!.email!.replace(/@.*/, "")} deleted a question from row ${item.rowId.slice(0, 8)}`;
       await logActivity(msg);
-      await decrementQuestionCount();
-      setStats((prev) => prev ? { ...prev, totalQuestions: Math.max(0, prev.totalQuestions - 1) } : prev);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      setStats((prev) =>
+        prev
+          ? { ...prev, totalQuestions: Math.max(0, prev.totalQuestions - 1) }
+          : prev,
+      );
+      setActivity((prev) =>
+        [
+          { id: Date.now().toString(), message: msg, timestamp: new Date() },
+          ...prev,
+        ].slice(0, 8),
+      );
       toast.success("Question deleted");
     } catch {
       toast.error("Delete failed");
@@ -418,16 +508,27 @@ export default function Admin() {
   };
 
   const handleEditSave = async (item: QuestionItem, index: number) => {
-    if (!editText.trim()) { toast.error("Question cannot be empty"); return; }
-    if (editText.trim() === item.text) { setEditingIndex(null); return; }
+    if (!editText.trim()) {
+      toast.error("Question cannot be empty");
+      return;
+    }
+    if (editText.trim() === item.text) {
+      setEditingIndex(null);
+      return;
+    }
     try {
-      const ref = doc(db, "questions", item.docId);
-      await updateDoc(ref, { questions: arrayRemove(item.text) });
-      await updateDoc(ref, { questions: arrayUnion(editText.trim()) });
-      setQuestionsList((prev) => prev.map((q, i) => i === index ? { ...q, text: editText.trim() } : q));
-      const msg = `${user.email.replace(/@.*/, "")} edited a question in ${item.docId}`;
+      await updateQuestion(item.rowId, item.text, editText.trim());
+      setQuestionsList((prev) =>
+        prev.map((q, i) => (i === index ? { ...q, text: editText.trim() } : q)),
+      );
+      const msg = `${user!.email!.replace(/@.*/, "")} edited a question in row ${item.rowId.slice(0, 8)}`;
       await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      setActivity((prev) =>
+        [
+          { id: Date.now().toString(), message: msg, timestamp: new Date() },
+          ...prev,
+        ].slice(0, 8),
+      );
       setEditingIndex(null);
       toast.success("Question updated");
     } catch {
@@ -435,16 +536,24 @@ export default function Admin() {
     }
   };
 
-  const startEdit  = (item: QuestionItem, index: number) => { setEditingIndex(index); setEditText(item.text); };
+  const startEdit = (item: QuestionItem, index: number) => {
+    setEditingIndex(index);
+    setEditText(item.text);
+  };
   const cancelEdit = () => setEditingIndex(null);
 
-  const resolveReport = async (id: string) => {
+  const handleResolveReport = async (id: string) => {
     try {
-      await updateDoc(doc(db, "reports", id), { resolved: true });
+      await resolveReportFn(id);
       setReports((prev) => prev.filter((r) => r.id !== id));
-      const msg = `Report #${id.slice(0, 6)} resolved by ${user.email.replace(/@.*/, "")}`;
+      const msg = `Report #${id.slice(0, 6)} resolved by ${user!.email!.replace(/@.*/, "")}`;
       await logActivity(msg);
-      setActivity((prev) => [{ id: Date.now().toString(), message: msg, timestamp: new Date() }, ...prev].slice(0, 8));
+      setActivity((prev) =>
+        [
+          { id: Date.now().toString(), message: msg, timestamp: new Date() },
+          ...prev,
+        ].slice(0, 8),
+      );
       toast.success("Report resolved");
     } catch {
       toast.error("Failed to resolve report");
@@ -453,13 +562,32 @@ export default function Admin() {
 
   const formatTime = (date: Date | null) => {
     if (!date) return "";
-    return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    return date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   const formatDate = (date: Date | null) => {
     if (!date) return "—";
-    return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    return date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-3 text-muted-foreground text-sm">
+          <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -469,15 +597,29 @@ export default function Admin() {
         </h2>
         <div className="w-[380px] bg-card border border-border shadow-sm rounded-2xl p-8 space-y-6 text-center">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Admin Portal</h1>
-            <p className="text-sm text-muted-foreground">Sign in with your Google account to continue</p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Admin Portal
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Sign in with your Google account to continue
+            </p>
           </div>
-          <Button onClick={handleLogin} className="w-full h-11 flex items-center justify-center gap-3">
+          <Button
+            onClick={handleLogin}
+            className="w-full h-11 flex items-center justify-center gap-3"
+          >
             <img src="/google.webp" className="w-5 h-5" alt="Google" />
             Continue with Google
           </Button>
-          <p className="text-xs text-muted-foreground">Access is restricted to authorized admins only.</p>
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground pt-10">← Back to Home</Link>
+          <p className="text-xs text-muted-foreground">
+            Access is restricted to authorized admins only.
+          </p>
+          <Link
+            to="/"
+            className="text-sm text-muted-foreground hover:text-foreground pt-10"
+          >
+            ← Back to Home
+          </Link>
         </div>
       </div>
     );
@@ -498,33 +640,68 @@ export default function Admin() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <h2 className="text-xl font-semibold">Access Denied</h2>
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">Redirect back to Home 😂</Link>
+        <Link
+          to="/"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          Redirect back to Home 😂
+        </Link>
       </div>
     );
   }
 
-  const navItems: { id: View; label: string; icon: React.ReactNode; badge?: number }[] = [
-    { id: "dashboard", label: "Dashboard",       icon: <LayoutDashboard className="h-4 w-4" /> },
-    { id: "add",       label: "Add Data",         icon: <PlusCircle      className="h-4 w-4" /> },
-    { id: "manage",    label: "Manage Questions", icon: <BookOpen        className="h-4 w-4" /> },
-    { id: "pending",   label: "Pending",          icon: <Clock           className="h-4 w-4" />, badge: pendingList.length || undefined },
-    { id: "reports",   label: "Reports",          icon: <Flag            className="h-4 w-4" />, badge: reports.length || undefined },
+  const navItems: {
+    id: View;
+    label: string;
+    icon: React.ReactNode;
+    badge?: number;
+  }[] = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: <LayoutDashboard className="h-4 w-4" />,
+    },
+    { id: "add", label: "Add Data", icon: <PlusCircle className="h-4 w-4" /> },
+    {
+      id: "manage",
+      label: "Manage Questions",
+      icon: <BookOpen className="h-4 w-4" />,
+    },
+    {
+      id: "pending",
+      label: "Pending",
+      icon: <Clock className="h-4 w-4" />,
+      badge: pendingList.length || undefined,
+    },
+    {
+      id: "reports",
+      label: "Reports",
+      icon: <Flag className="h-4 w-4" />,
+      badge: reports.length || undefined,
+    },
   ];
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="px-5 py-5 border-b border-border">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Admin</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Admin
+        </p>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => { setActiveView(item.id); setSidebarOpen(false); }}
+            onClick={() => {
+              setActiveView(item.id);
+              setSidebarOpen(false);
+            }}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-              ${activeView === item.id
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              ${
+                activeView === item.id
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
           >
             {item.icon}
             {item.label}
@@ -555,30 +732,34 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-border sticky top-0 h-screen overflow-y-auto">
         <SidebarContent />
       </aside>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setSidebarOpen(false)}
+          />
           <aside className="relative z-50 w-56 h-full bg-background border-r border-border flex flex-col">
             <SidebarContent />
           </aside>
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
         <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
           <div className="h-14 px-4 sm:px-6 flex items-center gap-3">
-            <button className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors" onClick={() => setSidebarOpen(true)}>
+            <button
+              className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
+              onClick={() => setSidebarOpen(true)}
+            >
               <Menu className="h-4 w-4" />
             </button>
-            <span className="text-sm text-muted-foreground truncate hidden sm:block">{user.email}</span>
+            <span className="text-sm text-muted-foreground truncate hidden sm:block">
+              {user.email}
+            </span>
             <div className="ml-auto relative w-full max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               <input
@@ -591,45 +772,94 @@ export default function Admin() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 px-4 sm:px-6 py-6 space-y-6 overflow-auto">
-
-          {/* DASHBOARD */}
           {activeView === "dashboard" && (
             <>
               <div>
                 <h1 className="text-xl font-bold">Admin Panel</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">Manage questions and resolve user reports</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Manage questions and resolve user reports
+                </p>
               </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { label: "Total Questions",    value: stats?.totalQuestions ?? "—", sub: "across all semesters" },
-                  { label: "Active Evaluators",  value: stats?.activeEvals    ?? "—", sub: "evals with questions" },
-                  { label: "Pending Submissions",value: pendingList.length,           sub: "awaiting your review" },
-                  { label: "Open Reports",       value: reports.length,               sub: "unresolved issues"    },
+                  {
+                    label: "Total Questions",
+                    value: stats?.totalQuestions ?? "—",
+                    sub: "across all semesters",
+                  },
+                  {
+                    label: "Active Evaluators",
+                    value: stats?.activeEvals ?? "—",
+                    sub: "evals with questions",
+                  },
+                  {
+                    label: "Pending Submissions",
+                    value: pendingList.length,
+                    sub: "awaiting your review",
+                  },
+                  {
+                    label: "Open Reports",
+                    value: reports.length,
+                    sub: "unresolved issues",
+                  },
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-card border border-border rounded-xl p-4 space-y-1">
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
+                  <div
+                    key={stat.label}
+                    className="bg-card border border-border rounded-xl p-4 space-y-1"
+                  >
+                    <p className="text-xs text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p className="text-3xl font-bold tracking-tight">
+                      {stat.value}
+                    </p>
                     <p className="text-xs text-muted-foreground">{stat.sub}</p>
                   </div>
                 ))}
               </div>
 
               <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-                <h2 className="text-sm font-semibold">System Health / Status</h2>
+                <h2 className="text-sm font-semibold">
+                  System Health / Status
+                </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
-                    { icon: <Database    className="h-3.5 w-3.5" />, label: "Database Status", value: dbOk ? "Connected" : "Error", ok: dbOk },
-                    { icon: <Activity    className="h-3.5 w-3.5" />, label: "API Status",       value: "Running",                    ok: true  },
-                    { icon: <Server      className="h-3.5 w-3.5" />, label: "Server",           value: "Live",                       ok: true  },
-                    { icon: <AlertCircle className="h-3.5 w-3.5" />, label: "Recent Errors",    value: "None (0)",                   ok: true  },
+                    {
+                      icon: <Database className="h-3.5 w-3.5" />,
+                      label: "Database Status",
+                      value: dbOk ? "Connected" : "Error",
+                      ok: dbOk,
+                    },
+                    {
+                      icon: <Activity className="h-3.5 w-3.5" />,
+                      label: "API Status",
+                      value: "Running",
+                      ok: true,
+                    },
+                    {
+                      icon: <Server className="h-3.5 w-3.5" />,
+                      label: "Server",
+                      value: "Live",
+                      ok: true,
+                    },
+                    {
+                      icon: <AlertCircle className="h-3.5 w-3.5" />,
+                      label: "Recent Errors",
+                      value: "None (0)",
+                      ok: true,
+                    },
                   ].map((s) => (
                     <div key={s.label} className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{s.icon}{s.label}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {s.icon}
+                        {s.label}
+                      </div>
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${s.ok ? "bg-green-500" : "bg-red-500"} animate-pulse`} />
+                        <span
+                          className={`w-2 h-2 rounded-full shrink-0 ${s.ok ? "bg-green-500" : "bg-red-500"} animate-pulse`}
+                        />
                         <span className="text-sm font-medium">{s.value}</span>
                       </div>
                     </div>
@@ -639,20 +869,29 @@ export default function Admin() {
 
               <div className="bg-card border border-border rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">Activity / Recent Actions</h2>
-                  <button onClick={loadActivity} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <h2 className="text-sm font-semibold">
+                    Activity / Recent Actions
+                  </h2>
+                  <button
+                    onClick={loadActivity}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     Refresh
                   </button>
                 </div>
                 {activity.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-6 text-center">No recent activity yet — actions will appear here</p>
+                  <p className="text-xs text-muted-foreground py-6 text-center">
+                    No recent activity yet — actions will appear here
+                  </p>
                 ) : (
                   <div className="space-y-3">
                     {activity.map((a) => (
                       <div key={a.id} className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 shrink-0" />
                         <p className="text-sm leading-relaxed">
-                          <span className="text-xs text-muted-foreground mr-2">{formatTime(a.timestamp)}</span>
+                          <span className="text-xs text-muted-foreground mr-2">
+                            {formatTime(a.timestamp)}
+                          </span>
                           {a.message}
                         </p>
                       </div>
@@ -663,19 +902,27 @@ export default function Admin() {
             </>
           )}
 
-          {/* ADD QUESTION */}
           {activeView === "add" && (
             <>
               <div>
                 <h1 className="text-xl font-bold">Add Data</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">Add a new question to the question bank</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Add a new question to the question bank
+                </p>
               </div>
-              <SectionCard title="Question Details" description="Select where this question belongs">
+              <SectionCard
+                title="Question Details"
+                description="Select where this question belongs"
+              >
                 <FieldGroup
-                  semester={semester} setSemester={setSemester}
-                  subject={subject}   setSubject={setSubject}
-                  year={year}         setYear={setYear}
-                  evalType={evalType} setEvalType={setEvalType}
+                  semester={semester}
+                  setSemester={setSemester}
+                  subject={subject}
+                  setSubject={setSubject}
+                  year={year}
+                  setYear={setYear}
+                  evalType={evalType}
+                  setEvalType={setEvalType}
                 />
                 <input
                   className="mt-1 w-full h-10 rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -684,7 +931,10 @@ export default function Admin() {
                   onChange={(e) => setSection(e.target.value)}
                 />
               </SectionCard>
-              <SectionCard title="Question" description="Type the question text below">
+              <SectionCard
+                title="Question"
+                description="Type the question text below"
+              >
                 <textarea
                   className="w-full rounded-lg border border-input bg-background p-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                   placeholder="Enter the question here…"
@@ -692,34 +942,61 @@ export default function Admin() {
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                 />
-                <Button className="w-full mt-1" onClick={handleAddQuestion}>Add Question</Button>
+                <Button className="w-full mt-1" onClick={handleAddQuestion}>
+                  Add Question
+                </Button>
               </SectionCard>
             </>
           )}
 
-          {/* MANAGE QUESTIONS */}
           {activeView === "manage" && (
             <>
               <div>
                 <h1 className="text-xl font-bold">Manage Questions</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">Load, edit, or delete existing questions</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Load, edit, or delete existing questions
+                </p>
               </div>
-              <SectionCard title="Filter Questions" description="Semester and subject required — year and eval are optional">
+              <SectionCard
+                title="Filter Questions"
+                description="Semester and subject required — year and eval are optional"
+              >
                 <FieldGroup
-                  semester={semester} setSemester={setSemester}
-                  subject={subject}   setSubject={setSubject}
-                  year={year}         setYear={setYear}
-                  evalType={evalType} setEvalType={setEvalType}
+                  semester={semester}
+                  setSemester={setSemester}
+                  subject={subject}
+                  setSubject={setSubject}
+                  year={year}
+                  setYear={setYear}
+                  evalType={evalType}
+                  setEvalType={setEvalType}
                 />
-                <Button variant="secondary" className="w-full mt-1" onClick={fetchQuestions}>Load Questions</Button>
+                <Button
+                  variant="secondary"
+                  className="w-full mt-1"
+                  onClick={fetchQuestions}
+                >
+                  Load Questions
+                </Button>
               </SectionCard>
 
-              <Dialog open={openDialog} onOpenChange={(open) => { setOpenDialog(open); if (!open) setEditingIndex(null); }}>
-                <DialogContent className="max-w-2xl" aria-describedby={undefined}>
+              <Dialog
+                open={openDialog}
+                onOpenChange={(open) => {
+                  setOpenDialog(open);
+                  if (!open) setEditingIndex(null);
+                }}
+              >
+                <DialogContent
+                  className="max-w-2xl"
+                  aria-describedby={undefined}
+                >
                   <DialogHeader>
                     <DialogTitle>
                       Existing Questions
-                      <span className="ml-2 text-sm font-normal text-muted-foreground">({questionsList.length})</span>
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">
+                        ({questionsList.length})
+                      </span>
                     </DialogTitle>
                   </DialogHeader>
 
@@ -730,8 +1007,13 @@ export default function Admin() {
                       value={searchSection}
                       onChange={(e) => setSearchSection(e.target.value)}
                     />
-                    <Select value={searchYear || "all"} onValueChange={(v) => setSearchYear(v === "all" ? "" : v)}>
-                      <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="All Years" /></SelectTrigger>
+                    <Select
+                      value={searchYear || "all"}
+                      onValueChange={(v) => setSearchYear(v === "all" ? "" : v)}
+                    >
+                      <SelectTrigger className="h-9 rounded-lg text-sm">
+                        <SelectValue placeholder="All Years" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Years</SelectItem>
                         <SelectItem value="2024">2024</SelectItem>
@@ -739,12 +1021,19 @@ export default function Admin() {
                         <SelectItem value="2026">2026</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Select value={searchEval || "all"} onValueChange={(v) => setSearchEval(v === "all" ? "" : v)}>
-                      <SelectTrigger className="h-9 rounded-lg text-sm"><SelectValue placeholder="All Evaluations" /></SelectTrigger>
+                    <Select
+                      value={searchEval || "all"}
+                      onValueChange={(v) => setSearchEval(v === "all" ? "" : v)}
+                    >
+                      <SelectTrigger className="h-9 rounded-lg text-sm">
+                        <SelectValue placeholder="All Evaluations" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Evaluations</SelectItem>
                         {Object.entries(evaluationLabelMap).map(([, label]) => (
-                          <SelectItem key={label} value={label}>{label}</SelectItem>
+                          <SelectItem key={label} value={label}>
+                            {label}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -752,62 +1041,130 @@ export default function Admin() {
 
                   {(() => {
                     const filtered = questionsList.filter((item) => {
-                      const matchSection = !searchSection || item.section.toLowerCase().includes(searchSection.toLowerCase());
-                      const matchYear    = !searchYear    || item.year === searchYear;
-                      const matchEval    = !searchEval    || item.evaluation === searchEval;
+                      const matchSection =
+                        !searchSection ||
+                        item.section
+                          .toLowerCase()
+                          .includes(searchSection.toLowerCase());
+                      const matchYear = !searchYear || item.year === searchYear;
+                      const matchEval =
+                        !searchEval || item.evaluation === searchEval;
                       return matchSection && matchYear && matchEval;
                     });
                     return (
                       <>
                         {(searchSection || searchYear || searchEval) && (
-                          <p className="text-xs text-muted-foreground -mb-1">{filtered.length} of {questionsList.length} questions</p>
+                          <p className="text-xs text-muted-foreground -mb-1">
+                            {filtered.length} of {questionsList.length}{" "}
+                            questions
+                          </p>
                         )}
                         <div className="max-h-[360px] overflow-y-auto space-y-2 pr-1">
                           {filtered.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-10 text-center gap-1">
                               <p className="text-sm font-medium">No matches</p>
-                              <p className="text-xs text-muted-foreground">Try adjusting the filters</p>
+                              <p className="text-xs text-muted-foreground">
+                                Try adjusting the filters
+                              </p>
                             </div>
-                          ) : filtered.map((item, index) => (
-                            <div key={index} className="group border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors">
-                              {editingIndex === questionsList.indexOf(item) ? (
-                                <div className="space-y-2">
-                                  <textarea
-                                    className="w-full rounded-lg border border-input bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                                    rows={3} value={editText} onChange={(e) => setEditText(e.target.value)} autoFocus
-                                  />
-                                  <div className="flex gap-2 justify-end">
-                                    <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-muted-foreground" onClick={cancelEdit}>
-                                      <X className="h-3.5 w-3.5" /> Cancel
-                                    </Button>
-                                    <Button size="sm" className="h-7 text-xs gap-1" onClick={() => handleEditSave(item, questionsList.indexOf(item))}>
-                                      <Check className="h-3.5 w-3.5" /> Save
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex items-start gap-3">
-                                  <span className="text-xs font-mono text-muted-foreground w-5 shrink-0 pt-0.5">{index + 1}.</span>
-                                  <div className="flex-1 min-w-0 space-y-1.5">
-                                    <p className="text-sm leading-relaxed">{item.text}</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {item.section    && <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-muted-foreground">§{item.section}</span>}
-                                      {item.year       && <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-muted-foreground">{item.year}</span>}
-                                      {item.evaluation && <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-muted-foreground">{item.evaluation}</span>}
+                          ) : (
+                            filtered.map((item, index) => (
+                              <div
+                                key={index}
+                                className="group border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
+                              >
+                                {editingIndex ===
+                                questionsList.indexOf(item) ? (
+                                  <div className="space-y-2">
+                                    <textarea
+                                      className="w-full rounded-lg border border-input bg-background p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                                      rows={3}
+                                      value={editText}
+                                      onChange={(e) =>
+                                        setEditText(e.target.value)
+                                      }
+                                      autoFocus
+                                    />
+                                    <div className="flex gap-2 justify-end">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs gap-1 text-muted-foreground"
+                                        onClick={cancelEdit}
+                                      >
+                                        <X className="h-3.5 w-3.5" /> Cancel
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        className="h-7 text-xs gap-1"
+                                        onClick={() =>
+                                          handleEditSave(
+                                            item,
+                                            questionsList.indexOf(item),
+                                          )
+                                        }
+                                      >
+                                        <Check className="h-3.5 w-3.5" /> Save
+                                      </Button>
                                     </div>
                                   </div>
-                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => startEdit(item, questionsList.indexOf(item))}>
-                                      <Pencil className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-500/10" onClick={() => handleDeleteQuestion(item)}>
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                ) : (
+                                  <div className="flex items-start gap-3">
+                                    <span className="text-xs font-mono text-muted-foreground w-5 shrink-0 pt-0.5">
+                                      {index + 1}.
+                                    </span>
+                                    <div className="flex-1 min-w-0 space-y-1.5">
+                                      <p className="text-sm leading-relaxed">
+                                        {item.text}
+                                      </p>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {item.section && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-muted-foreground">
+                                            §{item.section}
+                                          </span>
+                                        )}
+                                        {item.year && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-muted-foreground">
+                                            {item.year}
+                                          </span>
+                                        )}
+                                        {item.evaluation && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-muted-foreground">
+                                            {item.evaluation}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                        onClick={() =>
+                                          startEdit(
+                                            item,
+                                            questionsList.indexOf(item),
+                                          )
+                                        }
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                        onClick={() =>
+                                          handleDeleteQuestion(item)
+                                        }
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                                )}
+                              </div>
+                            ))
+                          )}
                         </div>
                       </>
                     );
@@ -817,15 +1174,21 @@ export default function Admin() {
             </>
           )}
 
-          {/* PENDING */}
           {activeView === "pending" && (
             <>
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-xl font-bold">Pending Questions</h1>
-                  <p className="text-sm text-muted-foreground mt-0.5">Review and approve or reject student submissions</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Review and approve or reject student submissions
+                  </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={loadPending} className="text-xs">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadPending}
+                  className="text-xs"
+                >
                   Refresh
                 </Button>
               </div>
@@ -838,13 +1201,17 @@ export default function Admin() {
                 <div className="flex flex-col items-center justify-center py-20 text-center gap-2">
                   <span className="text-3xl">✅</span>
                   <p className="text-sm font-medium">All clear</p>
-                  <p className="text-xs text-muted-foreground">No pending submissions to review</p>
+                  <p className="text-xs text-muted-foreground">
+                    No pending submissions to review
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {pendingList.map((item) => (
-                    <div key={item.id} className="border border-border rounded-xl bg-card p-4 space-y-3 flex flex-col">
-                      {/* Parameters */}
+                    <div
+                      key={item.id}
+                      className="border border-border rounded-xl bg-card p-4 space-y-3 flex flex-col"
+                    >
                       <div className="flex flex-wrap gap-1.5">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-xs font-medium">
                           {item.semester}
@@ -857,7 +1224,8 @@ export default function Admin() {
                         </span>
                         {item.evaluationType && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-green-500/10 text-green-500 text-xs font-medium">
-                            {evaluationLabelMap[item.evaluationType] ?? item.evaluationType}
+                            {evaluationLabelMap[item.evaluationType] ??
+                              item.evaluationType}
                           </span>
                         )}
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">
@@ -867,13 +1235,13 @@ export default function Admin() {
                           <Clock className="h-3 w-3 mr-1" /> Pending
                         </span>
                       </div>
-
-                      {/* Question */}
-                      <p className="text-sm leading-relaxed flex-1">{item.question}</p>
-
-                      {/* Footer */}
+                      <p className="text-sm leading-relaxed flex-1">
+                        {item.question}
+                      </p>
                       <div className="flex items-center justify-between pt-1 border-t border-border">
-                        <p className="text-xs text-muted-foreground">{formatDate(item.submittedAt)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(item.submittedAt)}
+                        </p>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -899,16 +1267,21 @@ export default function Admin() {
             </>
           )}
 
-          {/* REPORTS */}
           {activeView === "reports" && (
             <>
               <div>
                 <h1 className="text-xl font-bold">Reports</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">Unresolved issues submitted by users</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Unresolved issues submitted by users
+                </p>
               </div>
               <SectionCard
                 title="User Reports"
-                action={<span className="text-xs text-muted-foreground">{reports.length} active</span>}
+                action={
+                  <span className="text-xs text-muted-foreground">
+                    {reports.length} active
+                  </span>
+                }
               >
                 {loadingReports ? (
                   <div className="flex justify-center py-10">
@@ -918,17 +1291,29 @@ export default function Admin() {
                   <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
                     <span className="text-2xl">✅</span>
                     <p className="text-sm font-medium">All clear</p>
-                    <p className="text-xs text-muted-foreground">No unresolved reports</p>
+                    <p className="text-xs text-muted-foreground">
+                      No unresolved reports
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {reports.map((r) => (
-                      <div key={r.id} className="group flex items-start gap-3 border border-border rounded-lg p-3.5 hover:bg-muted/40 transition-colors">
+                      <div
+                        key={r.id}
+                        className="group flex items-start gap-3 border border-border rounded-lg p-3.5 hover:bg-muted/40 transition-colors"
+                      >
                         <div className="flex-1 space-y-0.5 min-w-0">
                           <p className="text-sm leading-relaxed">{r.message}</p>
-                          <p className="text-xs text-muted-foreground font-mono">#{r.id.slice(0, 8)}</p>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            #{r.id.slice(0, 8)}
+                          </p>
                         </div>
-                        <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs gap-1" onClick={() => resolveReport(r.id)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 h-7 text-xs gap-1"
+                          onClick={() => handleResolveReport(r.id)}
+                        >
                           Resolve <ChevronRight className="h-3 w-3" />
                         </Button>
                       </div>

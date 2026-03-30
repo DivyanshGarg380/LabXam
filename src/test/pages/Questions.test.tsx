@@ -1,9 +1,5 @@
-jest.mock("@/firebase/config", () => ({
-  db: {}
-}));
-
-jest.mock("@/firebase/getQuestions", () => ({
-  fetchQuestionsFromFirebase: jest.fn()
+jest.mock("@/supabase/getQuestions", () => ({
+  fetchQuestions: jest.fn()
 }));
 
 jest.mock("sonner", () => ({
@@ -34,10 +30,10 @@ jest.mock("react-router-dom", () => ({
 
 import { render, screen, waitFor } from "@testing-library/react";
 import Questions from "../../pages/Questions";
-import { fetchQuestionsFromFirebase } from "@/firebase/getQuestions";
+import { fetchQuestions } from "@/supabase/getQuestions"; 
 
 describe("Questions Page", () => {
-  const mockedFetch = fetchQuestionsFromFirebase as jest.Mock;
+  const mockedFetch = fetchQuestions as jest.Mock;
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -46,21 +42,15 @@ describe("Questions Page", () => {
 
   test("Shows loading text initially", () => {
     mockedFetch.mockImplementation(() => new Promise(() => {}));
-
     render(<Questions />);
-
-    expect(
-      screen.getByText(/fetching questions/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/fetching questions/i)).toBeInTheDocument();
   });
 
   test("Renders QuestionsPage after data loads", async () => {
     mockedFetch.mockResolvedValue([
-      { question: "Q1", section: "Section A" }
+      { question: "Q1", section: "Section A", year: "2024", uploaded_at: 0 }
     ]);
-
     render(<Questions />);
-
     await waitFor(() =>
       expect(screen.getByText("Q1")).toBeInTheDocument()
     );

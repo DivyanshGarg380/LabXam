@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Questions from "./pages/Questions";
 import NotFound from "./pages/NotFound";
 import AdminStatus from "./pages/AdminStatus";
+import AuthCallback from "@/pages/AuthCallback";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +68,7 @@ const App = () => {
             <Route path='/submit' element={<SubmitQuestion />} />
             <Route path='/admin' element={<Admin />} />
             <Route path="/admin/status" element={<AdminStatus />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path ="/report" element={<Report />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

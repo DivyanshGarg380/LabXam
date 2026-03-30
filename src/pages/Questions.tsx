@@ -7,13 +7,13 @@ import {
   normalizeEvaluation,
   normalizeSubject,
 } from "@/utils/normalize";
-import { fetchQuestionsFromFirebase } from "@/firebase/getQuestions";
+import { fetchQuestions } from "@/supabase/getQuestions";
 
 const Questions = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [allQuestions, setAllQuestions] = useState<
-    { question: string; section: string; year: string, uploadedAt: number }[]
+    { question: string; section: string; year: string, uploaded_at: number }[]
   >([]);
 
   const navigate = useNavigate();
@@ -41,21 +41,20 @@ const Questions = () => {
   const semesterKey = semester ? normalizeSemester(semester) : "";
   const subjectKey = subject ? normalizeSubject(subject) : "";
   const evalKey = evalType ? normalizeEvaluation(evalType) : "";
-
+  
   useEffect(() => {
     if (!semesterKey || !subjectKey || !evalKey) {
       redirectHome("Invalid parameters. Redirecting to home...");
     }
   }, [semesterKey, subjectKey, evalKey, redirectHome]);
 
-  // Fetch questions from Firebase 
   useEffect(() => {
     const loadQuestions = async () => {
       if (!semesterKey || !subjectKey || !evalKey) return;
 
       setIsLoading(true);
 
-      const data = await fetchQuestionsFromFirebase(
+      const data = await fetchQuestions(
         semesterKey,
         subjectKey,
         evalKey,

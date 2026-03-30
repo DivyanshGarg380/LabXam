@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { db } from "@/firebase/config";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { submitPending } from "@/supabase/pending" 
 
 const subject_sem: Record<string, string[]> = {
   "1": ["Programming for Problem Solving (PPS)"],
@@ -266,16 +265,14 @@ const SubmitQuestion = () => {
     setLoading(true);
     try {
       const normalizedQuestion = question.trim().replace(/\s+/g, " ");
-      await addDoc(collection(db, "pending"), {
-        semester: `Semester ${semester}`,
+      await submitPending(
+        `Semester ${semester}`,
+        subject.toLowerCase(),
         year,
-        subject: subject.toLowerCase(),
-        section: section.trim().toUpperCase(),
+        normalizedQuestion,
+        section.trim().toUpperCase(),
         evaluationType,
-        question: normalizedQuestion,
-        submittedAt: serverTimestamp(),
-        status: "pending",
-      });
+      );
 
       toast.success(
         "Question submitted! It will be reviewed before publishing.",
