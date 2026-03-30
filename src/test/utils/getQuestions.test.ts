@@ -14,8 +14,13 @@ jest.mock("sonner", () => ({
   },
 }));
 
+type MockQuery = {
+  select: jest.Mock,
+  eq: jest.Mock;
+};
+
 describe("fetchQuestions", () => {
-  let mockQuery: any;
+  let mockQuery: MockQuery;
 
   beforeEach(() => {
     jest.clearAllMocks();
