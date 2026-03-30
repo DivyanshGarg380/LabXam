@@ -55,8 +55,8 @@ export default function AdminStatus() {
           {status.map((s) => (
             <div key={s.name} className="border border-border rounded-xl p-4 bg-card">
               <div className="flex justify-between text-sm font-medium">
-                <span>{s.name}</span>
-                <span className={s.status === "UP" ? "text-green-500" : "text-red-500"}>
+                <span className="truncate">{s.name}</span>
+                <span className={`shrink-0 ${s.status === "UP" ? "text-green-500" : "text-red-500"}`}>
                   {s.status}
                 </span>
               </div>

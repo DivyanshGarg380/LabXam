@@ -28,8 +28,10 @@ async function checkEndpoint(url: string): Promise<ServiceStatus> {
     const res = await fetchWithTimeout(url);
     const end = performance.now();
 
+    const pathName = new URL(url).pathname || "/";
+
     return {
-      name: url,
+      name: pathName,
       status: res.ok ? "UP" : "DOWN",
       responseTime: Math.round(end - start),
     };
@@ -41,13 +43,11 @@ async function checkEndpoint(url: string): Promise<ServiceStatus> {
   }
 }
 
-// 🟢 Supabase health check
 async function checkSupabase(): Promise<ServiceStatus> {
   const start = performance.now();
 
   try {
-    // simplest lightweight query
-    const { error } = await supabase.from("health").select("*").limit(1);
+    const { error } = await supabase.from("questions").select("id").limit(1);
 
     const end = performance.now();
 

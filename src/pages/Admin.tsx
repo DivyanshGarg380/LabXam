@@ -308,6 +308,7 @@ export default function Admin() {
 
     initAuth();
   }, []);
+
   const handleLogin = async () => {
     try {
       await signInWithGoogle();
@@ -540,6 +541,7 @@ export default function Admin() {
     setEditingIndex(index);
     setEditText(item.text);
   };
+  
   const cancelEdit = () => setEditingIndex(null);
 
   const handleResolveReport = async (id: string) => {
