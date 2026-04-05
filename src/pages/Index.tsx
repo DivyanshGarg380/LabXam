@@ -106,7 +106,7 @@ const Index = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background overflow-x-hidden">
       <div className="container py-8 sm:py-12">
 
         {/* Theme Toggle */}
@@ -175,6 +175,7 @@ const Index = () => {
 
         {/* Selection Panel */}
         <div className="max-w-xl mx-auto">
+          <div style={{width: '100%'}}>
           <BorderGlow
             edgeSensitivity={30}
             borderRadius={16}
@@ -183,7 +184,7 @@ const Index = () => {
             coneSpread={25}
             animated={true}
             colors={['#c084fc', '#f472b6', '#38bdf8']}
-          >
+            >
             <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-card">
 
               {/* Semester */}
@@ -204,7 +205,7 @@ const Index = () => {
                   <SelectTrigger className="w-full h-12 rounded-xl bg-background">
                     <SelectValue placeholder="Choose a semester" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper">
                     {semesters.map((semester) => (
                       <SelectItem key={semester.value} value={semester.value}>
                         {semester.label}
@@ -237,7 +238,7 @@ const Index = () => {
                       }
                     />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper">
                     {subjectsBySemester[selectedSemester]?.length > 0 ? (
                       subjectsBySemester[selectedSemester].map((subject) => (
                         <SelectItem key={subject.value} value={subject.value}>
@@ -276,7 +277,7 @@ const Index = () => {
                       }
                     />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper">
                     {evaluationBySemester[selectedSemester]?.length > 0 ? (
                       evaluationBySemester[selectedSemester].map((evalKey) => (
                         <SelectItem key={evalKey} value={evalKey}>
@@ -315,6 +316,7 @@ const Index = () => {
 
             </div>
           </BorderGlow>
+        </div>
 
           {/* Footer */}
           <div className="mt-14 border-t border-border pt-6 text-center space-y-2">

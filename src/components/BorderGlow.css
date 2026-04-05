@@ -6,7 +6,8 @@
   --border-radius: 28px;
   --glow-padding: 40px;
   --cone-spread: 25;
-
+  
+  width: 100%;
   position: relative;
   border-radius: var(--border-radius);
   isolation: isolate;
