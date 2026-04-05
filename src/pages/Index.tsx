@@ -1,6 +1,7 @@
 import { GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import BorderGlow from '@/components/BorderGlow';
 import {
   Select,
   SelectContent,
@@ -46,14 +47,14 @@ const subjectsBySemester = {
     { value: "osl", label: "Operating Systems Lab (OSL)" },
   ],
   "5": [
-    { value: "isl", label: "Information Security Lab (ISL)"},
-    { value: "esdl", label: "Embedded Systems Design Lab (ESDL)"}
+    { value: "isl", label: "Information Security Lab (ISL)" },
+    { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" },
   ],
   "6": [
-    { value: "madl", label: "Mobile Application Development Lab (MADL)"},
-    { value: "ndlp", label: "Network Design and Programming Lab (NDLP)"},
-    { value: "cd", label: "Compiler Design Lab (CDL)"},
-    { value: "wp", label: "Web Programming Lab (WPL)"}
+    { value: "madl", label: "Mobile Application Development Lab (MADL)" },
+    { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
+    { value: "cd", label: "Compiler Design Lab (CDL)" },
+    { value: "wp", label: "Web Programming Lab (WPL)" },
   ],
 };
 
@@ -61,9 +62,9 @@ const evaluationBySemester = {
   "1": ["midsem", "endsem"],
   "2": ["midsem", "endsem"],
   "3": ["midsem", "endsem"],
-  "4": ["midsem", "eval-1", "eval-2" ,"endsem"],
+  "4": ["midsem", "eval-1", "eval-2", "endsem"],
   "5": ["midsem", "endsem"],
-  "6": ["midsem","eval-1", "endsem"]
+  "6": ["midsem", "eval-1", "endsem"],
 };
 
 const evaluationLabels = {
@@ -74,13 +75,11 @@ const evaluationLabels = {
 };
 
 const Index = () => {
-
   const [selectedSemester, setSelectedSemester] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedEval, setSelectedEval] = useState("");
-
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     trackPageView();
@@ -88,7 +87,6 @@ const Index = () => {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-
     if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else if (savedTheme === "light") {
@@ -100,7 +98,6 @@ const Index = () => {
 
   const applySystemTheme = () => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
     if (prefersDark) {
       document.documentElement.classList.add("dark");
     } else {
@@ -112,7 +109,7 @@ const Index = () => {
     <div className="relative min-h-screen bg-background">
       <div className="container py-8 sm:py-12">
 
-        {/* Theme Toggle Buttons */}
+        {/* Theme Toggle */}
         <div className="absolute top-4 right-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -130,7 +127,6 @@ const Index = () => {
                 <Sun className="w-4 h-4 mr-2" />
                 Light
               </DropdownMenuItem>
-
               <DropdownMenuItem
                 onClick={() => {
                   document.documentElement.classList.add("dark");
@@ -140,7 +136,6 @@ const Index = () => {
                 <Moon className="w-4 h-4 mr-2" />
                 Dark
               </DropdownMenuItem>
-
               <DropdownMenuItem
                 onClick={() => {
                   localStorage.setItem("theme", "system");
@@ -165,7 +160,6 @@ const Index = () => {
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Find previous lab exam questions easily
           </p>
-
           <div className="mt-6">
             <p className="text-sm text-muted-foreground">
               Have a new question{" "}
@@ -181,135 +175,146 @@ const Index = () => {
 
         {/* Selection Panel */}
         <div className="max-w-xl mx-auto">
-          <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-card">
-            {/* Semester */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-base font-semibold text-foreground">
-                  Select Semester
-                </h2>
+          <BorderGlow
+            edgeSensitivity={30}
+            borderRadius={16}
+            glowRadius={80}
+            glowIntensity={1}
+            coneSpread={25}
+            animated={true}
+            colors={['#c084fc', '#f472b6', '#38bdf8']}
+          >
+            <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-card">
+
+              {/* Semester */}
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <h2 className="text-base font-semibold text-foreground">
+                    Select Semester
+                  </h2>
+                </div>
+                <Select
+                  value={selectedSemester}
+                  onValueChange={(value) => {
+                    setSelectedSemester(value);
+                    setSelectedSubject("");
+                    setSelectedEval("");
+                  }}
+                >
+                  <SelectTrigger className="w-full h-12 rounded-xl bg-background">
+                    <SelectValue placeholder="Choose a semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {semesters.map((semester) => (
+                      <SelectItem key={semester.value} value={semester.value}>
+                        {semester.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={selectedSemester}
-                onValueChange={(value) => {
-                  setSelectedSemester(value);
-                  setSelectedSubject("");
-                  setSelectedEval("");
+
+              {/* Subject */}
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <h2 className="text-base font-semibold text-foreground">
+                    Select Subject
+                  </h2>
+                </div>
+                <Select
+                  value={selectedSubject}
+                  onValueChange={setSelectedSubject}
+                  disabled={!selectedSemester}
+                >
+                  <SelectTrigger className="w-full h-12 rounded-xl bg-background">
+                    <SelectValue
+                      placeholder={
+                        !selectedSemester
+                          ? "Select semester first"
+                          : subjectsBySemester[selectedSemester]?.length === 0
+                          ? "Coming soon"
+                          : "Choose a subject"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjectsBySemester[selectedSemester]?.length > 0 ? (
+                      subjectsBySemester[selectedSemester].map((subject) => (
+                        <SelectItem key={subject.value} value={subject.value}>
+                          {subject.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem disabled value="coming-soon">
+                        🚧 Coming Soon
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Evaluation Type */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <h2 className="text-base font-semibold text-foreground">
+                    Select Evaluation Type
+                  </h2>
+                </div>
+                <Select
+                  value={selectedEval}
+                  onValueChange={setSelectedEval}
+                  disabled={!selectedSemester}
+                >
+                  <SelectTrigger className="w-full h-12 rounded-xl bg-background">
+                    <SelectValue
+                      placeholder={
+                        !selectedSemester
+                          ? "Select semester first"
+                          : evaluationBySemester[selectedSemester]?.length === 0
+                          ? "Coming soon"
+                          : "Choose evaluation type"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {evaluationBySemester[selectedSemester]?.length > 0 ? (
+                      evaluationBySemester[selectedSemester].map((evalKey) => (
+                        <SelectItem key={evalKey} value={evalKey}>
+                          {evaluationLabels[evalKey]}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem disabled value="coming-soon">
+                        🚧 Coming Soon
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Action Button */}
+              <Button
+                disabled={!selectedSemester || !selectedSubject || !selectedEval || isLoading}
+                className="w-full h-12 text-base font-semibold rounded-xl"
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&eval=${selectedEval}`);
+                  }, 500);
                 }}
               >
-                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
-                  <SelectValue placeholder="Choose a semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  {semesters.map((semester) => (
-                    <SelectItem key={semester.value} value={semester.value}>
-                      {semester.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Loading...
+                  </span>
+                ) : (
+                  "View Questions"
+                )}
+              </Button>
+
             </div>
-
-            {/* Subject */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-base font-semibold text-foreground">
-                  Select Subject
-                </h2>
-              </div>
-              <Select
-                value={selectedSubject}
-                onValueChange={setSelectedSubject}
-                disabled={!selectedSemester}
-              >
-                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
-                  <SelectValue
-                    placeholder={
-                      !selectedSemester
-                        ? "Select semester first"
-                        : subjectsBySemester[selectedSemester]?.length === 0
-                        ? "Coming soon"
-                        : "Choose a subject"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjectsBySemester[selectedSemester]?.length > 0 ? (
-                    subjectsBySemester[selectedSemester].map((subject) => (
-                      <SelectItem key={subject.value} value={subject.value}>
-                        {subject.label}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem disabled value="coming-soon">
-                      🚧 Coming Soon
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Evaluation Type */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-base font-semibold text-foreground">
-                  Select Evaluation Type
-                </h2>
-              </div>
-              <Select
-                value={selectedEval}
-                onValueChange={setSelectedEval}
-                disabled={!selectedSemester}
-              >
-                <SelectTrigger className="w-full h-12 rounded-xl bg-background">
-                  <SelectValue
-                    placeholder={
-                      !selectedSemester
-                        ? "Select semester first"
-                        : evaluationBySemester[selectedSemester]?.length === 0
-                        ? "Coming soon"
-                        : "Choose evaluation type"
-                    }
-                  />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {evaluationBySemester[selectedSemester]?.length > 0 ? (
-                    evaluationBySemester[selectedSemester].map((evalKey) => (
-                      <SelectItem key={evalKey} value={evalKey}>
-                        {evaluationLabels[evalKey]}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem disabled value="coming-soon">
-                      🚧 Coming Soon
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Action Button */}
-            <Button
-              disabled={!selectedSemester || !selectedSubject || !selectedEval || isLoading}
-              className="w-full h-12 text-base font-semibold rounded-xl"
-              onClick={() => {
-                setIsLoading(true);
-                setTimeout(() => {
-                  navigate(`/questions?sem=${selectedSemester}&subject=${selectedSubject}&eval=${selectedEval}`);
-                }, 500);
-              }}
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Loading...
-                </span>
-              ) : (
-                "View Questions"
-              )}
-            </Button>
-          </div>
+          </BorderGlow>
 
           {/* Footer */}
           <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
@@ -317,7 +322,6 @@ const Index = () => {
               For the students of{" "}
               <span className="font-medium text-foreground">MIT Manipal</span>
             </p>
-
             <p className="text-xs text-muted-foreground">
               Built by{" "}
               <a
@@ -347,6 +351,7 @@ const Index = () => {
             </p>
           </div>
         </div>
+
       </div>
     </div>
   );
