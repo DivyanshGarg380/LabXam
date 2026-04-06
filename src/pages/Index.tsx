@@ -182,7 +182,7 @@ const Index = () => {
             glowRadius={80}
             glowIntensity={1}
             coneSpread={25}
-            animated={true}
+            animated={false}
             colors={['#c084fc', '#f472b6', '#38bdf8']}
             >
             <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-card">
