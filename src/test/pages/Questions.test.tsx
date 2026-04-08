@@ -43,7 +43,7 @@ describe("Questions Page", () => {
   test("Shows loading text initially", () => {
     mockedFetch.mockImplementation(() => new Promise(() => {}));
     render(<Questions />);
-    expect(screen.getByText(/fetching questions/i)).toBeInTheDocument();
+    expect(document.querySelector('.skeleton')).toBeInTheDocument();
   });
 
   test("Renders QuestionsPage after data loads", async () => {

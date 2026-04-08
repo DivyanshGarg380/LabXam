@@ -2,6 +2,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { QuestionsPage } from "@/components/QuestionsPage";
 import { useEffect, useCallback, useState } from "react";
 import { toast } from "sonner";
+import { QuestionCardSkeleton } from "@/components/QuestionCardSkeleton";
+
 import {
   normalizeSemester,
   normalizeEvaluation,
@@ -77,14 +79,16 @@ const Questions = () => {
   }, [semesterKey, subjectKey, evalKey, redirectHome]);
 
   return isLoading ? (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-muted-foreground text-sm">
-          Fetching questions...
-        </p>
-      </div>
+  <div className="min-h-screen max-w-2xl mx-auto px-4 py-8 flex flex-col gap-3">
+    {/* mimics the header area above cards */}
+    <div className="flex gap-2 mb-1">
+      <div className="skeleton h-[14px] w-28 rounded" />
+      <div className="skeleton h-[14px] w-20 rounded" />
     </div>
+    {Array.from({ length: 5 }).map((_, i) => (
+      <QuestionCardSkeleton key={i} />
+    ))}
+  </div>
   ) : (
     <QuestionsPage
       semester={semesterKey}
