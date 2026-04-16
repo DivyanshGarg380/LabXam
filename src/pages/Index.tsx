@@ -109,76 +109,42 @@ const Index = () => {
     <div className="relative min-h-screen bg-background overflow-x-hidden">
       <div className="container py-8 sm:py-12">
 
-        <div className="mt-12 mb-4 flex justify-center">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md 
-          border border-border bg-muted/40 text-sm">
-
-            <span className="text-muted-foreground">
-              OSDL practice questions are now available
-            </span>
-
-            <div className="relative group">
-              <a
-                href="/OSDL_Practice.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-foreground hover:underline"
-              >
-                View
-              </a>
-
-              {/* Tooltip */}
-              <div className="absolute right-0 top-full mt-2 w-64 p-2 rounded-md 
-              bg-popover border border-border text-xs text-muted-foreground
-              opacity-0 group-hover:opacity-100 
-              pointer-events-none transition-all duration-200 shadow-md z-50">
-                We do not guarantee that these questions will appear in the exam, nor the trauma you may experience while solving them.
-                <br /><br />
-                — Made by Vidhan 😈
-              </div>
-            </div>
-
+        {/* Top Bar */}
+        <div className="relative flex items-center justify-center mb-8">
+          
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-muted/40 text-sm">
+            <span className="text-muted-foreground">OSDL practice available</span>
+            <a
+              href="/OSDL_Practice.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground hover:underline"
+            >
+              View
+            </a>
           </div>
-        </div>
+          {/* Theme */}
+          <div className="absolute right-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-xl">
+                  Theme
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { document.documentElement.classList.remove("dark"); localStorage.setItem("theme", "light"); }}>
+                  <Sun className="w-4 h-4 mr-2" /> Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { document.documentElement.classList.add("dark"); localStorage.setItem("theme", "dark"); }}>
+                  <Moon className="w-4 h-4 mr-2" /> Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { localStorage.setItem("theme", "system"); applySystemTheme(); }}>
+                  <Monitor className="w-4 h-4 mr-2" /> System
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-        {/* Theme Toggle */}
-        <div className="absolute top-4 right-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl">
-                Theme
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  document.documentElement.classList.remove("dark");
-                  localStorage.setItem("theme", "light");
-                }}
-              >
-                <Sun className="w-4 h-4 mr-2" />
-                Light
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  document.documentElement.classList.add("dark");
-                  localStorage.setItem("theme", "dark");
-                }}
-              >
-                <Moon className="w-4 h-4 mr-2" />
-                Dark
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  localStorage.setItem("theme", "system");
-                  applySystemTheme();
-                }}
-              >
-                <Monitor className="w-4 h-4 mr-2" />
-                System
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         {/* Header */}
