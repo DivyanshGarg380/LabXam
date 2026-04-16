@@ -58,17 +58,23 @@ export function QuestionsPage({
               </h1>
 
               {showPracticeLink && (
-                <a
-                  href="/OSDL_Practice.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium px-3 py-1.5 rounded-md 
-                  bg-primary/10 text-primary 
-                  hover:bg-primary/20 
-                  transition-all"
-                >
-                  Practice Questions →
-                </a>
+                <div className="flex flex-col items-end">
+                  <a
+                    href="/OSDL_Practice.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium px-3 py-1.5 rounded-md 
+                    bg-primary/10 text-primary 
+                    hover:bg-primary/20 
+                    transition-all"
+                  >
+                    Practice Questions
+                  </a>
+
+                  <span className="text-xs text-muted-foreground mt-1">
+                    made by vidhan
+                  </span>
+                </div>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
