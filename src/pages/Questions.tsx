@@ -92,11 +92,6 @@ const Questions = () => {
       evaluationType={evalKey}
       questions={allQuestions}
       onBack={() => navigate("/", { replace: true })}
-      showPracticeLink={
-        semester === "4" &&
-        subject === "osdl" &&
-        evalType === "endsem"
-      }
     />
   );
 };

@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar, Users } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -14,7 +14,6 @@ interface QuestionsPageProps {
     uploaded_at: number;
   }[];
   onBack?: () => void;
-  showPracticeLink?: boolean;
 }
 
 export function QuestionsPage({
@@ -23,7 +22,6 @@ export function QuestionsPage({
   evaluationType,
   questions = [],
   onBack,
-  showPracticeLink,
 }: QuestionsPageProps) {
   return (
     <div className="min-h-screen bg-background">
@@ -35,19 +33,19 @@ export function QuestionsPage({
               variant="ghost"
               onClick={onBack}
               className="
-                  mb-4 -ml-2
-                  flex items-center gap-2
-                  text-muted-foreground
-                  rounded-full
-                  px-3 py-2
-                  transition-all
-                  hover:bg-primary/10
-                  hover:text-primary
-                  group
-                "
-            > 
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span className="text-sm font-medium">Back</span>
+                mb-4 -ml-2
+                flex items-center gap-2
+                text-muted-foreground
+                rounded-full
+                px-3 py-2
+                transition-all
+                hover:bg-primary/10
+                hover:text-primary
+                group
+              "
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-sm font-medium">Back</span>
             </Button>
           )}
 
@@ -56,27 +54,8 @@ export function QuestionsPage({
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                 {subject.toUpperCase()}
               </h1>
-
-              {showPracticeLink && (
-                <div className="flex flex-col items-end">
-                  <a
-                    href="/OSDL_Practice.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium px-3 py-1.5 rounded-md 
-                    bg-primary/10 text-primary 
-                    hover:bg-primary/20 
-                    transition-all"
-                  >
-                    Practice Questions
-                  </a>
-
-                  <span className="text-xs text-muted-foreground mt-1">
-                    made by vidhan
-                  </span>
-                </div>
-              )}
             </div>
+
             <p className="text-sm text-muted-foreground">
               {semester}
               <span className="mx-2">•</span>
@@ -94,7 +73,7 @@ export function QuestionsPage({
         {/* Questions List */}
         {questions.length > 0 ? (
           <div className="space-y-4 pt-2">
-           {questions.map(({ question, section, year, uploaded_at}, index) => (
+            {questions.map(({ question, section, year, uploaded_at }, index) => (
               <div
                 key={`${index}-${question.slice(0, 20)}`}
                 style={{ animationDelay: `${index * 50}ms` }}

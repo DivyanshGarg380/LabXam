@@ -111,7 +111,7 @@ const Index = () => {
 
         {/* Top Bar */}
         <div className="relative flex items-center justify-center mb-8">
-          
+          {/* Announcement */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-muted/40 text-sm">
             <span className="text-muted-foreground">OSDL practice available</span>
             <a
@@ -123,6 +123,7 @@ const Index = () => {
               View
             </a>
           </div>
+
           {/* Theme */}
           <div className="absolute right-0">
             <DropdownMenu>
