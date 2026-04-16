@@ -14,6 +14,7 @@ interface QuestionsPageProps {
     uploaded_at: number;
   }[];
   onBack?: () => void;
+  showPracticeLink?: boolean;
 }
 
 export function QuestionsPage({
@@ -22,6 +23,7 @@ export function QuestionsPage({
   evaluationType,
   questions = [],
   onBack,
+  showPracticeLink,
 }: QuestionsPageProps) {
   return (
     <div className="min-h-screen bg-background">
@@ -50,10 +52,25 @@ export function QuestionsPage({
           )}
 
           <div className="space-y-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              {subject.toUpperCase()}
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                {subject.toUpperCase()}
+              </h1>
 
+              {showPracticeLink && (
+                <a
+                  href="/OSDL_Practice.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium px-3 py-1.5 rounded-md 
+                  bg-primary/10 text-primary 
+                  hover:bg-primary/20 
+                  transition-all"
+                >
+                  Practice Questions →
+                </a>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               {semester}
               <span className="mx-2">•</span>

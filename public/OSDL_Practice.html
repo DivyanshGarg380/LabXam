@@ -1,0 +1,191 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{background:#141414;border-radius:16px;padding:24px;font-family:var(--font-sans)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.stat{background:#1e1e1e;border:0.5px solid #2e2e2e;border-radius:10px;padding:14px 18px;text-align:center}
+.stat-num{font-size:28px;font-weight:500;color:#e8e8e8}
+.stat-lbl{font-size:13px;color:#888;margin-top:3px}
+.stat.done-stat .stat-num{color:#6fcf97}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;align-items:center}
+.flbl{font-size:14px;color:#666;margin-right:4px}
+.fb{padding:7px 16px;font-size:13px;font-weight:500;border:0.5px solid #2e2e2e;border-radius:8px;background:#1e1e1e;color:#999;cursor:pointer;transition:all 0.15s}
+.fb:hover{background:#252525;color:#ccc}
+.fb.on{background:#2a2a3e;color:#a89ff5;border-color:#534AB7}
+.fb.done-btn.on{background:#1a2e1a;color:#6fcf97;border-color:#2a6a2a}
+.q-card{background:#1a1a1a;border:0.5px solid #2a2a2a;border-radius:12px;padding:20px 22px;margin-bottom:14px;transition:border-color 0.15s,background 0.2s}
+.q-card:hover{border-color:#3a3a3a}
+.q-card.hide{display:none}
+.q-card.completed{background:#161e16;border-color:#2a4a2a}
+.q-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.q-num{font-size:13px;font-weight:500;color:#555;min-width:32px;padding-top:2px}
+.q-title{font-size:17px;font-weight:500;color:#e0e0e0;line-height:1.4;flex:1}
+.q-card.completed .q-title{color:#7ab87a}
+.q-body{font-size:15px;color:#aaa;line-height:1.8;margin-bottom:14px;padding-left:44px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;padding-left:44px;align-items:center}
+.tag{font-size:12px;font-weight:500;padding:3px 10px;border-radius:6px}
+.t-javafx{background:#1a2535;color:#6fa8dc;border:0.5px solid #2a3f5a}
+.t-oop{background:#221e3a;color:#a89ff5;border:0.5px solid #3a2e6a}
+.t-thread{background:#2a1e0e;color:#e0a060;border:0.5px solid #5a3a10}
+.t-io{background:#1a2a1a;color:#80c080;border:0.5px solid #2a5a2a}
+.t-generics{background:#2a1a1a;color:#d07070;border:0.5px solid #5a2a2a}
+.t-collections{background:#0e2a2a;color:#60c0c0;border:0.5px solid #105a5a}
+.t-hard{background:#2a1518;color:#e06070;border:0.5px solid #5a1520}
+.t-medium{background:#2a2010;color:#d0b050;border:0.5px solid #5a4010}
+.no-res{text-align:center;padding:3rem;color:#444;font-size:16px}
+.divider{border:none;border-top:0.5px solid #222;margin:6px 0 20px}
+
+/* Checklist checkbox */
+.check-wrap{margin-left:auto;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.check-wrap label{font-size:12px;color:#555;cursor:pointer;user-select:none;white-space:nowrap}
+.q-card.completed .check-wrap label{color:#6fcf97}
+.q-checkbox{appearance:none;-webkit-appearance:none;width:18px;height:18px;border:1.5px solid #3a3a3a;border-radius:5px;background:#1e1e1e;cursor:pointer;position:relative;transition:all 0.15s;flex-shrink:0}
+.q-checkbox:checked{background:#2a6a2a;border-color:#4a9a4a}
+.q-checkbox:checked::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#6fcf97;font-weight:700}
+.q-checkbox:hover{border-color:#555}
+
+/* Progress bar */
+.progress-wrap{margin-bottom:20px}
+.progress-bar-bg{background:#1e1e1e;border-radius:8px;height:8px;border:0.5px solid #2e2e2e;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,#2a6a2a,#6fcf97);border-radius:8px;transition:width 0.4s ease}
+.progress-lbl{font-size:12px;color:#555;margin-bottom:6px;display:flex;justify-content:space-between}
+</style>
+
+<div class="wrap">
+  <h2 style="font-size:20px;font-weight:500;color:#e0e0e0;margin-bottom:6px">OSDL exam question bank</h2>
+  <p style="font-size:14px;color:#666;margin-bottom:20px">20 practice questions — medium to hard — all topics integrated with JavaFX</p>
+  <hr class="divider">
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="sc">20</div><div class="stat-lbl">Showing</div></div>
+    <div class="stat"><div class="stat-num">20</div><div class="stat-lbl">Total</div></div>
+    <div class="stat done-stat"><div class="stat-num" id="dc">0</div><div class="stat-lbl">Completed ✓</div></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-lbl"><span>Progress</span><span id="pct">0%</span></div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="pbar" style="width:0%"></div></div>
+  </div>
+  <div class="filters">
+    <span class="flbl">Filter:</span>
+    <button class="fb on" onclick="filt('all',this)">All</button>
+    <button class="fb" onclick="filt('oop',this)">OOP</button>
+    <button class="fb" onclick="filt('thread',this)">Threads</button>
+    <button class="fb" onclick="filt('io',this)">I/O</button>
+    <button class="fb" onclick="filt('generics',this)">Generics</button>
+    <button class="fb" onclick="filt('collections',this)">Collections</button>
+    <button class="fb" onclick="filt('hard',this)">Hard only</button>
+    <button class="fb done-btn" onclick="filt('done',this)">✓ Completed</button>
+    <button class="fb done-btn" onclick="filt('undone',this)">○ Remaining</button>
+  </div>
+  <div id="ql"></div>
+</div>
+
+<script>
+const qs=[
+  {n:1,title:"Hotel Room Booking System — OOP + JavaFX",tags:["oop","javafx","hard"],body:"Design a Java application with a JavaFX GUI for a hotel room booking system. Create an abstract class Room with fields roomNumber and basePrice, and an abstract method calculateTariff(). Derive StandardRoom and LuxuryRoom from it, overriding calculateTariff() — StandardRoom adds 10% tax while LuxuryRoom adds 10% tax plus a ₹500 amenity charge. Implement an Amenities interface with provideWifi() and provideBreakfast() methods; LuxuryRoom must implement it. In the JavaFX GUI, provide a ComboBox to choose room type, a TextField for number of nights, a Button labeled 'Calculate', and a Label that shows the final tariff. Use a base class reference (Room) to call calculateTariff() so that runtime polymorphism is demonstrated when the button is clicked."},
+  {n:2,title:"Concurrent room service with GUI status — Threads + JavaFX",tags:["thread","javafx","hard"],body:"Build a JavaFX application that simulates three simultaneous hotel services: room cleaning, food delivery, and maintenance. Create a separate thread for each service using the Runnable interface. Each thread should print five progress steps with a 500ms sleep between steps. Use join() on all three threads so the main thread waits for all services to finish before printing 'All services completed.' The JavaFX window should have three TextArea boxes (one per service) displaying progress updates in real time using Platform.runLater(), and a single Start button that launches all three threads when clicked."},
+  {n:3,title:"Synchronized room booking with wait/notify + JavaFX",tags:["thread","javafx","hard"],body:"Implement a hotel room booking monitor in Java where a shared RoomMonitor class has a fixed number of available rooms (say 2). Write a bookRoom() synchronized method that calls wait() when no rooms are free, and a checkoutRoom() synchronized method that calls notify() when a room is released. Spawn five customer threads that each try to book a room, stay for a random time, and then check out. Demonstrate that no more than two rooms are occupied at once. Wrap this in a JavaFX application where a TextArea logs all booking and checkout events updated via Platform.runLater(), and a Button labeled 'Start Simulation' launches the threads."},
+  {n:4,title:"Employee payroll with generics, collections, and JavaFX",tags:["generics","collections","javafx","hard"],body:"Create a generic class Pair<T, U> with two type parameters to store an employee ID (Integer) and their monthly salary (Double). Build an ArrayList of such Pair objects for at least five employees. Write a generic static method <T extends Number> double computeTotal(ArrayList<Pair<T,?>> list) using a bounded type to sum all salary values. Use an Iterator to traverse the list and display each employee record. Build a JavaFX GUI with a TableView showing employee ID and salary columns, a Label showing the total payroll computed by your generic method, and a Button 'Load Data' that populates the table."},
+  {n:5,title:"File copy utility with byte streams and JavaFX",tags:["io","javafx","medium"],body:"Write a JavaFX desktop application that copies the binary contents of one file to another using FileInputStream and FileOutputStream. The GUI should have two TextFields — one for the source file path and one for the destination path — a Button labeled 'Copy File', and a Label that reports either 'File copied successfully.' or the error message if an IOException occurs. The copy must be done byte by byte in a loop (do not use any NIO shortcuts). After copying, read the destination file back using a FileReader and display its text content in a TextArea inside the same JavaFX window."},
+  {n:6,title:"Serializable room bookings with JavaFX search",tags:["io","javafx","medium"],body:"Create a Room class that implements Serializable with fields roomNumber (int), roomType (String), pricePerNight (double), bookingStatus (boolean), and guestName (String). Write code to serialize a list of five Room objects to a file called rooms.dat. Write deserialization code to read them back. Build a JavaFX GUI with a TextField for entering a room number, a Button 'Search', and a TextArea that displays the matching room's details after deserializing from the file. Also provide a 'Show All' Button that lists all deserialized rooms in the TextArea. Handle IOException and ClassNotFoundException with appropriate error labels."},
+  {n:7,title:"Hotel billing with wrapper classes, autoboxing, and JavaFX",tags:["oop","javafx","medium"],body:"Build a hotel billing JavaFX application that stores room tariff and number of days as wrapper class objects (Integer for days, Double for tariff). Use autoboxing when assigning primitive values to these wrappers, and unboxing when computing the total bill (tariff × days + 18% GST). The GUI should include TextFields for tariff and days, a Button 'Generate Bill', and a Label that shows the itemized bill: base amount, GST amount, and total. Internally, all intermediate calculations must pass through wrapper objects at least once — do not use only primitives throughout."},
+  {n:8,title:"RandomAccessFile room manager with JavaFX",tags:["io","javafx","hard"],body:"Design a JavaFX application that manages hotel room records using RandomAccessFile with fixed-length records. Each record stores roomNumber (int, 4 bytes), roomType (20-char padded String, 40 bytes), pricePerNight (double, 8 bytes), and isBooked (boolean, 1 byte) — total 53 bytes per record. Provide GUI buttons for 'Add Room' (reads TextFields and writes a new record), 'View Room' (takes a room number, uses seek() to jump to the correct byte offset, and displays details in Labels), and 'Toggle Booking' (updates only the isBooked byte of a specific record using seek). Show error messages via JavaFX Alert dialogs for invalid input or file errors."},
+  {n:9,title:"Room type enum with tariff and JavaFX display",tags:["oop","javafx","medium"],body:"Define an enum RoomType with constants STANDARD, DELUXE, and SUITE, each carrying a base price and a service charge as instance variables initialized through an enum constructor. Add an enum method calculateFinalCost(int nights) that returns basePrice × nights + serviceCharge. In a JavaFX window, display all three room types in a ComboBox, provide a Spinner or TextField for number of nights, a Button 'Calculate Cost', and a Label that shows the total cost by calling the enum method. Also add a Label that lists all enum constants and their base prices using RoomType.values() when the application starts."},
+  {n:10,title:"Thread-safe bank account with synchronization and JavaFX",tags:["thread","javafx","medium"],body:"Implement a BankAccount class with a balance field and two synchronized methods: deposit(int amount) and withdraw(int amount). Withdraw should print an insufficient balance message and return without changing balance if funds are too low. Create four customer threads — two depositing and two withdrawing — all operating on the same account object. Use a synchronized block (not a synchronized method) in at least one of the four thread classes to demonstrate the difference. Build a JavaFX TextArea log that shows each thread's action and the balance after each operation, updated via Platform.runLater()."},
+  {n:11,title:"Generic hotel pair with bounded discount and JavaFX table",tags:["generics","collections","javafx","hard"],body:"Create a generic class RoomBooking<T, U> where T is the room identifier type and U is the price type. Store at least six bookings using Integer room IDs and Double prices. Write a bounded generic method <T extends Number> double applyDiscount(T price, T discountPercent) that returns the discounted price. Use an Iterator to traverse the booking list and apply the discount to each record. Display all bookings in a JavaFX TableView with columns for room ID, original price, and discounted price. Add a TextField for entering a discount percentage and a Button 'Apply Discount' that recomputes all discounted prices in the table when clicked."},
+  {n:12,title:"Producer-consumer order queue with GUI",tags:["thread","javafx","hard"],body:"Implement the classic producer-consumer problem using a shared Buffer class with synchronized produce(int value) and consume() methods that use wait() and notify() for coordination. The producer generates five order IDs and the consumer processes them. Wrap this in a JavaFX application where two TextAreas side by side show 'Producer log' and 'Consumer log' respectively. A Button 'Start' launches both threads. Use Platform.runLater() for all GUI updates. Ensure the producer never adds a new item until the previous one is consumed (buffer size = 1). Show 'All orders processed.' in a status Label once both threads complete."},
+  {n:13,title:"Hotel management system using ArrayList, HashMap, and JavaFX",tags:["collections","javafx","hard"],body:"Build a tab-based JavaFX hotel management application with three tabs: Rooms, Customers, and Bookings. Use an ArrayList<Room> to store room objects and a HashMap<Integer, String> to map room numbers to guest names. In the Rooms tab, provide a form to add rooms and a TableView to display them. In the Customers tab, capture customer name, contact, and preferred room number in a form. In the Bookings tab, allow booking a room (check availability using the HashMap) and checkout (remove the mapping and update availability). Use Collections.sort() to sort rooms by price when displaying. Display success or error messages using JavaFX Alert dialogs."},
+  {n:14,title:"Inheritance with constructor overloading and JavaFX form",tags:["oop","javafx","medium"],body:"Create a base class Room with three overloaded constructors: one accepting only roomNumber and roomType, one accepting those plus basePrice, and one accepting all fields including floorNumber. Create a derived class DeluxeRoom that extends Room, adds wifiFree (boolean) and breakfastIncluded (boolean) fields, and uses super() to call the appropriate base constructor. Override a displayDetails() method. In a JavaFX GUI, provide radio buttons to select which constructor to use, input fields for the relevant parameters, a Button 'Create Room', and a TextArea that calls displayDetails() and shows the created object's information. Demonstrate runtime polymorphism by holding the DeluxeRoom reference in a Room variable before calling displayDetails()."},
+  {n:15,title:"Character stream log writer with JavaFX editor",tags:["io","javafx","medium"],body:"Create a JavaFX text editor application for hotel log management. Use FileWriter in append mode to write new log entries when the user clicks 'Save Log'. Use FileReader to read all existing log content and display it in a TextArea when the user clicks 'Load Logs'. Use try-with-resources for both stream operations. The GUI should include a TextField for the log entry, a Button 'Save Log', a Button 'Load Logs', a TextArea for displaying all logs, and a Label showing 'Log saved.' or 'Logs loaded.' after each operation. Validate that the entry field is not empty before writing."},
+  {n:16,title:"Generic array manager with multiple type displays and JavaFX",tags:["generics","javafx","medium"],body:"Write a generic static method <T> void printArray(T[] array) that prints all elements of any array type. Demonstrate it with an Integer array of room numbers, a String array of room types, and a Double array of room prices. Also create a bounded generic method <T extends Comparable<T>> T findMax(T[] array) that returns the maximum element. Build a JavaFX application with three Buttons: 'Show Room Numbers', 'Show Room Types', 'Show Prices' — each calls printArray() and displays the result in a shared TextArea. Add a fourth Button 'Find Max Price' that calls findMax() on the prices array and shows the result in a Label."},
+  {n:17,title:"Deadlock demo with detection and JavaFX visualization",tags:["thread","javafx","hard"],body:"Write a Java program that deliberately causes a deadlock between two threads (ThreadA locks resource1 then waits for resource2; ThreadB locks resource2 then waits for resource1). In a separate, corrected version of the same program, fix the deadlock by enforcing a consistent lock ordering (always acquire resource1 before resource2). Build a JavaFX window with two Buttons: 'Run Deadlock Version' and 'Run Fixed Version'. Each button launches the respective pair of threads and logs their lock acquisition messages to a TextArea via Platform.runLater(). After 3 seconds, if the deadlock version is still running, show a Label 'Deadlock detected — threads are stuck.'"},
+  {n:18,title:"Enum-driven hotel billing with collections and JavaFX",tags:["oop","collections","javafx","hard"],body:"Define an enum ServiceType with values LAUNDRY, SPA, RESTAURANT, MINIBAR, each carrying a fixed charge initialized via enum constructor. Create a Booking class that holds a guest name, RoomType (your existing enum), an ArrayList<ServiceType> for extra services used, and a method computeTotalBill(int nights) that adds the room tariff from the RoomType enum plus all service charges. Build a JavaFX GUI where the user selects a room type from a ComboBox, checks off extra services using CheckBoxes, enters number of nights in a TextField, and clicks 'Generate Bill' to see an itemized breakdown in a TextArea."},
+  {n:19,title:"File-backed room inventory with sorting, iteration, and JavaFX",tags:["io","collections","javafx","hard"],body:"Design a JavaFX application that stores hotel room details in a text file, one room per line in CSV format (roomNumber,roomType,price,isAvailable). On startup, read the file using FileReader line by line, parse each line, and populate an ArrayList<Room>. Use an Iterator to filter and display only available rooms in a ListView in the JavaFX GUI. Provide a Button 'Sort by Price' that uses Collections.sort() with a Comparator and refreshes the ListView. Provide a Button 'Add Room' that collects input from TextFields, appends the new room to the file using FileWriter in append mode, and updates the ListView in real time."},
+  {n:20,title:"Complete mini hotel app — all topics integrated",tags:["oop","thread","io","generics","collections","javafx","hard"],body:"Build a complete standalone JavaFX hotel management application that integrates all course topics. Use an abstract class Room with calculateTariff() overridden in StandardRoom and LuxuryRoom (OOP + polymorphism). Store rooms and bookings in ArrayList and HashMap (Collections). Use an enum RoomStatus (AVAILABLE, BOOKED, MAINTENANCE) with a descriptive method. Implement a BookingService that runs room-availability checks in a background thread using Runnable, with results posted back via Platform.runLater() (Threads). Save and load the full list of bookings using serialization/deserialization (I/O). Use a generic Pair<Integer, String> to map room numbers to guest names (Generics). The GUI must be tab-based with at least three tabs (Rooms, Bookings, Reports), use TableView for data display, Alert dialogs for feedback, and a real-time status Label updated from threads."}
+];
+
+const tcls={javafx:"t-javafx",oop:"t-oop",thread:"t-thread",io:"t-io",generics:"t-generics",collections:"t-collections",hard:"t-hard",medium:"t-medium"};
+
+const STORAGE_KEY = 'osdl_completed';
+
+function getCompleted(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+
+function setCompleted(arr){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+  catch(e){}
+}
+
+function toggleDone(n, cb){
+  let done = getCompleted();
+  if(cb.checked){
+    if(!done.includes(n)) done.push(n);
+  } else {
+    done = done.filter(x=>x!==n);
+  }
+  setCompleted(done);
+  const card = cb.closest('.q-card');
+  card.classList.toggle('completed', cb.checked);
+  updateStats();
+}
+
+function updateStats(){
+  const done = getCompleted();
+  const count = done.length;
+  document.getElementById('dc').textContent = count;
+  const pct = Math.round((count/qs.length)*100);
+  document.getElementById('pct').textContent = pct+'%';
+  document.getElementById('pbar').style.width = pct+'%';
+}
+
+let currentFilter = 'all';
+
+function render(f){
+  currentFilter = f;
+  const ql=document.getElementById('ql');
+  ql.innerHTML='';
+  let shown=0;
+  const done = getCompleted();
+  qs.forEach(q=>{
+    const isDone = done.includes(q.n);
+    let match = false;
+    if(f==='all') match=true;
+    else if(f==='done') match=isDone;
+    else if(f==='undone') match=!isDone;
+    else match=q.tags.includes(f);
+    if(!match) return;
+    shown++;
+    const d=document.createElement('div');
+    d.className='q-card'+(isDone?' completed':'');
+    d.innerHTML=`
+      <div class="q-head">
+        <span class="q-num">Q${q.n}</span>
+        <span class="q-title">${q.title}</span>
+        <div class="check-wrap">
+          <input type="checkbox" class="q-checkbox" id="chk${q.n}" ${isDone?'checked':''} onchange="toggleDone(${q.n},this)">
+          <label for="chk${q.n}">${isDone?'Done':'Mark done'}</label>
+        </div>
+      </div>
+      <p class="q-body">${q.body}</p>
+      <div class="tags">${q.tags.map(t=>`<span class="tag ${tcls[t]||''}">${t}</span>`).join('')}</div>`;
+    ql.appendChild(d);
+  });
+  if(!shown){
+    const d=document.createElement('div');
+    d.className='no-res';
+    d.textContent = f==='done' ? 'No questions completed yet. Start checking them off!' : f==='undone' ? '🎉 All visible questions completed!' : 'No questions match this filter.';
+    ql.appendChild(d);
+  }
+  document.getElementById('sc').textContent=shown;
+  updateStats();
+}
+
+function filt(f,btn){
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  render(f);
+}
+
+render('all');
+</script>
