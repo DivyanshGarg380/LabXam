@@ -60,11 +60,11 @@ const Questions = () => {
         evalKey,
       );
 
-      if(!data || data.length === 0) {
-        setIsLoading(false);
-        redirectHome("Questions not found. Redirecting to home...");
-        return;
-      }
+      // if(!data || data.length === 0) {
+      //   setIsLoading(false);
+      //   redirectHome("Questions not found. Redirecting to home...");
+      //   return;
+      // }
 
       setAllQuestions(data);
 
