@@ -83,11 +83,6 @@ export function QuestionsPage({
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-
-                    {/* Mobile-only fallback */}
-                    <span className="text-xs text-muted-foreground sm:hidden">
-                      by Vidhan
-                    </span>
                   </>
                 )}
               </div>
