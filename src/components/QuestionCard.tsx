@@ -2,6 +2,7 @@ import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useState } from "react";
+
 interface QuestionCardProps {
   number: number;
   question: string;
@@ -9,12 +10,15 @@ interface QuestionCardProps {
   year: string;
   uploadedAt: number;
 }
+
 export function QuestionCard({ number, question, section, year, uploadedAt }: QuestionCardProps) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
   const isRecent = (uploadedAt: number) => {
     return Date.now() - uploadedAt < 24 * 60 * 60 * 1000;
-  }
+  };
+
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -26,11 +30,26 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
       toast.error("Failed to copy question");
     }
   };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+    if (isLongQuestion) setExpanded(!expanded);
+  };
+
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+    setExpanded(!expanded);
+  };
+
   const isLongQuestion = question.length > 150;
+
   return (
     <div
       className="question-card animate-fade-in"
-      onClick={() => isLongQuestion && setExpanded(!expanded)}
+      onClick={handleCardClick}
       style={{ cursor: isLongQuestion ? "pointer" : "default" }}
     >
       <div className="flex items-start justify-between gap-4">
@@ -41,9 +60,9 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
               {number}
             </span>
           </div>
+
           {/* Section + Question */}
           <div className="flex flex-col gap-1 pt-1">
-            {/* Section */}
             {isRecent(uploadedAt) && (
               <span className="text-xs text-green-500 font-semibold">
                 Recently Uploaded
@@ -52,7 +71,6 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
             <span className="text-xs font-bold text-muted-foreground">
               {year} • {section}
             </span>
-            {/* Question Text */}
             <p
               className={`
                 text-foreground text-sm sm:text-base leading-relaxed whitespace-pre-line
@@ -61,10 +79,9 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
             >
               {question}
             </p>
-            {/* Expand / Collapse Button */}
             {isLongQuestion && (
               <button
-                onClick={() => setExpanded(!expanded)}
+                onClick={handleToggleExpand}
                 className="text-xs font-medium text-primary hover:underline mt-1 w-fit"
               >
                 {expanded ? "Show less" : "Show more"}
@@ -72,18 +89,13 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
             )}
           </div>
         </div>
+
         {/* Copy Button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={handleCopy}
-          className="
-            flex-shrink-0
-            text-muted-foreground
-            hover:text-primary
-            hover:bg-primary/10
-            transition-colors
-          "
+          className="flex-shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
         >
           {copied ? (
             <Check className="w-4 h-4 text-primary" />
