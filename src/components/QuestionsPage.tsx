@@ -60,32 +60,37 @@ export function QuestionsPage({
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                 {subject.toUpperCase()}
               </h1>
-              {subject?.toLowerCase() === "osdl" && evaluationType === "Endsem" && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      asChild
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <a
-                        href="/OSDL_Practice.html"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        OSDL Practice Q's
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </Button>
-                  </TooltipTrigger>
+              {/* To remove after 23/04/2026 */}
+              <div className="flex items-center gap-2">
+                {subject?.toLowerCase() === "osdl" && evaluationType === "Endsem" && (
+                  <>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button asChild size="sm" className="flex items-center gap-2">
+                            <a
+                              href="/OSDL_Practice.html"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              OSDL Practice Q's
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Made by Vidhan</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
 
-                  <TooltipContent>
-                    <p>Made by Vidhan</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+                    {/* Mobile-only fallback */}
+                    <span className="text-xs text-muted-foreground sm:hidden">
+                      by Vidhan
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             <p className="text-sm text-muted-foreground">
