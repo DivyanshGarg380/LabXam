@@ -86,7 +86,7 @@ export default function Report() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+      <div className="px-4 pt-10 pb-24 sm:pt-12 sm:pb-28 flex flex-col items-center">
 
         {/* Header */}
         <div className="w-full max-w-xl text-center mb-8 space-y-2">
@@ -102,7 +102,7 @@ export default function Report() {
         <div className="w-full max-w-xl bg-card border border-border rounded-2xl p-6 shadow-sm space-y-5">
 
           <Textarea
-            placeholder="Describe the issue clearly… (what happened, where, expected behavior)"
+            placeholder="Describe the issue clearly…"
             rows={5}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -176,38 +176,54 @@ export default function Report() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border py-6 text-center space-y-2">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border pt-5 pb-5 text-center space-y-1 bg-background">
         <p className="text-sm text-muted-foreground">
           For the students of{" "}
           <span className="font-medium text-foreground">MIT Manipal</span>
         </p>
 
-        <p className="text-xs text-muted-foreground">
-          Built by{" "}
+        <p className="text-xs text-muted-foreground flex flex-wrap justify-center items-center gap-x-1">
+
+          <a
+            href="https://github.com/DivyanshGarg380/LabXam"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline whitespace-nowrap"
+          >
+            Open Source
+          </a>
+
+          <span className="whitespace-nowrap">• Built by</span>
+
           <a
             href="https://github.com/Vidhan-152"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-foreground hover:underline underline-offset-4"
+            className="font-medium text-foreground hover:underline whitespace-nowrap"
           >
             Vidhan
           </a>
-          {" & "}
+
+          <span>&</span>
+
           <a
             href="https://github.com/DivyanshGarg380"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-foreground hover:underline underline-offset-4"
+            className="font-medium text-foreground hover:underline whitespace-nowrap"
           >
             Divyansh
           </a>
-          {" • "}
+
+          <span>•</span>
+
           <Link
             to="/report"
-            className="hover:text-foreground underline-offset-4 hover:underline"
+            className="hover:text-foreground transition underline-offset-4 hover:underline whitespace-nowrap"
           >
-            Report an issue
+            Report
           </Link>
+
         </p>
       </div>
     </div>

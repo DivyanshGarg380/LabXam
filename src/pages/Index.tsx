@@ -108,7 +108,6 @@ const Index = () => {
   return (
     <div className="relative min-h-screen bg-background overflow-x-hidden">
       <div className="container pt-6 sm:pt-8 pb-4 sm:pb-6">
-
         {/* Top Bar */}
         <div className="relative flex items-center justify-center mb-4">
           {/* Theme */}
@@ -132,7 +131,6 @@ const Index = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
         </div>
 
         {/* Header */}
@@ -302,41 +300,57 @@ const Index = () => {
         </div>
 
           {/* Footer */}
-          <div className="mt-14 border-t border-border pt-6 text-center space-y-2">
+          <div className="mt-14 border-t border-border pt-5 text-center space-y-1">
             <p className="text-sm text-muted-foreground">
               For the students of{" "}
               <span className="font-medium text-foreground">MIT Manipal</span>
             </p>
-            <p className="text-xs text-muted-foreground">
-              Built by{" "}
+
+            <p className="text-xs text-muted-foreground flex flex-wrap justify-center items-center gap-x-1">
+
+              <a
+                href="https://github.com/DivyanshGarg380/LabXam"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline whitespace-nowrap"
+              >
+                Open Source
+              </a>
+
+              <span className="whitespace-nowrap">• Built by</span>
+
               <a
                 href="https://github.com/Vidhan-152"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-foreground hover:underline underline-offset-4 transition"
+                className="font-medium text-foreground hover:underline whitespace-nowrap"
               >
                 Vidhan
               </a>
-              {" & "}
+
+              <span>&</span>
+
               <a
                 href="https://github.com/DivyanshGarg380"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-foreground hover:underline underline-offset-4 transition"
+                className="font-medium text-foreground hover:underline whitespace-nowrap"
               >
                 Divyansh
               </a>
-              {" • "}
+
+              <span>•</span>
+
               <Link
                 to="/report"
-                className="hover:text-foreground transition underline-offset-4 hover:underline"
+                className="hover:text-foreground transition underline-offset-4 hover:underline whitespace-nowrap"
               >
-                Report an issue
+                Report
               </Link>
+
             </p>
           </div>
         </div>
-
       </div>
     </div>
   );
