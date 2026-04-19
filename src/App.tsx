@@ -40,7 +40,7 @@ const SecurityBanner = () => {
           >
             Question submitting
           </Link>{" "}
-          is temporarily disabled due to recent issues on Vercel. We’ll restore it shortly.
+          is temporarily disabled due to recent issues with Vercel. We’ll restore it shortly.
         </p>
 
       </div>
