@@ -107,7 +107,7 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen bg-background overflow-x-hidden">
-      <div className="container pt-8 sm:pt-10 pb-4 sm:pb-6">
+      <div className="container pt-6 sm:pt-8 pb-4 sm:pb-6">
 
         {/* Top Bar */}
         <div className="relative flex items-center justify-center mb-4">
