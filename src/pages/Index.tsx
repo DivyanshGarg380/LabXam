@@ -107,10 +107,10 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen bg-background overflow-x-hidden">
-      <div className="container py-8 sm:py-12">
+      <div className="container py-4 sm:py-6">
 
         {/* Top Bar */}
-        <div className="relative flex items-center justify-center mb-8">
+        <div className="relative flex items-center justify-center mb-4">
           {/* Theme */}
           <div className="absolute right-0">
             <DropdownMenu>
@@ -136,10 +136,7 @@ const Index = () => {
         </div>
 
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-12">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-6">
-            <GraduationCap className="w-7 h-7 text-primary" />
-          </div>
+        <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
             Lab Exam Questions Hub
           </h1>
