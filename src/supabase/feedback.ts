@@ -21,11 +21,15 @@ export async function fetchFeedback(): Promise<FeedbackItem[]> {
 export async function fetchAvgRating(): Promise<number> {
   const { data, error } = await supabase
     .from("feedback")
-    .select("avg_rating:avg(rating)");
+    .select("rating")
+    .order("created_at", { ascending: false })
+    .limit(15);
 
   if (error) throw error;
 
-  const avg = data?.[0]?.avg_rating;
+  if (!data || data.length === 0) return 0;
 
-  return typeof avg === "number" ? avg : 0;
+  return (
+    data.reduce((acc, f) => acc + f.rating, 0) / data.length
+  );
 }
