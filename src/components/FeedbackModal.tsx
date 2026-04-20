@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const STORAGE_KEY = "feedback_done";
 const WORD_LIMIT = 50;
-const TRIGGER_DELAY_MS = 20_000 + Math.random() * 10_000;
 
 const countWords = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
 const LABELS = ["Terrible", "Bad", "Okay", "Good", "Amazing"];
@@ -70,12 +69,8 @@ export default function FeedbackModal() {
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return;
 
-    const t = setTimeout(() => {
-      setVisible(true);
-      setTimeout(() => setOpen(true), 100);
-    }, TRIGGER_DELAY_MS);
-
-    return () => clearTimeout(t);
+    setVisible(true); 
+    setOpen(false);
   }, []);
 
   if (!visible) return null;

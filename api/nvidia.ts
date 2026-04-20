@@ -16,7 +16,7 @@ export default async function handler(req: any, res: any) {
           Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "meta/llama3-70b-instruct",
+          model: "meta/llama-3.1-nemotron-safety-guard-8b-v3",
           messages: body.messages,
           max_tokens: body.max_tokens ?? 256,
           temperature: 0.2,
