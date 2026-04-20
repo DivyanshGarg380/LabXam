@@ -597,7 +597,8 @@ export default function Admin() {
 
       setFeedbackList(list);
       setAvgRating(avg);
-    } catch {
+    } catch (error) {
+      console.log("FEEDBACK ERROR: ", error);
       toast.error("Failed to load feedback");
     } finally {
       setLoadingFeedback(false);
@@ -1471,7 +1472,6 @@ export default function Admin() {
               )}
             </>
           )}
-          
         </main>
       </div>
     </div>
