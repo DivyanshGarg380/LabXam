@@ -27,20 +27,20 @@ const queryClient = new QueryClient({
 
 const SecurityBanner = () => {
   return (
-    <div className="sticky top-0 z-50 w-full border-b bg-yellow-500/10 backdrop-blur supports-[backdrop-filter]:bg-yellow-500/10">
+    <div className="sticky top-0 z-50 w-full border-b bg-green-500/10 backdrop-blur supports-[backdrop-filter]:bg-green-500/10">
       <div className="flex items-center justify-center gap-3 px-4 py-3 text-sm">
 
-        <Info className="h-5 w-5 text-yellow-600 shrink-0" />
+        <Info className="h-5 w-5 text-green-600 shrink-0" />
 
-        <p className="text-center text-yellow-800 dark:text-yellow-300">
+        <p className="text-center text-green-800 dark:text-green-300">
           <span className="font-semibold">Notice:</span>{" "}
           <Link
             to="/submit"
-            className="font-medium underline underline-offset-4 hover:text-yellow-900 dark:hover:text-yellow-200 transition"
+            className="font-medium underline underline-offset-4 hover:text-green-900 dark:hover:text-green-200 transition"
           >
             Question submitting
           </Link>{" "}
-          is temporarily disabled due to recent issues with Vercel. We’ll restore it shortly.
+          is now available. We’re now accepting submissions.
         </p>
 
       </div>
