@@ -59,8 +59,10 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  MessageSquarePlus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { fetchFeedback, fetchAvgRating, type FeedbackItem } from "@/supabase/feedback";
 
 type Subject = { value: string; label: string };
 type SubjectsMap = { [semester: string]: Subject[] };
@@ -72,7 +74,7 @@ type QuestionItem = {
   year: string;
   evaluation: string;
 };
-type View = "dashboard" | "add" | "manage" | "reports" | "pending";
+type View = "dashboard" | "add" | "manage" | "reports" | "pending" | "feedback";
 type ActivityEntry = { id: string; message: string; timestamp: Date | null };
 type PendingItem = {
   id: string;
@@ -274,6 +276,10 @@ export default function Admin() {
   const [searchYear, setSearchYear] = useState("");
   const [searchEval, setSearchEval] = useState("");
 
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
+  const [avgRating, setAvgRating] = useState<number>(0);
+  const [loadingFeedback, setLoadingFeedback] = useState(true);
+
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -292,6 +298,7 @@ export default function Admin() {
             loadActivity();
             loadStats();
             loadPending();
+            loadFeedback();
           }
         } else {
           setUser(null);
@@ -580,6 +587,23 @@ export default function Admin() {
     });
   };
 
+  const loadFeedback = async () => {
+    setLoadingFeedback(true);
+    try {
+      const [list, avg] = await Promise.all([
+        fetchFeedback(),
+        fetchAvgRating(),
+      ]);
+
+      setFeedbackList(list);
+      setAvgRating(avg);
+    } catch (error) {
+      toast.error("Failed to load feedback");
+    } finally {
+      setLoadingFeedback(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -680,6 +704,11 @@ export default function Admin() {
       label: "Reports",
       icon: <Flag className="h-4 w-4" />,
       badge: reports.length || undefined,
+    },
+    {
+      id: "feedback",
+      label: "Feedback",
+      icon: <MessageSquarePlus className="h-4 w-4" />,
     },
   ];
 
@@ -1323,6 +1352,123 @@ export default function Admin() {
                   </div>
                 )}
               </SectionCard>
+            </>
+          )}
+
+          {activeView === "feedback" && (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-bold">Feedback</h1>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Latest user insights
+                  </p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadFeedback}
+                  className="text-xs"
+                >
+                  Refresh
+                </Button>
+              </div>
+
+              {/* ===== AVG RATING CARD ===== */}
+              <div className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Average Rating
+                  </p>
+
+                  <div className="flex items-end gap-3">
+                    <span className="text-4xl font-bold tracking-tight">
+                      {avgRating ? avgRating.toFixed(1) : "—"}
+                    </span>
+
+                    {/* stars visual */}
+                    <div className="flex gap-0.5 pb-1">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <span
+                          key={i}
+                          className={`text-sm ${
+                            i <= Math.round(avgRating)
+                              ? "text-violet-400"
+                              : "text-zinc-700"
+                          }`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">
+                    Showing latest
+                  </p>
+                  <p className="text-lg font-semibold">
+                    {feedbackList.length}
+                  </p>
+                </div>
+              </div>
+
+              {/* ===== FEEDBACK LIST ===== */}
+              {loadingFeedback ? (
+                <div className="flex justify-center py-20">
+                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : feedbackList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <p className="text-sm font-medium">No feedback yet</p>
+                  <p className="text-xs text-muted-foreground">
+                    Waiting for first responses
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {feedbackList.map((f) => (
+                    <div
+                      key={f.id}
+                      className="border border-border rounded-xl bg-card p-4 space-y-3 hover:bg-muted/40 transition"
+                    >
+                      {/* top row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <span
+                              key={i}
+                              className={`text-sm ${
+                                i <= f.rating
+                                  ? "text-violet-400"
+                                  : "text-zinc-700"
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+
+                        <span className="text-[11px] text-muted-foreground">
+                          {new Date(f.created_at).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </span>
+                      </div>
+
+                      {/* note */}
+                      {f.note && (
+                        <p className="text-sm text-zinc-300 leading-relaxed">
+                          {f.note}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </main>

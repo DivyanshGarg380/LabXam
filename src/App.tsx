@@ -15,6 +15,7 @@ import AdminStatus from "./pages/AdminStatus";
 import AuthCallback from "@/pages/AuthCallback";
 import { Info } from "lucide-react";
 import { Link } from "react-router-dom";
+import FeedbackModal from "@/components/FeedbackModal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +100,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Analytics />
+          <FeedbackModal />
         </TooltipProvider>
       </QueryClientProvider>
     </BrowserRouter>
