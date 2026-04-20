@@ -102,7 +102,6 @@ export default function FeedbackModal() {
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
-
       {/* Floating panel */}
       <AnimatePresence>
         {open && (
@@ -127,7 +126,6 @@ export default function FeedbackModal() {
                 visible: { transition: { staggerChildren: 0.06 } },
               }}
             >
-
               <div className="h-[2px] w-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500" />
 
               <motion.div variants={fadeUp} className="flex items-start justify-between px-4 pt-4 pb-3">
@@ -137,7 +135,7 @@ export default function FeedbackModal() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white leading-tight">Share your feedback</p>
-                    <p className="text-[11px] text-zinc-500 leading-tight mt-0.5">Helps us improve · 10 seconds</p>
+                    <p className="text-[11px] text-zinc-500 leading-tight mt-0.5">Helps us improve</p>
                   </div>
                 </div>
 
@@ -152,7 +150,6 @@ export default function FeedbackModal() {
               </motion.div>
 
               <motion.div variants={fadeUp} className="px-4 pb-4 space-y-4">
-
                 {submitted ? (
                   <div className="flex flex-col items-center gap-2 py-5 text-center">
                     <div className="w-12 h-12 rounded-2xl bg-violet-500/15 flex items-center justify-center mb-1">
@@ -220,6 +217,7 @@ export default function FeedbackModal() {
                   </>
                 )}
               </motion.div>
+
             </motion.div>
           </motion.div>
         )}
