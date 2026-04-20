@@ -433,8 +433,7 @@ const SubmitQuestion = () => {
           {/* Send Question */}
           <button
             onClick={sendQuestion}
-            // disabled={isSubmitting || cooldown !== null}
-            disabled
+            disabled={isSubmitting || cooldown !== null}
             className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-medium transition hover:opacity-90 disabled:opacity-50"
           >
             {validating
