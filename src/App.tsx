@@ -35,13 +35,8 @@ const SecurityBanner = () => {
 
         <p className="text-center text-green-800 dark:text-green-300">
           <span className="font-semibold">Notice:</span>{" "}
-          <Link
-            to="/submit"
-            className="font-medium underline underline-offset-4 hover:text-green-900 dark:hover:text-green-200 transition"
-          >
-            Question submitting
-          </Link>{" "}
-          is now available. We’re now accepting submissions.
+{" "}
+          Please take a moment to fill out our feedback form—your input helps us improve!
         </p>
 
       </div>
