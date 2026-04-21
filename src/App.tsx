@@ -35,10 +35,8 @@ const SecurityBanner = () => {
 
         <p className="text-center text-green-800 dark:text-green-300">
           <span className="font-semibold">Notice:</span>{" "}
-{" "}
-          Please take a moment to fill out our feedback form—your input helps us improve!
+          Please share your feedback to help us improve.
         </p>
-
       </div>
     </div>
   );
