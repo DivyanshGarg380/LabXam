@@ -62,7 +62,12 @@ import {
   MessageSquarePlus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { fetchFeedback, fetchAvgRating, type FeedbackItem } from "@/supabase/feedback";
+import {
+  fetchFeedback,
+  fetchAvgRating,
+  fetchFeedbackCount,
+  type FeedbackItem,
+} from "@/supabase/feedback";
 
 type Subject = { value: string; label: string };
 type SubjectsMap = { [semester: string]: Subject[] };
@@ -278,6 +283,7 @@ export default function Admin() {
 
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [avgRating, setAvgRating] = useState<number>(0);
+  const [feedbackCount, setFeedbackCount] = useState<number>(0);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
 
   const [authLoading, setAuthLoading] = useState(true);
@@ -590,13 +596,15 @@ export default function Admin() {
   const loadFeedback = async () => {
     setLoadingFeedback(true);
     try {
-      const [list, avg] = await Promise.all([
+      const [list, avg, total] = await Promise.all([
         fetchFeedback(),
         fetchAvgRating(),
+        fetchFeedbackCount(),
       ]);
 
       setFeedbackList(list);
       setAvgRating(avg);
+      setFeedbackCount(total);
     } catch (error) {
       toast.error("Failed to load feedback");
     } finally {
@@ -1407,10 +1415,10 @@ export default function Admin() {
 
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">
-                    Showing latest
+                    Total submitted
                   </p>
                   <p className="text-lg font-semibold">
-                    {feedbackList.length}
+                    {feedbackCount}
                   </p>
                 </div>
               </div>

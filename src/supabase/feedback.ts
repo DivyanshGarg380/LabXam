@@ -18,6 +18,15 @@ export async function fetchFeedback(): Promise<FeedbackItem[]> {
     return data;
 }
 
+export async function fetchFeedbackCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("feedback")
+    .select("id", { count: "exact", head: true });
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function fetchAvgRating(): Promise<number> {
   const { data, error } = await supabase
     .from("feedback")
