@@ -19,6 +19,14 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
     return Date.now() - uploadedAt < 24 * 60 * 60 * 1000;
   };
 
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -69,7 +77,7 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
               </span>
             )}
             <span className="text-xs font-bold text-muted-foreground">
-              {year} • {section}
+              {formatDate(uploadedAt)} • {section}
             </span>
             <p
               className={`
