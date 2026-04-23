@@ -105,7 +105,12 @@ export function QuestionsPage({
         {/* Questions List */}
         {questions.length > 0 ? (
           <div className="space-y-4 pt-2">
-            {questions.map(({ question, section, year, uploaded_at }, index) => (
+            {[...questions]
+              .sort((a, b) => {
+                const parse = (d: string) => { const [dd, mm, yyyy] = d.split("/"); return new Date(`${yyyy}-${mm}-${dd}`).getTime(); };
+                return parse(b.year) - parse(a.year);
+              })
+              .map(({ question, section, year, uploaded_at }, index) => (
               <div
                 key={`${index}-${question.slice(0, 20)}`}
                 style={{ animationDelay: `${index * 50}ms` }}

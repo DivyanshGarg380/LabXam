@@ -15,16 +15,9 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const isRecent = (uploadedAt: number) => {
-    return Date.now() - uploadedAt < 24 * 60 * 60 * 1000;
-  };
-
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    const dd = String(date.getDate()).padStart(2, "0");
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
+  const isRecent = (year: string) => {
+    const [dd, mm, yyyy] = year.split("/");
+    return Date.now() - new Date(`${yyyy}-${mm}-${dd}`).getTime() < 24 * 60 * 60 * 1000;
   };
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -71,13 +64,13 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
 
           {/* Section + Question */}
           <div className="flex flex-col gap-1 pt-1">
-            {isRecent(uploadedAt) && (
+            {isRecent(year) && (
               <span className="text-xs text-green-500 font-semibold">
                 Recently Uploaded
               </span>
             )}
             <span className="text-xs font-bold text-muted-foreground">
-              {formatDate(uploadedAt)} • {section}
+              {year} • {section}
             </span>
             <p
               className={`
