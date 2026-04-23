@@ -16,8 +16,7 @@ export function QuestionCard({ number, question, section, year, uploadedAt }: Qu
   const [expanded, setExpanded] = useState(false);
 
   const isRecent = (year: string) => {
-    const [dd, mm, yyyy] = year.split("/");
-    return Date.now() - new Date(`${yyyy}-${mm}-${dd}`).getTime() < 24 * 60 * 60 * 1000;
+    return Date.now() - uploadedAt < 23 * 60 * 60 * 1000;
   };
 
   const handleCopy = async (e: React.MouseEvent) => {
