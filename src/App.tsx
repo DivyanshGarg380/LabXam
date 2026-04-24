@@ -16,6 +16,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import { Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import FeedbackModal from "@/components/FeedbackModal";
+import { BellRing } from "lucide-react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,15 +29,16 @@ const queryClient = new QueryClient({
 
 const SecurityBanner = () => {
   return (
-    <div className="sticky top-0 z-50 w-full border-b bg-green-500/10 backdrop-blur supports-[backdrop-filter]:bg-green-500/10">
-      <div className="flex items-center justify-center gap-3 px-4 py-3 text-sm">
+    <div className="sticky top-0 z-50 w-full border-b bg-green-500/10 backdrop-blur">
+      
+      <div className="flex items-center justify-center gap-2 px-4 py-3 text-sm">
 
-        <Info className="h-5 w-5 text-green-600 shrink-0" />
+        <CalendarCheck className="h-5 w-5 text-green-600" />
 
-        <p className="text-center text-green-800 dark:text-green-300">
-          <span className="font-semibold">Update:</span>{" "}
-          Questions now show full dates (DD/MM/YYYY) based on feedback.
+        <p className="text-center text-green-800 dark:text-green-300 font-medium">
+          See you again next semester
         </p>
+
       </div>
     </div>
   );
