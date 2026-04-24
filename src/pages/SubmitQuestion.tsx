@@ -31,6 +31,7 @@ const subject_sem: Record<string, string[]> = {
     "Embedded Systems Design Lab (ESDL)"
   ],
   "6": [
+    "Parallel Programming Lab (PPL)",
     "Mobile Application Development Lab (MADL)",
     "Network Design and Programming Lab (NDLP)",
     "Compiler Design (CD)",
