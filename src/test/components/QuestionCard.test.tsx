@@ -4,18 +4,20 @@ import { QuestionCard } from "../../components/QuestionCard";
 describe("QuestionCard", () => {
 
   test("renders question number, text and section", () => {
+    const uploadedAt = new Date("2026-04-20T10:00:00.000Z").getTime();
     render(
       <QuestionCard
         number={3}
         question="Explain Deadlock"
         section="Section B"
         year="2024"
-        uploadedAt={Date.now() - 100000}
+        uploadedAt={uploadedAt}
       />
     );
 
     expect(screen.getByText("Explain Deadlock")).toBeInTheDocument();
     expect(screen.getByText(/section b/i)).toBeInTheDocument();
+    expect(screen.getByText(/uploaded on/i)).toBeInTheDocument();
     expect(screen.getByText(/3/)).toBeInTheDocument();
   });
 

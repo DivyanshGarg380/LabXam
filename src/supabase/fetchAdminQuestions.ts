@@ -6,6 +6,7 @@ export type AdminQuestionItem = {
   section: string;
   year: string;
   evaluation: string;
+  uploadedAt: number;
 };
 
 export const fetchAdminQuestions = async (
@@ -16,7 +17,7 @@ export const fetchAdminQuestions = async (
 ) => {
   let query = supabase
     .from("questions")
-    .select("id, questions, section, year, evaluation")
+    .select("id, questions, section, year, evaluation, uploaded_at")
     .eq("semester", semester)
     .eq("subject", subject);
 
@@ -39,6 +40,7 @@ export const fetchAdminQuestions = async (
         section: row.section ?? "",
         year: row.year ?? "",
         evaluation: row.evaluation ?? "",
+        uploadedAt: row.uploaded_at ?? 0,
       });
     });
   });

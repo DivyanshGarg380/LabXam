@@ -6,7 +6,8 @@ export const addQuestion = async (
   evaluation: string,
   section: string,
   year: string,
-  question: string
+  question: string,
+  uploadedAt: number = Date.now()
 ) => {
   const { data, error } = await supabase
     .from("questions")
@@ -23,7 +24,10 @@ export const addQuestion = async (
   if (data) {
     const { error: updateError } = await supabase
       .from("questions")
-      .update({ questions: [...data.questions, question] })
+      .update({
+        questions: [...data.questions, question],
+        uploaded_at: uploadedAt,
+      })
       .eq("id", data.id);
 
     return !updateError;
@@ -37,7 +41,7 @@ export const addQuestion = async (
         section,
         year,
         questions: [question],
-        uploaded_at: Date.now(),
+        uploaded_at: uploadedAt,
       });
 
     return !insertError;

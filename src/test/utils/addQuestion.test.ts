@@ -32,6 +32,7 @@ describe("addQuestion", () => {
   });
 
   const args = ["sem1", "os", "midsem", "A", "2023", "New Question"] as const;
+  const selectedUploadDate = 1735689600000;
 
   it("updates existing question list", async () => {
     mockQuery.single.mockResolvedValue({
@@ -48,11 +49,12 @@ describe("addQuestion", () => {
       eq: mockEq,
     });
 
-    const res = await addQuestion(...args);
+    const res = await addQuestion(...args, selectedUploadDate);
 
     expect(res).toBe(true);
     expect(mockQuery.update).toHaveBeenCalledWith({
       questions: ["Old Q", "New Question"],
+      uploaded_at: selectedUploadDate,
     });
   });
 
@@ -71,7 +73,7 @@ describe("addQuestion", () => {
       }),
     });
 
-    const res = await addQuestion(...args);
+    const res = await addQuestion(...args, selectedUploadDate);
 
     expect(res).toBe(false);
   });
@@ -84,7 +86,7 @@ describe("addQuestion", () => {
 
     mockQuery.insert.mockResolvedValue({ error: null });
 
-    const res = await addQuestion(...args);
+    const res = await addQuestion(...args, selectedUploadDate);
 
     expect(res).toBe(true);
     expect(mockQuery.insert).toHaveBeenCalledWith({
@@ -94,7 +96,7 @@ describe("addQuestion", () => {
       section: "A",
       year: "2023",
       questions: ["New Question"],
-      uploaded_at: expect.any(Number),
+      uploaded_at: selectedUploadDate,
     });
   });
 
@@ -108,7 +110,7 @@ describe("addQuestion", () => {
       error: { message: "Insert failed" },
     });
 
-    const res = await addQuestion(...args);
+    const res = await addQuestion(...args, selectedUploadDate);
 
     expect(res).toBe(false);
   });
@@ -119,7 +121,7 @@ describe("addQuestion", () => {
       error: { code: "SOME_OTHER_ERROR" },
     });
 
-    const res = await addQuestion(...args);
+    const res = await addQuestion(...args, selectedUploadDate);
 
     expect(res).toBe(false);
   });

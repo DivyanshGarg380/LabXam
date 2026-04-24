@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import {
   signInWithGoogle,
   signOut,
@@ -39,6 +40,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Trash2,
   LogOut,
@@ -60,6 +67,7 @@ import {
   CheckCircle,
   XCircle,
   MessageSquarePlus,
+  CalendarDays,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -78,6 +86,7 @@ type QuestionItem = {
   section: string;
   year: string;
   evaluation: string;
+  uploadedAt: number;
 };
 type View = "dashboard" | "add" | "manage" | "reports" | "pending" | "feedback";
 type ActivityEntry = { id: string; message: string; timestamp: Date | null };
@@ -272,6 +281,9 @@ export default function Admin() {
 
   const [section, setSection] = useState("");
   const [question, setQuestion] = useState("");
+  const [uploadedDate, setUploadedDate] = useState<Date | undefined>(
+    new Date(),
+  );
 
   const [openDialog, setOpenDialog] = useState(false);
   const [questionsList, setQuestionsList] = useState<QuestionItem[]>([]);
@@ -427,13 +439,22 @@ export default function Admin() {
   };
 
   const handleAddQuestion = async () => {
-    if (!semester || !subject || !year || !evalType || !section || !question) {
+    if (
+      !semester ||
+      !subject ||
+      !year ||
+      !evalType ||
+      !section ||
+      !question ||
+      !uploadedDate
+    ) {
       toast.error("Please fill all fields");
       return;
     }
     try {
       const semLabel = `Semester ${semester}`;
       const evalLabel = evaluationLabelMap[evalType];
+      const uploadAt = uploadedDate.getTime();
       const success = await addQuestion(
         semLabel,
         subject,
@@ -441,12 +462,13 @@ export default function Admin() {
         section,
         year,
         question,
+        uploadAt,
       );
       if (!success) {
         toast.error("Permission denied");
         return;
       }
-      const msg = `${user!.email!.replace(/@.*/, "")} added a question in ${semLabel} — ${subject} (${evalLabel}, ${section})`;
+      const msg = `${user!.email!.replace(/@.*/, "")} added a question in ${semLabel} — ${subject} (${evalLabel}, ${section}) for ${format(uploadedDate, "dd MMM yyyy")}`;
       await logActivity(msg);
       setStats((prev) =>
         prev ? { ...prev, totalQuestions: prev.totalQuestions + 1 } : prev,
@@ -458,6 +480,7 @@ export default function Admin() {
         ].slice(0, 8),
       );
       setQuestion("");
+      setUploadedDate(new Date());
       toast.success("Question added successfully!");
     } catch {
       toast.error("Permission denied");
@@ -484,6 +507,7 @@ export default function Admin() {
         section: d.section,
         year: d.year,
         evaluation: d.evaluation,
+        uploadedAt: d.uploadedAt,
       }));
       setQuestionsList(all);
       setSearchSection("");
@@ -969,6 +993,64 @@ export default function Admin() {
                   value={section}
                   onChange={(e) => setSection(e.target.value)}
                 />
+                <div className="relative mt-1 overflow-hidden rounded-xl border border-border/70 bg-gradient-to-br from-muted/50 via-card to-background p-3">
+                  <div className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-primary/10 blur-xl" />
+                  <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        Submission Date
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Pick the exam date for this question
+                      </p>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={`h-10 w-full sm:w-[220px] justify-start rounded-lg border-border/70 bg-background/80 text-left font-medium shadow-sm hover:bg-background ${
+                            !uploadedDate ? "text-muted-foreground" : ""
+                          }`}
+                        >
+                          <CalendarDays className="h-4 w-4 text-primary" />
+                          {uploadedDate
+                            ? format(uploadedDate, "dd MMM yyyy")
+                            : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                          mode="single"
+                          selected={uploadedDate}
+                          onSelect={setUploadedDate}
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                        />
+                        <div className="flex items-center justify-between border-t border-border p-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => setUploadedDate(new Date())}
+                          >
+                            Use today
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-xs text-muted-foreground"
+                            onClick={() => setUploadedDate(undefined)}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </SectionCard>
               <SectionCard
                 title="Question"
@@ -1170,6 +1252,15 @@ export default function Admin() {
                                         {item.evaluation && (
                                           <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-muted-foreground">
                                             {item.evaluation}
+                                          </span>
+                                        )}
+                                        {item.uploadedAt > 0 && (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-xs font-medium text-blue-500">
+                                            <CalendarDays className="h-3 w-3" />
+                                            {format(
+                                              new Date(item.uploadedAt),
+                                              "dd MMM yyyy",
+                                            )}
                                           </span>
                                         )}
                                       </div>
