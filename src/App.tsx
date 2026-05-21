@@ -97,7 +97,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Analytics />
-          <FeedbackModal />
+          /* <FeedbackModal /> */
         </TooltipProvider>
       </QueryClientProvider>
     </BrowserRouter>
