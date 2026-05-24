@@ -221,16 +221,19 @@ function FieldGroup({
           ))}
         </SelectContent>
       </Select>
-      <Select value={year} onValueChange={setYear}>
-        <SelectTrigger className="h-10 rounded-lg text-sm">
-          <SelectValue placeholder="Year" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="2024">2024</SelectItem>
-          <SelectItem value="2025">2025</SelectItem>
-          <SelectItem value="2026">2026</SelectItem>
-        </SelectContent>
-      </Select>
+      <input
+        type="date"
+        className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        value={
+          year
+            ? year.split("/").reverse().join("-")
+            : ""
+        }
+        onChange={(e) => {
+          const [yyyy, mm, dd] = e.target.value.split("-");
+          setYear(`${dd}/${mm}/${yyyy}`);
+        }}
+      />
       <Select value={evalType} onValueChange={setEvalType} disabled={!semester}>
         <SelectTrigger className="h-10 rounded-lg text-sm">
           <SelectValue placeholder="Evaluation Type" />
