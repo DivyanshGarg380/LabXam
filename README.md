@@ -1,5 +1,13 @@
 # LabXam  
 
+<img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" />
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+<img src="https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+<img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
+<img src="https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white" />
+
+
+
 A clean, scalable, and real-time web platform that helps students access previous year lab exam questions — organized by semester, subject, year, and evaluation type.
 
 The goal of this project is to eliminate the need to search through scattered WhatsApp messages, PDFs, and shared drives before lab exams by providing a centralized and structured repository.
@@ -129,7 +137,7 @@ The application uses clean query-based URLs.
 
 Example:
 ```
-/questions?sem=<sem_id>&subject=<subject_id>&year=<year>&eval=<eval_type>
+/questions?sem=<sem_id>&subject=<subject_id>&eval=<eval_type>
 ```
 
 ### URL Parameters
@@ -138,7 +146,6 @@ Example:
 |---------- |-----------------|
 | sem       | Semester ID     |
 | subject   | Subject ID      |
-| year      | Year            |
 | eval      | Evaluation type |
 
 ---
@@ -151,7 +158,6 @@ Create a `.env` file in the root directory:
 VITE_SUPABASE_URL=your_project_url
 VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
- 
 
 ---
 
@@ -173,8 +179,29 @@ Open http:localhost:8080
 ### BEFORE RAISING A PR: 
 Please ensure you do ```npm test```
 
+## Contributors
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/DivyanshGarg380">
+        <img src="https://github.com/DivyanshGarg380.png" width="100px;" alt="Divyansh Garg"/>
+        <br />
+        <sub><b>Divyansh Garg</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Vidhan-152">
+        <img src="https://github.com/Vidhan-152.png" width="100px;" alt="Vidhan Sachdeva"/>
+        <br />
+        <sub><b>Vidhan Sachdeva</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
 ## LICENCE
 This project is open-source and available under the MIT License.
 
-© 2026 Divyansh Garg and Vidhan Sachdeva. All rights reserved.
+© 2026 All rights reserved.
 
