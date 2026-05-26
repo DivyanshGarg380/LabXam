@@ -208,24 +208,9 @@ Please ensure you do ```npm test```
 
 ## Contributors
 
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/DivyanshGarg380">
-        <img src="https://github.com/DivyanshGarg380.png" width="100px;" alt="Divyansh Garg"/>
-        <br />
-        <sub><b>Divyansh Garg</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/Vidhan-152">
-        <img src="https://github.com/Vidhan-152.png" width="100px;" alt="Vidhan Sachdeva"/>
-        <br />
-        <sub><b>Vidhan Sachdeva</b></sub>
-      </a>
-    </td>
-  </tr>
-</table>
+<a href="https://github.com/DivyanshGarg380/LabXam/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=DivyanshGarg380/LabXam" />
+</a>
 
 ## LICENCE
 This project is open-source and available under the MIT License.
