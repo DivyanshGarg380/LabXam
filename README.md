@@ -1,10 +1,12 @@
 # LabXam  
 
-<img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" />
-<img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-<img src="https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
-<img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
-<img src="https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white" />
+<p align="left">
+  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white" />
+</p>
 
 
 
@@ -130,6 +132,31 @@ Each question record includes:
 - Supabase
 - Firebase for backup :)
 ---
+
+## Architecture
+
+```mermaid
+flowchart LR
+
+    U[Students] --> F[React + TypeScript Frontend]
+
+    F --> DB[(PostgreSQL Database)]
+    F --> AUTH[Supabase Auth]
+
+    AUTH --> ADMIN[Admin Dashboard]
+
+    ADMIN --> QM[Question Management]
+    ADMIN --> FB[Feedback Management]
+    ADMIN --> SUB[User Submission Review]
+
+    QM --> DB
+    FB --> DB
+    SUB --> DB
+
+
+    USERSUB[Question Submissions & Issue Reports]
+    USERSUB --> SUB
+```
 
 ## Routing Logic
 
