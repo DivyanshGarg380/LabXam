@@ -5,6 +5,7 @@ export const queryCache = new Map<
   string,
   {
     data: {
+      id: string;
       question: string;
       section: string;
       year: string;
@@ -29,7 +30,7 @@ export const fetchQuestions = async (
 
     const { data, error } = await supabase
       .from("questions")
-      .select("section, year, questions, uploaded_at")
+      .select("id, section, year, questions, uploaded_at")
       .eq("semester", semester)
       .eq("subject", subject)
       .eq("evaluation", evaluation);
@@ -41,6 +42,7 @@ export const fetchQuestions = async (
     }
 
     const result: {
+      id: string;
       question: string;
       section: string;
       year: string;
@@ -51,8 +53,9 @@ export const fetchQuestions = async (
       if (!row.questions) return;
 
       if (Array.isArray(row.questions)) {
-        row.questions.forEach((q: string) => {
+        row.questions.forEach((q: string, index: number) => {
           result.push({
+            id: `${row.id}:${index}`,
             question: q,
             section: row.section,
             year: row.year,
@@ -61,6 +64,7 @@ export const fetchQuestions = async (
         });
       } else {
         result.push({
+          id: `${row.id}:0`,
           question: row.questions,
           section: row.section,
           year: row.year,

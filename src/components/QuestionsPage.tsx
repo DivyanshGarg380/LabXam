@@ -14,6 +14,7 @@ interface QuestionsPageProps {
   subject: string;
   evaluationType: string;
   questions?: {
+    id: string;
     question: string;
     section: string;
     year: string;
@@ -110,12 +111,13 @@ export function QuestionsPage({
                 const parse = (d: string) => { const [dd, mm, yyyy] = d.split("/"); return new Date(`${yyyy}-${mm}-${dd}`).getTime(); };
                 return parse(b.year) - parse(a.year);
               })
-              .map(({ question, section, year, uploaded_at }, index) => (
+              .map(({ id, question, section, year, uploaded_at }, index) => (
               <div
-                key={`${index}-${question.slice(0, 20)}`}
+                key={id}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <QuestionCard
+                  questionId={id}
                   number={index + 1}
                   question={question}
                   section={section}
