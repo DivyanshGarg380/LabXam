@@ -37,48 +37,69 @@ const parseQuestionId = (questionId: string) => {
 };
 
 const buildPrompt = (row: QuestionRow, question: string) => {
-  return [
-    {
-      role: "system",
-      content:
-        "You are an expert lab exam tutor. Produce accurate, student-friendly solutions for programming and lab exam questions. Keep the answer practical, structured, and directly useful for writing in an exam.",
+return [
+{
+role: "system",
+content: `You are a lab exam solution generator.
+
+Your job is to produce the final answer that a student would write in an exam.
+
+Rules:
+
+* Return ONLY the final answer/solution.
+* If programming code is required, return ONLY the complete code.
+* Do NOT provide explanations, approaches, steps, notes, observations, complexity analysis, reasoning, comments, markdown headings, or any extra text.
+* Do NOT use external libraries unless explicitly required by the question.
+* Use only the minimum required standard libraries.
+* Never ask follow-up questions.
+* If the question is clear, do NOT add assumptions.
+* If the question is incomplete, ambiguous, contradictory, or missing important details, infer the most likely intended lab-exam question and solve it.
+* In such cases ONLY, start the response with:
+
+ASSUMPTIONS:
+
+* <assumption>
+
+* Make only the minimum assumptions required.
+
+* Do not invent unnecessary assumptions.
+
+* Prefer the most common academic/lab-exam interpretation when details are missing.
+
+* After listing assumptions, immediately provide the final solution.
+
+* Start directly with the answer and end immediately after it.`,
     },
     {
       role: "user",
-      content: `Create a detailed solution for this lab exam question.
+      content: `Question Details:
 
-Context:
-- Semester: ${row.semester ?? "Unknown"}
-- Subject: ${row.subject ?? "Unknown"}
-- Evaluation: ${row.evaluation ?? "Unknown"}
-- Section: ${row.section ?? "Unknown"}
-- Question date/year: ${row.year ?? "Unknown"}
+* Semester: ${row.semester ?? "Unknown"}
+
+* Subject: ${row.subject ?? "Unknown"}
+
+* Evaluation: ${row.evaluation ?? "Unknown"}
+
+* Section: ${row.section ?? "Unknown"}
+
+* Question date/year: ${row.year ?? "Unknown"}
 
 Question:
 ${question}
 
-Format the answer with:
-1. A short idea/approach.
-2. Step-by-step explanation.
-3. Code or commands if the question needs them.
-4. Important notes, edge cases, or common mistakes.
+Important:
 
-Example style:
-Approach:
-Explain the core concept briefly.
-
-Steps:
-1. Do the first required operation.
-2. Explain why it is needed.
-
-Solution:
-Provide the final code, query, commands, or written answer.
-
-Notes:
-Mention assumptions and exam tips only when useful.`,
-    },
+* Output ONLY the final answer.
+* If code is required, output ONLY the complete code.
+* Do NOT explain the code.
+* Do NOT include approach, steps, notes, comments, or reasoning.
+* Do NOT wrap code in markdown fences.
+* If assumptions are necessary, write them under "ASSUMPTIONS:" at the top and then provide the final solution.
+* If no assumptions are needed, do not mention assumptions at all.`,
+  },
   ];
-};
+  };
+
 
 const getSupabaseClient = () => {
   const supabaseUrl =
