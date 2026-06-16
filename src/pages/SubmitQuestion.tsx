@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { submitPending } from "@/supabase/pending" 
+import { submitPending } from "@/supabase/pending";
+import { Input } from "@/components/ui/input";
 
 const subject_sem: Record<string, string[]> = {
   "1": ["Programming for Problem Solving (PPS)"],
@@ -31,6 +32,7 @@ const subject_sem: Record<string, string[]> = {
     "Embedded Systems Design Lab (ESDL)"
   ],
   "6": [
+    "Parallel Programming Lab (PPL)",
     "Mobile Application Development Lab (MADL)",
     "Network Design and Programming Lab (NDLP)",
     "Compiler Design (CD)",
@@ -349,19 +351,17 @@ const SubmitQuestion = () => {
           
           {/* Year */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Year</label>
-            <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Select Year" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl shadow-lg">
-                {years.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <label className="text-sm font-medium">Date</label>
+
+            <Input
+              type="date"
+              className="rounded-xl"
+              value={year ? year.split("/").reverse().join("-") : ""}
+              onChange={(e) => {
+                const [yyyy, mm, dd] = e.target.value.split("-");
+                setYear(`${dd}/${mm}/${yyyy}`);
+              }}
+            />
           </div>
           
           {/* Subject */}

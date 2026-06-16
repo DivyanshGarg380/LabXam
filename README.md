@@ -1,5 +1,15 @@
 # LabXam  
 
+<p align="left">
+  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white" />
+</p>
+
+
+
 A clean, scalable, and real-time web platform that helps students access previous year lab exam questions — organized by semester, subject, year, and evaluation type.
 
 The goal of this project is to eliminate the need to search through scattered WhatsApp messages, PDFs, and shared drives before lab exams by providing a centralized and structured repository.
@@ -9,6 +19,10 @@ The goal of this project is to eliminate the need to search through scattered Wh
 [![CI Status](https://github.com/DivyanshGarg380/LabXam/actions/workflows/ci.yml/badge.svg)](https://github.com/DivyanshGarg380/LabXam/actions)
 
 ---
+
+⭐ Rated 4.5/5 from 67+ student feedback submissions
+
+📈 Served 7,000+ visits during peak examination periods
 
 ## Project Vision
 
@@ -23,17 +37,24 @@ Students often waste hours searching for reliable lab exam questions. This platf
 
 ## Features
 
-- Semester-based selection  
-- Dynamic subject filtering based on semester  
-- Evaluation-wise categorization (Midsem, Endsem)  
-- Clean, shareable query-based URLs  
-- Graceful handling of missing/unavailable data  
-- Minimal, fast, and responsive UI  
-- Centralized and scalable database  
-- Rate limiting for abuse prevention  
-- Admin dashboard for content management  
-- Real-time updates across users  
-- Secure authentication and access control  
+- Browse questions seamlessly
+- Semester-based selection
+- Dynamic subject filtering based on semester
+- Evaluation-wise categorization (Midsem, Endsem)
+- Date and section tags
+- Clean, shareable query-based URLs
+- Graceful handling of missing/unavailable data
+- Minimal, fast, and responsive UI
+- Centralized and scalable database
+- Rate limiting for abuse prevention
+- Admin dashboard to manage all workflows
+- Real-time updates across users
+- Secure authentication and access control
+- Feedback system
+- Users can submit questions and report issues
+- AI-generated solutions with structured explanations
+
+> 🚀 **Performance Update:** Introduced a cache-first AI solution system using Supabase, allowing previously generated solutions to be served instantly from cache instead of triggering new NVIDIA API requests. This significantly reduced API usage and improved response times during peak exam periods.
 
 ---
 
@@ -48,6 +69,8 @@ A dedicated admin dashboard allows full control over question management.
 - Real-time updates reflected instantly across the app  
 - Protected routes using authentication  
 - No need to modify static files manually  
+- Review user-submitted questions
+- Manage feedback and issue reports
 
 ---
 
@@ -113,13 +136,38 @@ Each question record includes:
 - Firebase for backup :)
 ---
 
+## Architecture
+
+```mermaid
+flowchart LR
+
+    U[Students] --> F[React + TypeScript Frontend]
+
+    F --> DB[(PostgreSQL Database)]
+    F --> AUTH[Supabase Auth]
+
+    AUTH --> ADMIN[Admin Dashboard]
+
+    ADMIN --> QM[Question Management]
+    ADMIN --> FB[Feedback Management]
+    ADMIN --> SUB[User Submission Review]
+
+    QM --> DB
+    FB --> DB
+    SUB --> DB
+
+
+    USERSUB[Question Submissions & Issue Reports]
+    USERSUB --> SUB
+```
+
 ## Routing Logic
 
 The application uses clean query-based URLs.
 
 Example:
 ```
-/questions?sem=<sem_id>&subject=<subject_id>&year=<year>&eval=<eval_type>
+/questions?sem=<sem_id>&subject=<subject_id>&eval=<eval_type>
 ```
 
 ### URL Parameters
@@ -128,7 +176,6 @@ Example:
 |---------- |-----------------|
 | sem       | Semester ID     |
 | subject   | Subject ID      |
-| year      | Year            |
 | eval      | Evaluation type |
 
 ---
@@ -141,7 +188,6 @@ Create a `.env` file in the root directory:
 VITE_SUPABASE_URL=your_project_url
 VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
- 
 
 ---
 
@@ -163,8 +209,14 @@ Open http:localhost:8080
 ### BEFORE RAISING A PR: 
 Please ensure you do ```npm test```
 
+## Contributors
+
+<a href="https://github.com/DivyanshGarg380/LabXam/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=DivyanshGarg380/LabXam" />
+</a>
+
 ## LICENCE
 This project is open-source and available under the MIT License.
 
-© 2026 Divyansh Garg and Vidhan Sachdeva. All rights reserved.
+© 2026 All rights reserved.
 

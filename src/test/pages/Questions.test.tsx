@@ -48,7 +48,13 @@ describe("Questions Page", () => {
 
   test("Renders QuestionsPage after data loads", async () => {
     mockedFetch.mockResolvedValue([
-      { question: "Q1", section: "Section A", year: "2024", uploaded_at: 0 }
+      {
+        id: "row-a:0",
+        question: "Q1",
+        section: "Section A",
+        year: "2024",
+        uploaded_at: 0,
+      }
     ]);
     render(<Questions />);
     await waitFor(() =>

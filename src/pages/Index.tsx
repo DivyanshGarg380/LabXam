@@ -51,6 +51,7 @@ const subjectsBySemester = {
     { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" },
   ],
   "6": [
+    { value: "ppl", label: "Parallel Programming Lab (PPL)" },
     { value: "madl", label: "Mobile Application Development Lab (MADL)" },
     { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
     { value: "cd", label: "Compiler Design Lab (CDL)" },

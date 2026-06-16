@@ -10,6 +10,7 @@ describe("QuestionsPage", () => {
         evaluationType="midsem"
         questions={[
           {
+            id: "question-row:0",
             question: "What is fork()?",
             section: "SectionA",
             year: "2024",
