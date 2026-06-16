@@ -14,6 +14,7 @@ interface QuestionsPageProps {
   subject: string;
   evaluationType: string;
   questions?: {
+    id: string;
     question: string;
     section: string;
     year: string;
@@ -60,32 +61,6 @@ export function QuestionsPage({
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                 {subject.toUpperCase()}
               </h1>
-              {/* To remove after 23/04/2026 */}
-              <div className="flex items-center gap-2">
-                {subject?.toLowerCase() === "osdl" && evaluationType === "Endsem" && (
-                  <>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button asChild size="sm" className="flex items-center gap-2">
-                            <a
-                              href="/OSDL_Practice.html"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              OSDL Practice Q's
-                              <ExternalLink className="w-4 h-4" />
-                            </a>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Made by Vidhan</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </>
-                )}
-              </div>
             </div>
 
             <p className="text-sm text-muted-foreground">
@@ -110,12 +85,13 @@ export function QuestionsPage({
                 const parse = (d: string) => { const [dd, mm, yyyy] = d.split("/"); return new Date(`${yyyy}-${mm}-${dd}`).getTime(); };
                 return parse(b.year) - parse(a.year);
               })
-              .map(({ question, section, year, uploaded_at }, index) => (
+              .map(({ id, question, section, year, uploaded_at }, index) => (
               <div
-                key={`${index}-${question.slice(0, 20)}`}
+                key={id}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <QuestionCard
+                  questionId={id}
                   number={index + 1}
                   question={question}
                   section={section}

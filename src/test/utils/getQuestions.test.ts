@@ -44,12 +44,14 @@ describe("fetchQuestions", () => {
     mockQuery.eq.mockResolvedValueOnce({
       data: [
         {
+          id: "row-a",
           section: "A",
           year: "2023",
           questions: ["Q1", "Q2"],
           uploaded_at: now,
         },
         {
+          id: "row-b",
           section: "B",
           year: "2022",
           questions: "Q3",
@@ -72,6 +74,7 @@ describe("fetchQuestions", () => {
     queryCache.set(key, {
       data: [
         {
+          id: "cached-row:0",
           question: "Cached Q",
           section: "A",
           year: "2023",
@@ -118,6 +121,7 @@ describe("fetchQuestions", () => {
     mockQuery.eq.mockResolvedValueOnce({
       data: [
         {
+          id: "row-a",
           section: "A",
           year: "2023",
           questions: null,
@@ -138,12 +142,14 @@ describe("fetchQuestions", () => {
     mockQuery.eq.mockResolvedValueOnce({
       data: [
         {
+          id: "row-a",
           section: "A",
           year: "2020",
           questions: "Old",
           uploaded_at: now - 3 * 24 * 60 * 60 * 1000,
         },
         {
+          id: "row-b",
           section: "B",
           year: "2021",
           questions: "Recent",
@@ -164,12 +170,14 @@ describe("fetchQuestions", () => {
     mockQuery.eq.mockResolvedValueOnce({
       data: [
         {
+          id: "row-a",
           section: "A",
           year: "2020",
           questions: "Q1",
           uploaded_at: old,
         },
         {
+          id: "row-b",
           section: "B",
           year: "2022",
           questions: "Q2",

@@ -6,6 +6,7 @@ describe("QuestionCard", () => {
   test("renders question number, text and section", () => {
     render(
       <QuestionCard
+        questionId="question-row:0"
         number={3}
         question="Explain Deadlock"
         section="Section B"
