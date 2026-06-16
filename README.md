@@ -51,7 +51,10 @@ Students often waste hours searching for reliable lab exam questions. This platf
 - Real-time updates across users
 - Secure authentication and access control
 - Feedback system
-- Users can submit questions and report issues  
+- Users can submit questions and report issues
+- AI-generated solutions with structured explanations
+
+> 🚀 **Performance Update:** Introduced a cache-first AI solution system using Supabase, allowing previously generated solutions to be served instantly from cache instead of triggering new NVIDIA API requests. This significantly reduced API usage and improved response times during peak exam periods.
 
 ---
 
