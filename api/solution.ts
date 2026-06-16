@@ -18,8 +18,14 @@ type QuestionRow = {
 };
 
 const parseBody = (body: unknown): RequestBody => {
-  if (typeof body === "string") return JSON.parse(body);
-  return (body ?? {}) as RequestBody;
+  try {
+    if (typeof body === "string") {
+      return JSON.parse(body);
+    }
+    return (body ?? {}) as RequestBody;
+  } catch {
+    throw new Error("Invalid request body");
+  }
 };
 
 const parseQuestionId = (questionId: string) => {
@@ -37,77 +43,70 @@ const parseQuestionId = (questionId: string) => {
 };
 
 const buildPrompt = (row: QuestionRow, question: string) => {
-return [
-{
-role: "system",
-content: `You are a lab exam solution generator.
+  return [
+    {
+      role: "system",
+      content: `You are generating answers for college lab examinations.
 
-Your job is to produce the final answer that a student would write in an exam.
+        Return ONLY what a student would write in the answer sheet.
 
-Rules:
+        Rules:
 
-* Return ONLY the final answer/solution.
-* If programming code is required, return ONLY the complete code.
-* Do NOT provide explanations, approaches, steps, notes, observations, complexity analysis, reasoning, comments, markdown headings, or any extra text.
-* Do NOT use external libraries unless explicitly required by the question.
-* Use only the minimum required standard libraries.
-* Never ask follow-up questions.
-* If the question is clear, do NOT add assumptions.
-* If the question is incomplete, ambiguous, contradictory, or missing important details, infer the most likely intended lab-exam question and solve it.
-* In such cases ONLY, start the response with:
+        - Return only the final answer.
+        - If programming code is required, return only the complete code.
+        - Do not provide explanations.
+        - Do not provide reasoning.
+        - Do not provide steps.
+        - Do not provide notes.
+        - Do not provide complexity analysis.
+        - Programming Output Rules:
+          - If the answer is a program, return only the complete source code.
+          - Use standard code formatting and indentation.
+          - Do not include explanations before or after the code.
+        - Do not add comments inside code unless the question explicitly asks for them.
+        - Do not use markdown code fences.
 
-ASSUMPTIONS:
+        Programming Rules:
 
-* <assumption>
+        - Prefer simple beginner-level solutions.
+        - Use the most common college-lab approach.
+        - Avoid advanced techniques.
+        - Avoid clever optimizations.
+        - Avoid design patterns.
+        - Avoid abstractions that students normally would not write in exams.
+        - Use straightforward procedural code.
+        - Use descriptive variable names.
+        - Keep code short and easy to understand.
+        - For C programs use stdio.h unless additional headers are required.
+        - For Java programs use a single class with main().
+        - For Python programs use basic constructs only.
+        - The output should look like something an average student can write in a lab exam and still receive full marks.
 
-* Make only the minimum assumptions required.
+        If the question is unclear, choose the most common academic interpretation and answer directly.
 
-* Do not invent unnecessary assumptions.
-
-* Prefer the most common academic/lab-exam interpretation when details are missing.
-
-* After listing assumptions, immediately provide the final solution.
-
-* Start directly with the answer and end immediately after it.`,
+        Return only the final answer.`
     },
     {
       role: "user",
-      content: `Question Details:
+      content: `
+        Semester: ${row.semester ?? ""}
+        Subject: ${row.subject ?? ""}
+        Evaluation: ${row.evaluation ?? ""}
+        Section: ${row.section ?? ""}
+        Year: ${row.year ?? ""}
 
-* Semester: ${row.semester ?? "Unknown"}
-
-* Subject: ${row.subject ?? "Unknown"}
-
-* Evaluation: ${row.evaluation ?? "Unknown"}
-
-* Section: ${row.section ?? "Unknown"}
-
-* Question date/year: ${row.year ?? "Unknown"}
-
-Question:
-${question}
-
-Important:
-
-* Output ONLY the final answer.
-* If code is required, output ONLY the complete code.
-* Do NOT explain the code.
-* Do NOT include approach, steps, notes, comments, or reasoning.
-* Do NOT wrap code in markdown fences.
-* If assumptions are necessary, write them under "ASSUMPTIONS:" at the top and then provide the final solution.
-* If no assumptions are needed, do not mention assumptions at all.`,
-  },
+        Question:
+        ${question}
+      `
+    }
   ];
-  };
+};
 
 
 const getSupabaseClient = () => {
-  const supabaseUrl =
-    process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_ANON_KEY ??
-    process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
 
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("Missing Supabase server environment variables");
@@ -146,7 +145,7 @@ export default async function handler(req: any, res: any) {
 
     if (cacheError) {
       if (cacheTableMissing) {
-        console.warn("Solution cache table is missing; generating without cache.");
+        // Generating from AI directly without caching
       } else {
       console.error("Solution cache read error:", cacheError);
       return res.status(500).json({ error: "Failed to read solution cache" });
@@ -192,25 +191,31 @@ export default async function handler(req: any, res: any) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 150000);
 
-    const nvidiaResponse = await fetch(
-      "https://integrate.api.nvidia.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+    let nvidiaResponse: Response;
+
+    try {
+      nvidiaResponse = await fetch(
+        "https://integrate.api.nvidia.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: buildPrompt(questionRow as QuestionRow, question),
+            max_tokens: 2048,
+            temperature: 0,
+            top_p: 1,
+            stream: false,
+          }),
+          signal: controller.signal,
         },
-        body: JSON.stringify({
-          model,
-          messages: buildPrompt(questionRow as QuestionRow, question),
-          max_tokens: 1024,
-          temperature: 0.1,
-          top_p: 0.7,
-          stream: false,
-        }),
-        signal: controller.signal,
-      },
-    );
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!nvidiaResponse.ok) {
       clearTimeout(timeout);
@@ -219,9 +224,16 @@ export default async function handler(req: any, res: any) {
       return res.status(502).json({ error: "Failed to generate solution" });
     }
 
-    const data = await nvidiaResponse.json();
+    const data: any = await nvidiaResponse.json();
     clearTimeout(timeout);
-    const solution = data?.choices?.[0]?.message?.content?.trim();
+    let solution = data?.choices?.[0]?.message?.content?.trim();
+
+    if (solution) {
+      solution = solution
+        .replace(/^```[\w-]*\n?/, "")
+        .replace(/\n?```$/, "")
+        .trim();
+    }
 
     if (!solution) {
       return res.status(502).json({ error: "NVIDIA returned no solution" });
@@ -229,17 +241,27 @@ export default async function handler(req: any, res: any) {
 
     const { error: insertError } = cacheTableMissing
       ? { error: null }
-      : await supabase.from("ai_solutions").insert({
-          question_id: body.questionId,
-          question_row_id: parsed.rowId,
-          question_index: parsed.questionIndex,
-          solution_text: solution,
-          model,
-          prompt_version: PROMPT_VERSION,
-        });
+      : await supabase
+        .from("ai_solutions")
+        .upsert(
+          {
+            question_id: body.questionId,
+            question_row_id: parsed.rowId,
+            question_index: parsed.questionIndex,
+            solution_text: solution,
+            model,
+            prompt_version: PROMPT_VERSION,
+          },
+          {
+            onConflict: "question_id,prompt_version",
+          }
+        );
 
     if (insertError) {
-      console.error("Solution cache insert error:", insertError);
+      return res.status(500).json({
+        error: "Cache insert failed",
+        details: insertError,
+      });
     }
 
     return res.status(200).json({
