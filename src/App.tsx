@@ -83,7 +83,7 @@ const App = () => {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <SecurityBanner />
+          {/* <SecurityBanner /> */}
           <Toaster />
           <Sonner />
           <Routes>
