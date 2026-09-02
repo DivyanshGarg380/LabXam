@@ -49,12 +49,13 @@ const subjectsBySemester = {
   "5": [
     { value: "isl", label: "Information Security Lab (ISL)" },
     { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" },
+    { value: "bda", label: "Big Data Analysis (BDA)" },
+    { value: "cd", label: "Compiler Design Lab (CDL)" },
+    { value: "ppl", label: "Parallel Programming Lab (PPL)" },
   ],
   "6": [
-    { value: "ppl", label: "Parallel Programming Lab (PPL)" },
     { value: "madl", label: "Mobile Application Development Lab (MADL)" },
     { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
-    { value: "cd", label: "Compiler Design Lab (CDL)" },
     { value: "wp", label: "Web Programming Lab (WPL)" },
   ],
 };
