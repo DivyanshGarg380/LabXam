@@ -64,7 +64,7 @@ const evaluationBySemester = {
   "2": ["midsem", "endsem"],
   "3": ["midsem", "endsem"],
   "4": ["midsem", "eval-1", "eval-2", "endsem"],
-  "5": ["midsem", "endsem"],
+  "5": ["midsem", "eval-1", "endsem"],
   "6": ["midsem", "eval-1", "endsem"],
 };
 
