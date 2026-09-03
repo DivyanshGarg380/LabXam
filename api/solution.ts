@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const PROMPT_VERSION = "v1";
-const DEFAULT_MODEL = "meta/llama-3.1-nemotron-safety-guard-8b-v3";
+const DEFAULT_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b";
 
 type RequestBody = {
   questionId?: string;
