@@ -29,13 +29,14 @@ const subject_sem: Record<string, string[]> = {
   ],
   "5": [
     "Information Security Lab (ISL)",
-    "Embedded Systems Design Lab (ESDL)"
+    "Embedded Systems Design Lab (ESDL)",
+    "Parallel Programming Lab (PPL)",
+    "Compiler Design (CD)",
+    "Big Data Analysis (BDA)"
   ],
   "6": [
-    "Parallel Programming Lab (PPL)",
     "Mobile Application Development Lab (MADL)",
     "Network Design and Programming Lab (NDLP)",
-    "Compiler Design (CD)",
     "Web Programming (WP)"
   ],
 };
