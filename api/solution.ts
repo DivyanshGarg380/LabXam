@@ -65,6 +65,7 @@ const buildPrompt = (row: QuestionRow, question: string) => {
           - Do not include explanations before or after the code.
         - Do not add comments inside code unless the question explicitly asks for them.
         - Do not use markdown code fences.
+        - If its a Assembly language program, follow ARM architecture guidelines and return the simplest Assembly code.
 
         Programming Rules:
 
