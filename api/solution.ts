@@ -30,7 +30,10 @@ const parseBody = (body: unknown): RequestBody => {
 
 const parseQuestionId = (questionId: string) => {
   const separatorIndex = questionId.lastIndexOf(":");
-  if (separatorIndex === -1) return null;
+
+  if (separatorIndex === -1) {
+    return null;
+  }
 
   const rowId = questionId.slice(0, separatorIndex);
   const questionIndex = Number(questionId.slice(separatorIndex + 1));
@@ -103,7 +106,6 @@ const buildPrompt = (row: QuestionRow, question: string) => {
   ];
 };
 
-
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -129,11 +131,16 @@ export default async function handler(req: any, res: any) {
     }
 
     const parsed = parseQuestionId(body.questionId);
+
     if (!parsed) {
       return res.status(400).json({ error: "Invalid questionId" });
     }
 
     const supabase = getSupabaseClient();
+
+    // ---------------------------------------------------------
+    // CHECK CACHE FIRST
+    // ---------------------------------------------------------
 
     const { data: cached, error: cacheError } = await supabase
       .from("ai_solutions")
@@ -148,8 +155,11 @@ export default async function handler(req: any, res: any) {
       if (cacheTableMissing) {
         // Generating from AI directly without caching
       } else {
-      console.error("Solution cache read error:", cacheError);
-      return res.status(500).json({ error: "Failed to read solution cache" });
+        console.error("Solution cache read error:", cacheError);
+
+        return res.status(500).json({
+          error: "Failed to read solution cache",
+        });
       }
     }
 
@@ -162,6 +172,10 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    // ---------------------------------------------------------
+    // GET QUESTION
+    // ---------------------------------------------------------
+
     const { data: questionRow, error: questionError } = await supabase
       .from("questions")
       .select("id, semester, subject, evaluation, section, year, questions")
@@ -169,10 +183,13 @@ export default async function handler(req: any, res: any) {
       .single();
 
     if (questionError || !questionRow) {
-      return res.status(404).json({ error: "Question not found" });
+      return res.status(404).json({
+        error: "Question not found",
+      });
     }
 
     const questions = (questionRow as QuestionRow).questions;
+
     const question = Array.isArray(questions)
       ? questions[parsed.questionIndex]
       : parsed.questionIndex === 0
@@ -180,15 +197,29 @@ export default async function handler(req: any, res: any) {
         : null;
 
     if (!question) {
-      return res.status(404).json({ error: "Question not found" });
+      return res.status(404).json({
+        error: "Question not found",
+      });
     }
 
-    const apiKey = process.env.NVIDIA_API_KEY;
+    // ---------------------------------------------------------
+    // HUGGING FACE API
+    // ---------------------------------------------------------
+
+    const apiKey = process.env.HF_TOKEN;
+
     if (!apiKey) {
-      return res.status(500).json({ error: "Missing NVIDIA_API_KEY" });
+      return res.status(500).json({
+        error: "Missing HF_TOKEN",
+      });
     }
 
-    const model = process.env.NVIDIA_SOLUTION_MODEL ?? DEFAULT_MODEL;
+    const model = process.env.HF_SOLUTION_MODEL ?? DEFAULT_MODEL;
+
+    // ---------------------------------------------------------
+    // TIMEOUT
+    // ---------------------------------------------------------
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 150000);
 
@@ -220,9 +251,14 @@ export default async function handler(req: any, res: any) {
 
     if (!nvidiaResponse.ok) {
       clearTimeout(timeout);
-      const raw = await nvidiaResponse.text();
-      console.error("NVIDIA solution error:", nvidiaResponse.status, raw);
-      return res.status(502).json({ error: "Failed to generate solution" });
+
+      if (timedOut) {
+        return res.status(504).json({
+          error: "Hugging Face stream timed out",
+        });
+      }
+
+      throw streamError;
     }
 
     const data: any = await nvidiaResponse.json();
@@ -237,8 +273,14 @@ export default async function handler(req: any, res: any) {
     }
 
     if (!solution) {
-      return res.status(502).json({ error: "NVIDIA returned no solution" });
+      return res.status(502).json({
+        error: "Hugging Face returned no solution",
+      });
     }
+
+    // ---------------------------------------------------------
+    // SAVE TO CACHE
+    // ---------------------------------------------------------
 
     const { error: insertError } = cacheTableMissing
       ? { error: null }
@@ -265,6 +307,10 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    // ---------------------------------------------------------
+    // RETURN RESPONSE
+    // ---------------------------------------------------------
+
     return res.status(200).json({
       solution,
       cached: false,
@@ -273,10 +319,15 @@ export default async function handler(req: any, res: any) {
     });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      return res.status(504).json({ error: "NVIDIA request timed out" });
+      return res.status(504).json({
+        error: "Hugging Face request timed out",
+      });
     }
 
     console.error("Solution handler error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+
+    return res.status(500).json({
+      error: "Internal Server Error",
+    });
   }
 }
