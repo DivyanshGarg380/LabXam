@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const PROMPT_VERSION = "v1";
 const DEFAULT_MODEL = "Qwen/Qwen2.5-Coder-32B-Instruct";
+const KNOWN_MODELS = new Set([DEFAULT_MODEL]);
 
 type RequestBody = {
   questionId?: string;
@@ -140,10 +141,6 @@ export default async function handler(req: any, res: any) {
 
     const supabase = getSupabaseClient();
 
-    // ---------------------------------------------------------
-    // CHECK CACHE FIRST
-    // ---------------------------------------------------------
-
     const { data: cached, error: cacheError } = await supabase
       .from("ai_solutions")
       .select("solution_text, model, prompt_version")
@@ -174,10 +171,6 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ---------------------------------------------------------
-    // GET QUESTION
-    // ---------------------------------------------------------
-
     const { data: questionRow, error: questionError } = await supabase
       .from("questions")
       .select("id, semester, subject, evaluation, section, year, questions")
@@ -204,10 +197,6 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // ---------------------------------------------------------
-    // HUGGING FACE API
-    // ---------------------------------------------------------
-
     const apiKey = process.env.HF_TOKEN;
 
     if (!apiKey) {
@@ -216,11 +205,14 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const model = process.env.HF_SOLUTION_MODEL ?? DEFAULT_MODEL;
+    const rawModel = (process.env.HF_SOLUTION_MODEL ?? DEFAULT_MODEL).trim();
+    const model = KNOWN_MODELS.has(rawModel) ? rawModel : DEFAULT_MODEL;
 
-    // ---------------------------------------------------------
-    // TIMEOUT
-    // ---------------------------------------------------------
+    if (rawModel !== model) {
+      console.warn(
+        `[solution] HF_SOLUTION_MODEL "${rawModel}" not recognized, falling back to ${DEFAULT_MODEL}`,
+      );
+    }
 
     const controller = new AbortController();
 
@@ -254,13 +246,8 @@ export default async function handler(req: any, res: any) {
 
             messages: buildPrompt(questionRow as QuestionRow, question),
 
-            // Keep this low because your answers are simple.
             max_tokens: 1024,
-
-            // Low temperature gives more deterministic answers.
             temperature: 0.2,
-
-            // Streaming lets the response start arriving sooner.
             stream: true,
           }),
 
@@ -283,10 +270,6 @@ export default async function handler(req: any, res: any) {
 
     console.log("[solution] Hugging Face responded", hfResponse.status);
 
-    // ---------------------------------------------------------
-    // API ERROR
-    // ---------------------------------------------------------
-
     if (!hfResponse.ok) {
       clearTimeout(timeout);
 
@@ -296,12 +279,10 @@ export default async function handler(req: any, res: any) {
 
       return res.status(502).json({
         error: "Failed to generate solution",
+        detail: raw,
+        model,
       });
     }
-
-    // ---------------------------------------------------------
-    // READ STREAM
-    // ---------------------------------------------------------
 
     let solution = "";
     let chunkCount = 0;
@@ -394,10 +375,6 @@ export default async function handler(req: any, res: any) {
 
     solution = solution.trim();
 
-    // ---------------------------------------------------------
-    // REMOVE MARKDOWN CODE FENCES
-    // ---------------------------------------------------------
-
     if (solution) {
       solution = solution
         .replace(/^```[\w-]*\n?/, "")
@@ -405,19 +382,11 @@ export default async function handler(req: any, res: any) {
         .trim();
     }
 
-    // ---------------------------------------------------------
-    // EMPTY RESPONSE
-    // ---------------------------------------------------------
-
     if (!solution) {
       return res.status(502).json({
         error: "Hugging Face returned no solution",
       });
     }
-
-    // ---------------------------------------------------------
-    // SAVE TO CACHE
-    // ---------------------------------------------------------
 
     const { error: insertError } = cacheTableMissing
       ? { error: null }
@@ -438,10 +407,6 @@ export default async function handler(req: any, res: any) {
     if (insertError) {
       console.error("Solution cache insert error:", insertError);
     }
-
-    // ---------------------------------------------------------
-    // RETURN RESPONSE
-    // ---------------------------------------------------------
 
     return res.status(200).json({
       solution,
