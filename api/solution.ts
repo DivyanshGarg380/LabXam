@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const PROMPT_VERSION = "v1";
-const DEFAULT_MODEL = "meta/llama-3.1-8b-instruct";
+const DEFAULT_MODEL = "Qwen/Qwen2.5-Coder-32B-Instruct";
 
 type RequestBody = {
   questionId?: string;
@@ -18,13 +18,23 @@ type QuestionRow = {
 };
 
 const parseBody = (body: unknown): RequestBody => {
-  if (typeof body === "string") return JSON.parse(body);
-  return (body ?? {}) as RequestBody;
+  try {
+    if (typeof body === "string") {
+      return JSON.parse(body);
+    }
+
+    return (body ?? {}) as RequestBody;
+  } catch {
+    throw new Error("Invalid request body");
+  }
 };
 
 const parseQuestionId = (questionId: string) => {
   const separatorIndex = questionId.lastIndexOf(":");
-  if (separatorIndex === -1) return null;
+
+  if (separatorIndex === -1) {
+    return null;
+  }
 
   const rowId = questionId.slice(0, separatorIndex);
   const questionIndex = Number(questionId.slice(separatorIndex + 1));
@@ -42,72 +52,66 @@ return [
 role: "system",
 content: `You are a lab exam solution generator.
 
-Your job is to produce the final answer that a student would write in an exam.
+Return ONLY what a student would write in the answer sheet.
 
 Rules:
 
-* Return ONLY the final answer/solution.
-* If programming code is required, return ONLY the complete code.
-* Do NOT provide explanations, approaches, steps, notes, observations, complexity analysis, reasoning, comments, markdown headings, or any extra text.
-* Do NOT use external libraries unless explicitly required by the question.
-* Use only the minimum required standard libraries.
-* Never ask follow-up questions.
-* If the question is clear, do NOT add assumptions.
-* If the question is incomplete, ambiguous, contradictory, or missing important details, infer the most likely intended lab-exam question and solve it.
-* In such cases ONLY, start the response with:
+- Return only the final answer.
+- If programming code is required, return only the complete code.
+- Do not provide explanations.
+- Do not provide reasoning.
+- Do not provide steps.
+- Do not provide notes.
+- Do not provide complexity analysis.
 
-ASSUMPTIONS:
+Programming Output Rules:
 
-* <assumption>
+- If the answer is a program, return only the complete source code.
+- Use standard code formatting and indentation.
+- Do not include explanations before or after the code.
+- Do not add comments inside code unless the question explicitly asks for them.
+- Do not use markdown code fences.
+- If its a Assembly language program, follow ARM architecture guidelines and return the simplest Assembly code.
 
-* Make only the minimum assumptions required.
+Programming Rules:
 
-* Do not invent unnecessary assumptions.
+- Prefer simple beginner-level solutions.
+- Use the most common college-lab approach.
+- Avoid advanced techniques.
+- Avoid clever optimizations.
+- Avoid design patterns.
+- Avoid abstractions that students normally would not write in exams.
+- Use straightforward procedural code.
+- Use descriptive variable names.
+- Keep code short and easy to understand.
+- For C programs use stdio.h unless additional headers are required.
+- For Java programs use a single class with main().
+- For Python programs use basic constructs only.
+- The output should look like something an average student can write in a lab exam and still receive full marks.
 
-* Prefer the most common academic/lab-exam interpretation when details are missing.
+If the question is unclear, choose the most common academic interpretation and answer directly.
 
-* After listing assumptions, immediately provide the final solution.
-
-* Start directly with the answer and end immediately after it.`,
+Return only the final answer.`,
     },
     {
       role: "user",
-      content: `Question Details:
-
-* Semester: ${row.semester ?? "Unknown"}
-
-* Subject: ${row.subject ?? "Unknown"}
-
-* Evaluation: ${row.evaluation ?? "Unknown"}
-
-* Section: ${row.section ?? "Unknown"}
-
-* Question date/year: ${row.year ?? "Unknown"}
+      content: `
+Semester: ${row.semester ?? ""}
+Subject: ${row.subject ?? ""}
+Evaluation: ${row.evaluation ?? ""}
+Section: ${row.section ?? ""}
+Year: ${row.year ?? ""}
 
 Question:
 ${question}
-
-Important:
-
-* Output ONLY the final answer.
-* If code is required, output ONLY the complete code.
-* Do NOT explain the code.
-* Do NOT include approach, steps, notes, comments, or reasoning.
-* Do NOT wrap code in markdown fences.
-* If assumptions are necessary, write them under "ASSUMPTIONS:" at the top and then provide the final solution.
-* If no assumptions are needed, do not mention assumptions at all.`,
-  },
+`,
+    },
   ];
   };
 
-
 const getSupabaseClient = () => {
-  const supabaseUrl =
-    process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_ANON_KEY ??
-    process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("Missing Supabase server environment variables");
@@ -129,11 +133,16 @@ export default async function handler(req: any, res: any) {
     }
 
     const parsed = parseQuestionId(body.questionId);
+
     if (!parsed) {
       return res.status(400).json({ error: "Invalid questionId" });
     }
 
     const supabase = getSupabaseClient();
+
+    // ---------------------------------------------------------
+    // CHECK CACHE FIRST
+    // ---------------------------------------------------------
 
     const { data: cached, error: cacheError } = await supabase
       .from("ai_solutions")
@@ -146,10 +155,13 @@ export default async function handler(req: any, res: any) {
 
     if (cacheError) {
       if (cacheTableMissing) {
-        console.warn("Solution cache table is missing; generating without cache.");
+        // no-op
       } else {
-      console.error("Solution cache read error:", cacheError);
-      return res.status(500).json({ error: "Failed to read solution cache" });
+        console.error("Solution cache read error:", cacheError);
+
+        return res.status(500).json({
+          error: "Failed to read solution cache",
+        });
       }
     }
 
@@ -162,6 +174,10 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    // ---------------------------------------------------------
+    // GET QUESTION
+    // ---------------------------------------------------------
+
     const { data: questionRow, error: questionError } = await supabase
       .from("questions")
       .select("id, semester, subject, evaluation, section, year, questions")
@@ -169,10 +185,13 @@ export default async function handler(req: any, res: any) {
       .single();
 
     if (questionError || !questionRow) {
-      return res.status(404).json({ error: "Question not found" });
+      return res.status(404).json({
+        error: "Question not found",
+      });
     }
 
     const questions = (questionRow as QuestionRow).questions;
+
     const question = Array.isArray(questions)
       ? questions[parsed.questionIndex]
       : parsed.questionIndex === 0
@@ -180,67 +199,249 @@ export default async function handler(req: any, res: any) {
         : null;
 
     if (!question) {
-      return res.status(404).json({ error: "Question not found" });
+      return res.status(404).json({
+        error: "Question not found",
+      });
     }
 
-    const apiKey = process.env.NVIDIA_API_KEY;
+    // ---------------------------------------------------------
+    // HUGGING FACE API
+    // ---------------------------------------------------------
+
+    const apiKey = process.env.HF_TOKEN;
+
     if (!apiKey) {
-      return res.status(500).json({ error: "Missing NVIDIA_API_KEY" });
+      return res.status(500).json({
+        error: "Missing HF_TOKEN",
+      });
     }
 
-    const model = process.env.NVIDIA_SOLUTION_MODEL ?? DEFAULT_MODEL;
+    const model = process.env.HF_SOLUTION_MODEL ?? DEFAULT_MODEL;
+
+    // ---------------------------------------------------------
+    // TIMEOUT
+    // ---------------------------------------------------------
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 150000);
 
-    const nvidiaResponse = await fetch(
-      "https://integrate.api.nvidia.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+    let timedOut = false;
+
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 60000);
+
+    let hfResponse: Response;
+
+    console.log("[solution] calling Hugging Face", {
+      model,
+      questionId: body.questionId,
+    });
+
+    try {
+      hfResponse = await fetch(
+        "https://router.huggingface.co/v1/chat/completions",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+
+          body: JSON.stringify({
+            model,
+
+            messages: buildPrompt(questionRow as QuestionRow, question),
+
+            // Keep this low because your answers are simple.
+            max_tokens: 300,
+
+            // Low temperature gives more deterministic answers.
+            temperature: 0.2,
+
+            // Streaming lets the response start arriving sooner.
+            stream: true,
+          }),
+
+          signal: controller.signal,
         },
-        body: JSON.stringify({
-          model,
-          messages: buildPrompt(questionRow as QuestionRow, question),
-          max_tokens: 1024,
-          temperature: 0.1,
-          top_p: 0.7,
-          stream: false,
-        }),
-        signal: controller.signal,
-      },
-    );
-
-    if (!nvidiaResponse.ok) {
+      );
+    } catch (fetchError) {
       clearTimeout(timeout);
-      const raw = await nvidiaResponse.text();
-      console.error("NVIDIA solution error:", nvidiaResponse.status, raw);
-      return res.status(502).json({ error: "Failed to generate solution" });
+
+      console.error("[solution] Hugging Face fetch() threw", fetchError);
+
+      if (timedOut) {
+        return res.status(504).json({
+          error: "Hugging Face request timed out",
+        });
+      }
+
+      throw fetchError;
     }
 
-    const data = await nvidiaResponse.json();
+    console.log("[solution] Hugging Face responded", hfResponse.status);
+
+    // ---------------------------------------------------------
+    // API ERROR
+    // ---------------------------------------------------------
+
+    if (!hfResponse.ok) {
+      clearTimeout(timeout);
+
+      const raw = await hfResponse.text();
+
+      console.error("Hugging Face solution error:", hfResponse.status, raw);
+
+      return res.status(502).json({
+        error: "Failed to generate solution",
+      });
+    }
+
+    // ---------------------------------------------------------
+    // READ STREAM
+    // ---------------------------------------------------------
+
+    let solution = "";
+    let chunkCount = 0;
+
+    const reader = hfResponse.body?.getReader();
+
+    const decoder = new TextDecoder();
+
+    let buffer = "";
+
+    try {
+      if (reader) {
+        while (true) {
+          if (timedOut) {
+            throw new Error("Stream read timed out");
+          }
+
+          const { done, value } = await reader.read();
+
+          if (done) {
+            console.log(
+              "[solution] stream done, total chunks:",
+              chunkCount,
+              "chars:",
+              solution.length,
+            );
+
+            break;
+          }
+
+          chunkCount++;
+
+          if (chunkCount % 20 === 0) {
+            console.log(
+              "[solution] chunk",
+              chunkCount,
+              "chars so far:",
+              solution.length,
+            );
+          }
+
+          buffer += decoder.decode(value, {
+            stream: true,
+          });
+
+          const lines = buffer.split("\n");
+
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+
+            if (!trimmed.startsWith("data:")) {
+              continue;
+            }
+
+            const payload = trimmed.slice(5).trim();
+
+            if (payload === "[DONE]") {
+              continue;
+            }
+
+            try {
+              const parsed = JSON.parse(payload);
+
+              const delta = parsed?.choices?.[0]?.delta?.content;
+
+              if (delta) {
+                solution += delta;
+              }
+            } catch {
+              // Ignore malformed/incomplete stream chunks.
+            }
+          }
+        }
+      }
+    } catch (streamError) {
+      clearTimeout(timeout);
+
+      if (timedOut) {
+        return res.status(504).json({
+          error: "Hugging Face stream timed out",
+        });
+      }
+
+      throw streamError;
+    }
+
     clearTimeout(timeout);
-    const solution = data?.choices?.[0]?.message?.content?.trim();
+
+    solution = solution.trim();
+
+    // ---------------------------------------------------------
+    // REMOVE MARKDOWN CODE FENCES
+    // ---------------------------------------------------------
+
+    if (solution) {
+      solution = solution
+        .replace(/^```[\w-]*\n?/, "")
+        .replace(/\n?```$/, "")
+        .trim();
+    }
+
+    // ---------------------------------------------------------
+    // EMPTY RESPONSE
+    // ---------------------------------------------------------
 
     if (!solution) {
-      return res.status(502).json({ error: "NVIDIA returned no solution" });
+      return res.status(502).json({
+        error: "Hugging Face returned no solution",
+      });
     }
+
+    // ---------------------------------------------------------
+    // SAVE TO CACHE
+    // ---------------------------------------------------------
 
     const { error: insertError } = cacheTableMissing
       ? { error: null }
-      : await supabase.from("ai_solutions").insert({
-          question_id: body.questionId,
-          question_row_id: parsed.rowId,
-          question_index: parsed.questionIndex,
-          solution_text: solution,
-          model,
-          prompt_version: PROMPT_VERSION,
-        });
+      : await supabase.from("ai_solutions").upsert(
+          {
+            question_id: body.questionId,
+            question_row_id: parsed.rowId,
+            question_index: parsed.questionIndex,
+            solution_text: solution,
+            model,
+            prompt_version: PROMPT_VERSION,
+          },
+          {
+            onConflict: "question_id,prompt_version",
+          },
+        );
 
     if (insertError) {
       console.error("Solution cache insert error:", insertError);
     }
+
+    // ---------------------------------------------------------
+    // RETURN RESPONSE
+    // ---------------------------------------------------------
 
     return res.status(200).json({
       solution,
@@ -250,10 +451,15 @@ export default async function handler(req: any, res: any) {
     });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      return res.status(504).json({ error: "NVIDIA request timed out" });
+      return res.status(504).json({
+        error: "Hugging Face request timed out",
+      });
     }
 
     console.error("Solution handler error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+
+    return res.status(500).json({
+      error: "Internal Server Error",
+    });
   }
 }

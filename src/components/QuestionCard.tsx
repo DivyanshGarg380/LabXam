@@ -178,7 +178,9 @@ export function QuestionCard({
           ) : solutionError ? (
             <div className="text-destructive">{solutionError}</div>
           ) : (
-            <div className="whitespace-pre-line text-foreground">{solution}</div>
+            <pre className="whitespace-pre-wrap break-words font-mono text-sm text-foreground">
+              <code>{solution}</code>
+            </pre>
           )}
         </div>
       )}
