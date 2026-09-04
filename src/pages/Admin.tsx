@@ -99,7 +99,9 @@ const semesters = Array.from({ length: 6 }, (_, i) => ({
 }));
 
 const subjectsBySemester: SubjectsMap = {
-  "1": [{ value: "pps", label: "Programming for Problem Solving (PPS)" }],
+  "1": [
+    { value: "pps", label: "Programming for Problem Solving (PPS)" },
+  ],
   "2": [
     { value: "ioop", label: "Introduction to OOP (IOOP)" },
     { value: "dav", label: "Data Analysis & Visualization (DAV)" },
@@ -116,12 +118,13 @@ const subjectsBySemester: SubjectsMap = {
   "5": [
     { value: "isl", label: "Information Security Lab (ISL)" },
     { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" },
+    { value: "bda", label: "Big Data Analysis (BDA)" },
+    { value: "cd", label: "Compiler Design Lab (CDL)" },
+    { value: "ppl", label: "Parallel Programming Lab (PPL)" },
   ],
   "6": [
-    { value: "ppl", label: "Parallel Programming Lab (PPL)" },
     { value: "madl", label: "Mobile Application Development Lab (MADL)" },
     { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
-    { value: "cd", label: "Compiler Design Lab (CDL)" },
     { value: "wp", label: "Web Programming Lab (WPL)" },
   ],
 };

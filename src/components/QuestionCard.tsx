@@ -76,8 +76,7 @@ export function QuestionCard({
         data.cached ? "Loaded saved solution" : "Solution generated",
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load solution";
+      const message = error instanceof Error ? error.message : "Failed to load solution";
       setSolutionError(message);
       toast.error(message);
     } finally {
@@ -178,9 +177,7 @@ export function QuestionCard({
           ) : solutionError ? (
             <div className="text-destructive">{solutionError}</div>
           ) : (
-            <pre className="whitespace-pre-wrap break-words font-mono text-sm text-foreground">
-              <code>{solution}</code>
-            </pre>
+            <pre className="whitespace-pre-wrap font-mono text-foreground overflow-x-auto">{solution}</pre>
           )}
         </div>
       )}

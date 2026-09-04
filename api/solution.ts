@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const PROMPT_VERSION = "v1";
-const DEFAULT_MODEL = "Qwen/Qwen2.5-Coder-32B-Instruct";
+const DEFAULT_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b";
 
 type RequestBody = {
   questionId?: string;
@@ -22,7 +22,6 @@ const parseBody = (body: unknown): RequestBody => {
     if (typeof body === "string") {
       return JSON.parse(body);
     }
-
     return (body ?? {}) as RequestBody;
   } catch {
     throw new Error("Invalid request body");
@@ -47,71 +46,70 @@ const parseQuestionId = (questionId: string) => {
 };
 
 const buildPrompt = (row: QuestionRow, question: string) => {
-return [
-{
-role: "system",
-content: `You are a lab exam solution generator.
+  return [
+    {
+      role: "system",
+      content: `You are generating answers for college lab examinations.
 
-Return ONLY what a student would write in the answer sheet.
+        Return ONLY what a student would write in the answer sheet.
 
-Rules:
+        Rules:
 
-- Return only the final answer.
-- If programming code is required, return only the complete code.
-- Do not provide explanations.
-- Do not provide reasoning.
-- Do not provide steps.
-- Do not provide notes.
-- Do not provide complexity analysis.
+        - Return only the final answer.
+        - If programming code is required, return only the complete code.
+        - Do not provide explanations.
+        - Do not provide reasoning.
+        - Do not provide steps.
+        - Do not provide notes.
+        - Do not provide complexity analysis.
+        - Programming Output Rules:
+          - If the answer is a program, return only the complete source code.
+          - Use standard code formatting and indentation.
+          - Do not include explanations before or after the code.
+        - Do not add comments inside code unless the question explicitly asks for them.
+        - Do not use markdown code fences.
+        - If its a Assembly language program, follow ARM architecture guidelines and return the simplest Assembly code.
 
-Programming Output Rules:
+        Programming Rules:
 
-- If the answer is a program, return only the complete source code.
-- Use standard code formatting and indentation.
-- Do not include explanations before or after the code.
-- Do not add comments inside code unless the question explicitly asks for them.
-- Do not use markdown code fences.
-- If its a Assembly language program, follow ARM architecture guidelines and return the simplest Assembly code.
+        - Prefer simple beginner-level solutions.
+        - Use the most common college-lab approach.
+        - Avoid advanced techniques.
+        - Avoid clever optimizations.
+        - Avoid design patterns.
+        - Avoid abstractions that students normally would not write in exams.
+        - Use straightforward procedural code.
+        - Use descriptive variable names.
+        - Keep code short and easy to understand.
+        - For C programs use stdio.h unless additional headers are required.
+        - For Java programs use a single class with main().
+        - For Python programs use basic constructs only.
+        - The output should look like something an average student can write in a lab exam and still receive full marks.
 
-Programming Rules:
+        If the question is unclear, choose the most common academic interpretation and answer directly.
 
-- Prefer simple beginner-level solutions.
-- Use the most common college-lab approach.
-- Avoid advanced techniques.
-- Avoid clever optimizations.
-- Avoid design patterns.
-- Avoid abstractions that students normally would not write in exams.
-- Use straightforward procedural code.
-- Use descriptive variable names.
-- Keep code short and easy to understand.
-- For C programs use stdio.h unless additional headers are required.
-- For Java programs use a single class with main().
-- For Python programs use basic constructs only.
-- The output should look like something an average student can write in a lab exam and still receive full marks.
-
-If the question is unclear, choose the most common academic interpretation and answer directly.
-
-Return only the final answer.`,
+        Return only the final answer.`
     },
     {
       role: "user",
       content: `
-Semester: ${row.semester ?? ""}
-Subject: ${row.subject ?? ""}
-Evaluation: ${row.evaluation ?? ""}
-Section: ${row.section ?? ""}
-Year: ${row.year ?? ""}
+        Semester: ${row.semester ?? ""}
+        Subject: ${row.subject ?? ""}
+        Evaluation: ${row.evaluation ?? ""}
+        Section: ${row.section ?? ""}
+        Year: ${row.year ?? ""}
 
-Question:
-${question}
-`,
-    },
+        Question:
+        ${question}
+      `
+    }
   ];
-  };
+};
 
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
 
   if (!supabaseUrl || !supabaseKey) {
     throw new Error("Missing Supabase server environment variables");
@@ -155,7 +153,7 @@ export default async function handler(req: any, res: any) {
 
     if (cacheError) {
       if (cacheTableMissing) {
-        // no-op
+        // Generating from AI directly without caching
       } else {
         console.error("Solution cache read error:", cacheError);
 
@@ -223,162 +221,35 @@ export default async function handler(req: any, res: any) {
     // ---------------------------------------------------------
 
     const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 150000);
 
-    let timedOut = false;
-
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, 60000);
-
-    let hfResponse: Response;
-
-    console.log("[solution] calling Hugging Face", {
-      model,
-      questionId: body.questionId,
-    });
+    let nvidiaResponse: Response;
 
     try {
-      hfResponse = await fetch(
-        "https://router.huggingface.co/v1/chat/completions",
+      nvidiaResponse = await fetch(
+        "https://integrate.api.nvidia.com/v1/chat/completions",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
           },
-
           body: JSON.stringify({
             model,
-
             messages: buildPrompt(questionRow as QuestionRow, question),
-
-            // Keep this low because your answers are simple.
-            max_tokens: 300,
-
-            // Low temperature gives more deterministic answers.
-            temperature: 0.2,
-
-            // Streaming lets the response start arriving sooner.
-            stream: true,
+            max_tokens: 2048,
+            temperature: 0,
+            top_p: 1,
+            stream: false,
           }),
-
           signal: controller.signal,
         },
       );
-    } catch (fetchError) {
+    } finally {
       clearTimeout(timeout);
-
-      console.error("[solution] Hugging Face fetch() threw", fetchError);
-
-      if (timedOut) {
-        return res.status(504).json({
-          error: "Hugging Face request timed out",
-        });
-      }
-
-      throw fetchError;
     }
 
-    console.log("[solution] Hugging Face responded", hfResponse.status);
-
-    // ---------------------------------------------------------
-    // API ERROR
-    // ---------------------------------------------------------
-
-    if (!hfResponse.ok) {
-      clearTimeout(timeout);
-
-      const raw = await hfResponse.text();
-
-      console.error("Hugging Face solution error:", hfResponse.status, raw);
-
-      return res.status(502).json({
-        error: "Failed to generate solution",
-      });
-    }
-
-    // ---------------------------------------------------------
-    // READ STREAM
-    // ---------------------------------------------------------
-
-    let solution = "";
-    let chunkCount = 0;
-
-    const reader = hfResponse.body?.getReader();
-
-    const decoder = new TextDecoder();
-
-    let buffer = "";
-
-    try {
-      if (reader) {
-        while (true) {
-          if (timedOut) {
-            throw new Error("Stream read timed out");
-          }
-
-          const { done, value } = await reader.read();
-
-          if (done) {
-            console.log(
-              "[solution] stream done, total chunks:",
-              chunkCount,
-              "chars:",
-              solution.length,
-            );
-
-            break;
-          }
-
-          chunkCount++;
-
-          if (chunkCount % 20 === 0) {
-            console.log(
-              "[solution] chunk",
-              chunkCount,
-              "chars so far:",
-              solution.length,
-            );
-          }
-
-          buffer += decoder.decode(value, {
-            stream: true,
-          });
-
-          const lines = buffer.split("\n");
-
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-
-            if (!trimmed.startsWith("data:")) {
-              continue;
-            }
-
-            const payload = trimmed.slice(5).trim();
-
-            if (payload === "[DONE]") {
-              continue;
-            }
-
-            try {
-              const parsed = JSON.parse(payload);
-
-              const delta = parsed?.choices?.[0]?.delta?.content;
-
-              if (delta) {
-                solution += delta;
-              }
-            } catch {
-              // Ignore malformed/incomplete stream chunks.
-            }
-          }
-        }
-      }
-    } catch (streamError) {
+    if (!nvidiaResponse.ok) {
       clearTimeout(timeout);
 
       if (timedOut) {
@@ -390,13 +261,9 @@ export default async function handler(req: any, res: any) {
       throw streamError;
     }
 
+    const data: any = await nvidiaResponse.json();
     clearTimeout(timeout);
-
-    solution = solution.trim();
-
-    // ---------------------------------------------------------
-    // REMOVE MARKDOWN CODE FENCES
-    // ---------------------------------------------------------
+    let solution = data?.choices?.[0]?.message?.content?.trim();
 
     if (solution) {
       solution = solution
@@ -404,10 +271,6 @@ export default async function handler(req: any, res: any) {
         .replace(/\n?```$/, "")
         .trim();
     }
-
-    // ---------------------------------------------------------
-    // EMPTY RESPONSE
-    // ---------------------------------------------------------
 
     if (!solution) {
       return res.status(502).json({
@@ -421,7 +284,9 @@ export default async function handler(req: any, res: any) {
 
     const { error: insertError } = cacheTableMissing
       ? { error: null }
-      : await supabase.from("ai_solutions").upsert(
+      : await supabase
+        .from("ai_solutions")
+        .upsert(
           {
             question_id: body.questionId,
             question_row_id: parsed.rowId,
@@ -432,11 +297,14 @@ export default async function handler(req: any, res: any) {
           },
           {
             onConflict: "question_id,prompt_version",
-          },
+          }
         );
 
     if (insertError) {
-      console.error("Solution cache insert error:", insertError);
+      return res.status(500).json({
+        error: "Cache insert failed",
+        details: insertError,
+      });
     }
 
     // ---------------------------------------------------------

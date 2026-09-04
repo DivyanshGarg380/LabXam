@@ -29,22 +29,20 @@ const queryClient = new QueryClient({
 
 const SecurityBanner = () => {
   return (
-    <div className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0b1f16]/80 backdrop-blur-md">
-      
+    <div className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#241b0b]/80 backdrop-blur-md">
       <div className="flex items-center justify-center gap-3 px-4 py-3 text-sm">
+        <Sparkles className="h-4 w-4 text-amber-400/80" />
 
-        <Sparkles className="h-4 w-4 text-emerald-400/80" />
-
-        <p className="text-center text-emerald-200/90 font-medium tracking-wide">
-          That’s it for this semester.
-          <span className="text-emerald-300/70"> We’ll see you soon.</span>
+        <p className="text-center text-amber-200/90 font-medium tracking-wide">
+          AI solution generation is temporarily unavailable.
+          <span className="text-amber-300/70">
+            {" "}We’re working to get it back up.
+          </span>
         </p>
-
       </div>
     </div>
   );
 };
-
 
 const App = () => {
 
