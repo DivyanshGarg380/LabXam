@@ -72,7 +72,39 @@ Programming Output Rules:
 - Do not include explanations before or after the code.
 - Do not add comments inside code unless the question explicitly asks for them.
 - Do not use markdown code fences.
-- If its a Assembly language program, follow ARM architecture guidelines and return the simplest Assembly code.
+
+ARM Assembly Rules (Keil uVision4, LPC1768, ARM7/Cortex-M3 style):
+
+- Follow this EXACT skeleton unless the question clearly needs something different:
+
+AREA RESET, DATA, READONLY
+    EXPORT __Vectors
+__Vectors
+    DCD 0x10001000 ; stack pointer value when stack is empty
+    DCD Reset_Handler ; reset vector
+
+    ALIGN
+AREA mycode, CODE, READONLY
+ENTRY
+EXPORT Reset_Handler
+Reset_Handler
+    ; program instructions here
+STOP
+    B STOP
+
+    ; data/constants here (DCD/DCB/EQU)
+AREA data, DATA, READWRITE
+    ; writable variables here (DCD 0)
+END
+
+- Keep it to plain MOV/ADD/SUB/LDR/STR/CMP/B-family instructions only.
+- Do NOT use subroutines, BL/BX, stack push/pop, or macros unless the question explicitly asks for a function/recursion/procedure call.
+- Do NOT use UAL syntax, Thumb-specific instructions, or CMSIS/C-style constructs.
+- Use simple labels like "up", "loop", "STOP" — not descriptive multi-word labels.
+- Use repetitive subtraction / simple loops for anything division- or iteration-based, exactly like a first-semester student would.
+- If recursion or a subroutine is explicitly asked for, use BL to call and MOV PC, LR (or BX LR) to return — keep the stack handling minimal (STMFD/LDMFD sp! with only the registers actually needed).
+- Prefer DCD for word data, EQU for constants, matching the manual's format.
+- Absolutely no advanced addressing tricks, no conditional execution flags beyond BEQ/BNE/BCS/BLO/BHI etc., no clever one-liners.
 
 Programming Rules:
 
