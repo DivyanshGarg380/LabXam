@@ -79,7 +79,7 @@ type QuestionItem = {
   year: string;
   evaluation: string;
 };
-type View = "dashboard" | "add" | "manage" | "reports" | "pending" | "feedback";
+type View = "dashboard" | "add" |  "manage" | "reports" | "pending" | "feedback";
 type ActivityEntry = { id: string; message: string; timestamp: Date | null };
 type PendingItem = {
   id: string;
@@ -974,7 +974,7 @@ export default function Admin() {
                   className="mt-1 w-full h-10 rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder="Section (e.g. A, B, C)"
                   value={section}
-                  onChange={(e) => setSection(e.target.value)}
+                  onChange={(e) => setSection(e.target.value.trim().toUpperCase())}
                 />
               </SectionCard>
               <SectionCard

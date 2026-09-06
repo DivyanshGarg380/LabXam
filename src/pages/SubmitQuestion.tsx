@@ -12,32 +12,36 @@ import { Link } from "react-router-dom";
 import { submitPending } from "@/supabase/pending";
 import { Input } from "@/components/ui/input";
 
-const subject_sem: Record<string, string[]> = {
-  "1": ["Programming for Problem Solving (PPS)"],
+type SubjectOption = { value: string; label: string };
+
+const subject_sem: Record<string, SubjectOption[]> = {
+  "1": [
+    { value: "pps", label: "Programming for Problem Solving (PPS)" },
+  ],
   "2": [
-    "Introduction to OOP (IOOP)",
-    "Data Analysis & Visualization (DAV)"
+    { value: "ioop", label: "Introduction to OOP (IOOP)" },
+    { value: "dav", label: "Data Analysis & Visualization (DAV)" },
   ],
   "3": [
-    "Data Structures Lab (DSL)",
-    "Digital Systems Lab (DISL)"
+    { value: "dsl", label: "Data Structures Lab (DSL)" },
+    { value: "disl", label: "Digital Systems Lab (DISL)" },
   ],
   "4": [
-    "Database Systems (DBSL)",
-    "Software Development Lab (OSDL)",
-    "Operating Systems Lab (OSL)"
+    { value: "dbsl", label: "Database Systems (DBSL)" },
+    { value: "osdl", label: "Software Development Lab (OSDL)" },
+    { value: "osl", label: "Operating Systems Lab (OSL)" },
   ],
   "5": [
-    "Information Security Lab (ISL)",
-    "Embedded Systems Design Lab (ESDL)",
-    "Parallel Programming Lab (PPL)",
-    "Compiler Design (CD)",
-    "Big Data Analysis (BDA)"
+    { value: "isl", label: "Information Security Lab (ISL)" },
+    { value: "esdl", label: "Embedded Systems Design Lab (ESDL)" },
+    { value: "bda", label: "Big Data Analysis (BDA)" },
+    { value: "cd", label: "Compiler Design Lab (CDL)" },
+    { value: "ppl", label: "Parallel Programming Lab (PPL)" },
   ],
   "6": [
-    "Mobile Application Development Lab (MADL)",
-    "Network Design and Programming Lab (NDLP)",
-    "Web Programming (WP)"
+    { value: "madl", label: "Mobile Application Development Lab (MADL)" },
+    { value: "ndlp", label: "Network Design and Programming Lab (NDLP)" },
+    { value: "wp", label: "Web Programming Lab (WPL)" },
   ],
 };
 
@@ -270,7 +274,7 @@ const SubmitQuestion = () => {
       const normalizedQuestion = question.trim().replace(/\s+/g, " ");
       await submitPending(
         `Semester ${semester}`,
-        subject.toLowerCase(),
+        subject,           
         year,
         normalizedQuestion,
         section.trim().toUpperCase(),
@@ -382,8 +386,8 @@ const SubmitQuestion = () => {
               </SelectTrigger>
               <SelectContent className="rounded-xl shadow-lg">
                 {subjects.map((sub) => (
-                  <SelectItem key={sub} value={sub}>
-                    {sub}
+                  <SelectItem key={sub.value} value={sub.value}>
+                    {sub.label}
                   </SelectItem>
                 ))}
               </SelectContent>
