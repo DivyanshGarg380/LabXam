@@ -22,7 +22,7 @@ The goal of this project is to eliminate the need to search through scattered Wh
 
 ⭐ Rated 4.5/5 from 67+ student feedback submissions
 
-📈 Served 7,000+ visits during peak examination periods
+📈 Served 10K+ visits and 25K+ page views during peak examination periods
 
 ## Project Vision
 
