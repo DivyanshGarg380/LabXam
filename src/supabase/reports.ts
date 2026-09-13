@@ -1,43 +1,34 @@
 import { supabase } from "@/lib/supabase";
 
+export type ReportStatus = "pending" | "in_review" | "resolved" | "declined";
+
 export type Report = {
   id: string;
   message: string;
-  resolved: boolean;
+  status: ReportStatus;
   createdAt: Date | null;
 };
+
+const mapRow = (row: any): Report => ({
+  id: row.id,
+  message: row.message,
+  status: row.status,
+  createdAt: row.created_at ? new Date(row.created_at) : null,
+});
 
 export const fetchReports = async (): Promise<Report[]> => {
   const { data, error } = await supabase
     .from("reports")
-    .select("id, message, resolved, created_at")
-    .eq("resolved", false)
+    .select("id, message, status, created_at")
+    .in("status", ["pending", "in_review"])
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
-
-  return data.map((row) => ({
-    id:        row.id,
-    message:   row.message,
-    resolved:  row.resolved,
-    createdAt: row.created_at ? new Date(row.created_at) : null,
-  }));
+  return data.map(mapRow);
 };
 
-export const resolveReport = async (id: string) => {
-  const { error } = await supabase
-    .from("reports")
-    .update({ resolved: true })
-    .eq("id", id);
-
-  return !error;
-};
-
-export const submitReport = async (message: string) => {
-  const { error } = await supabase
-    .from("reports")
-    .insert({ message });
-
+export const updateReportStatus = async (id: string, status: ReportStatus) => {
+  const { error } = await supabase.from("reports").update({ status }).eq("id", id);
   return !error;
 };
 
@@ -62,19 +53,15 @@ export const fetchMyReports = async (): Promise<Report[]> => {
 
   const { data, error } = await supabase
     .from("reports")
-    .select("id, message, resolved, created_at")
+    .select("id, message, status, created_at")
     .in("id", ids)
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
-
-  return data.map((row) => ({
-    id:        row.id,
-    message:   row.message,
-    resolved:  row.resolved,
-    createdAt: row.created_at ? new Date(row.created_at) : null,
-  }));
+  return data.map(mapRow);
 };
+
+const CLOSED_STATUSES: ReportStatus[] = ["resolved", "declined"];
 
 export const deleteOldResolvedReports = async () => {
   const ids: string[] = JSON.parse(localStorage.getItem("myReportIds") || "[]");
@@ -82,14 +69,18 @@ export const deleteOldResolvedReports = async () => {
 
   const { data } = await supabase
     .from("reports")
-    .select("id, resolved, created_at")
+    .select("id, status, created_at")
     .in("id", ids);
 
   if (!data) return;
 
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const toRemove = data
-    .filter((r) => r.resolved && new Date(r.created_at).getTime() < sevenDaysAgo)
+    .filter(
+      (r) =>
+        CLOSED_STATUSES.includes(r.status) &&
+        new Date(r.created_at).getTime() < sevenDaysAgo,
+    )
     .map((r) => r.id);
 
   if (toRemove.length === 0) return;

@@ -8,7 +8,8 @@ import { fetchDashboardStats, type DashboardStats } from "@/supabase/metric";
 import { fetchActivityLog, logActivity } from "@/supabase/activityLog";
 import {
   fetchReports,
-  resolveReport as resolveReportFn,
+  updateReportStatus,
+  type ReportStatus,
 } from "@/supabase/reports";
 import {
   fetchPending,
@@ -25,7 +26,6 @@ import { updateQuestion } from "@/supabase/updateQuestion";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +45,6 @@ import {
   LogOut,
   PlusCircle,
   Flag,
-  ChevronRight,
   Pencil,
   Check,
   X,
@@ -263,7 +263,7 @@ export default function Admin() {
   const [dbOk, setDbOk] = useState(true);
 
   const [reports, setReports] = useState<
-    { id: string; message: string; resolved: boolean }[]
+    { id: string; message: string; status: ReportStatus }[]
   >([]);
   const [loadingReports, setLoadingReports] = useState(true);
 
@@ -564,11 +564,28 @@ export default function Admin() {
   
   const cancelEdit = () => setEditingIndex(null);
 
-  const handleResolveReport = async (id: string) => {
+  const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
+    pending: "Pending",
+    in_review: "In Review",
+    resolved: "Resolved",
+    declined: "Declined",
+  };
+
+  const handleUpdateReportStatus = async (id: string, status: ReportStatus) => {
     try {
-      await resolveReportFn(id);
-      setReports((prev) => prev.filter((r) => r.id !== id));
-      const msg = `Report #${id.slice(0, 6)} resolved by ${user!.email!.replace(/@.*/, "")}`;
+      const ok = await updateReportStatus(id, status);
+      if (!ok) throw new Error();
+
+      // Active list only holds pending/in_review reports; drop it once it leaves that set.
+      if (status === "resolved" || status === "declined") {
+        setReports((prev) => prev.filter((r) => r.id !== id));
+      } else {
+        setReports((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status } : r)),
+        );
+      }
+
+      const msg = `Report #${id.slice(0, 6)} marked "${REPORT_STATUS_LABELS[status]}" by ${user!.email!.replace(/@.*/, "")}`;
       await logActivity(msg);
       setActivity((prev) =>
         [
@@ -576,9 +593,9 @@ export default function Admin() {
           ...prev,
         ].slice(0, 8),
       );
-      toast.success("Report resolved");
+      toast.success(`Report marked ${REPORT_STATUS_LABELS[status]}`);
     } catch {
-      toast.error("Failed to resolve report");
+      toast.error("Failed to update report");
     }
   };
 
@@ -1354,14 +1371,22 @@ export default function Admin() {
                             #{r.id.slice(0, 8)}
                           </p>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="shrink-0 h-7 text-xs gap-1"
-                          onClick={() => handleResolveReport(r.id)}
+                        <Select
+                          value={r.status}
+                          onValueChange={(v) =>
+                            handleUpdateReportStatus(r.id, v as ReportStatus)
+                          }
                         >
-                          Resolve <ChevronRight className="h-3 w-3" />
-                        </Button>
+                          <SelectTrigger className="shrink-0 h-7 w-[130px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="in_review">In Review</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                            <SelectItem value="declined">Declined</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     ))}
                   </div>

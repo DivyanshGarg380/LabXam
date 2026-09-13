@@ -7,15 +7,42 @@ import {
   deleteOldResolvedReports,
   sendReport,
   fetchMyReports,
+  type Report,
+  type ReportStatus,
 } from "@/supabase/reports";
-import { CheckCircle2, Clock, RefreshCw } from "lucide-react";
+import { CheckCircle2, Clock, RefreshCw, ListChecks, Eye, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-type Report = {
-  id: string;
-  message: string;
-  resolved: boolean;
-  createdAt: Date | null;
+const STATUS_META: Record<
+  ReportStatus,
+  { label: string; icon: typeof Clock; className: string }
+> = {
+  pending: {
+    label: "Pending",
+    icon: Clock,
+    className: "bg-muted text-muted-foreground",
+  },
+  in_review: {
+    label: "In Review",
+    icon: Eye,
+    className: "bg-blue-500/10 text-blue-500",
+  },
+  resolved: {
+    label: "Resolved",
+    icon: CheckCircle2,
+    className: "bg-green-500/10 text-green-600",
+  },
+  declined: {
+    label: "Declined",
+    icon: XCircle,
+    className: "bg-red-500/10 text-red-500",
+  },
 };
 
 export default function Report() {
@@ -24,6 +51,7 @@ export default function Report() {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState<Report[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [myReportsOpen, setMyReportsOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,7 +114,7 @@ export default function Report() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Main Content */}
-      <div className="px-4 pt-10 pb-24 sm:pt-12 sm:pb-28 flex flex-col items-center">
+      <div className="flex-1 px-4 pb-24 sm:pb-28 flex flex-col items-center justify-center">
 
         {/* Header */}
         <div className="w-full max-w-xl text-center mb-8 space-y-2">
@@ -119,10 +147,9 @@ export default function Report() {
             <Button
               className="flex-1 h-11 rounded-xl"
               onClick={handleSubmit}
-              // disabled={submitting}
-              disabled
+              disabled={submitting}
             >
-              {submitting ? "Submitting…" : "Feature Coming Soon!"}
+              {submitting ? "Submitting…" : "Submit Report"}
             </Button>
 
             <Button
@@ -133,47 +160,72 @@ export default function Report() {
               Back
             </Button>
           </div>
+
+          {reports.length > 0 && (
+            <button
+              onClick={() => setMyReportsOpen(true)}
+              className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition py-1"
+            >
+              <ListChecks className="h-4 w-4" />
+              View my reports
+              <span className="px-1.5 py-0.5 rounded-md bg-muted text-xs">
+                {reports.length}
+              </span>
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* Reports */}
-        {reports.length > 0 && (
-          <div className="w-full max-w-xl mt-10 space-y-3">
-            {reports.map((r) => (
-              <div
-                key={r.id}
-                className="bg-card border border-border rounded-xl p-4 flex items-start gap-3"
+      <Dialog open={myReportsOpen} onOpenChange={setMyReportsOpen}>
+        <DialogContent className="max-w-lg rounded-2xl">
+          <DialogHeader>
+            <div className="flex items-center justify-between pr-6">
+              <DialogTitle>My Reports</DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={handleRefresh}
+                disabled={refreshing}
               >
-                {r.resolved ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-1" />
-                ) : (
-                  <Clock className="h-4 w-4 text-muted-foreground mt-1" />
-                )}
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+              </Button>
+            </div>
+          </DialogHeader>
 
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm line-clamp-3">{r.message}</p>
+          <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
+            {reports.map((r) => {
+              const meta = STATUS_META[r.status];
+              const StatusIcon = meta.icon;
+              return (
+                <div
+                  key={r.id}
+                  className="bg-card border border-border rounded-xl p-4 flex items-start gap-3"
+                >
+                  <StatusIcon className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
 
-                  <div className="flex items-center gap-2 text-xs">
-                    {r.createdAt && (
-                      <span className="text-muted-foreground">
-                        {formatDate(r.createdAt)}
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <p className="text-sm break-words">{r.message}</p>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      {r.createdAt && (
+                        <span className="text-muted-foreground">
+                          {formatDate(r.createdAt)}
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-md ${meta.className}`}>
+                        {meta.label}
                       </span>
-                    )}
-                    <span
-                      className={`px-2 py-0.5 rounded-md ${
-                        r.resolved
-                          ? "bg-green-500/10 text-green-600"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {r.resolved ? "Resolved" : "Pending"}
-                    </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        )}
-      </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border pt-5 pb-5 text-center space-y-1 bg-background">
