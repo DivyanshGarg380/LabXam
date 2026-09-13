@@ -212,6 +212,8 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.readme_only == 'false'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Validate vercel.json is valid JSON
