@@ -9,12 +9,19 @@ export type Report = {
   createdAt: Date | null;
 };
 
-const mapRow = (row: any): Report => ({
-  id: row.id,
-  message: row.message,
-  status: row.status,
-  createdAt: row.created_at ? new Date(row.created_at) : null,
-});
+type ReportRow = {
+  id: string;
+  message: string;
+  status: ReportStatus;
+  created_at: string | null;
+};
+
+const mapRow = (row: ReportRow): Report => ({
+   id: row.id,
+   message: row.message,
+   status: row.status,
+   createdAt: row.created_at ? new Date(row.created_at) : null,
+ });
 
 export const fetchReports = async (): Promise<Report[]> => {
   const { data, error } = await supabase
