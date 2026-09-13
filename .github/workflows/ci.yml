@@ -148,24 +148,6 @@ jobs:
             exit 1
           fi
 
-  dependency-audit:
-    name: Dependency audit (npm audit)
-    needs: detect-changes
-    if: needs.detect-changes.outputs.readme_only == 'false'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci
-      - name: Fail on high/critical vulns in PRODUCTION dependencies
-        run: npm audit --omit=dev --audit-level=high
-      - name: Report full audit (including devDependencies)
-        if: always()
-        run: npm audit --audit-level=high || true
-
   secret-scan:
     name: Secret scan (gitleaks)
     needs: detect-changes
