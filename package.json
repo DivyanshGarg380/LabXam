@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "vitest",
+    "test:run": "jest --ci",
+    "type-check": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "validate": "npm run type-check && npm run test:run && npx eslint src"
   },
   "dependencies": {

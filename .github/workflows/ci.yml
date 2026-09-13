@@ -1,37 +1,225 @@
-name: CI Pipeline
+name: CI/CD
 
 on:
   push:
-    branches: ["main", "dev"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
 
 jobs:
-  build-and-test:
+  detect-changes:
+    name: Detect changed files
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20]
-
+    outputs:
+      readme_only: ${{ steps.check.outputs.readme_only }}
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Determine if change is README-only
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
 
-      - name: Run ESLint
-        run: npx eslint src
+          # New branch / force-push edge case: no valid "before" commit.
+          # Default to false so a full check run happens (safer default).
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "readme_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-      - name: Run Tests
-        run: npm test
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
 
-      - name: Build project
-        run: npm run build
+          if [ -n "$CHANGED_FILES" ] && [ "$(echo "$CHANGED_FILES" | grep -vc '^README\.md$')" -eq 0 ]; then
+            echo "readme_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "readme_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  lint:
+    name: Lint (ESLint)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  type-check:
+    name: Type check (tsc)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Type check app source
+        run: npx tsc --noEmit -p tsconfig.app.json
+      - name: Type check node/build config
+        run: npx tsc --noEmit -p tsconfig.node.json
+
+  unit-tests:
+    name: Unit tests (Jest)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Run tests with coverage
+        run: npx jest --ci --coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  build:
+    name: Build (vite build)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  bundle-size-check:
+    name: Bundle size budget
+    needs: [detect-changes, build]
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    env:
+      MAX_DIST_SIZE_KB: 20480 
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Check dist size against budget
+        run: |
+          SIZE_KB=$(du -sk dist | cut -f1)
+          echo "dist size: ${SIZE_KB} KB (budget: ${MAX_DIST_SIZE_KB} KB)"
+          if [ "$SIZE_KB" -gt "$MAX_DIST_SIZE_KB" ]; then
+            echo "::error::Build output exceeds the ${MAX_DIST_SIZE_KB}KB budget."
+            exit 1
+          fi
+
+  dependency-audit:
+    name: Dependency audit (npm audit)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Fail on high/critical vulnerabilities
+        run: npm audit --audit-level=high
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql-analysis:
+    name: CodeQL security scan
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+
+  dependency-review:
+    name: Dependency review
+    needs: detect-changes
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  config-validation:
+    name: Config validation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.readme_only == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate vercel.json is valid JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8')); console.log('vercel.json OK')"
+      - name: Validate package.json is valid JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json OK')"
+      - name: Ensure required npm scripts exist
+        run: |
+          for script in lint build test type-check; do
+            node -e "process.exit(require('./package.json').scripts['$script'] ? 0 : 1)" \
+              || { echo "::error::Missing required npm script: $script"; exit 1; }
+          done
