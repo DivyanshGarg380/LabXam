@@ -266,6 +266,9 @@ export default function Admin() {
     { id: string; message: string; status: ReportStatus }[]
   >([]);
   const [loadingReports, setLoadingReports] = useState(true);
+  const openReportsCount = reports.filter(
+    (r) => r.status === "pending" || r.status === "in_review",
+  ).length;
 
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
 
@@ -576,14 +579,10 @@ export default function Admin() {
       const ok = await updateReportStatus(id, status);
       if (!ok) throw new Error();
 
-      // Active list only holds pending/in_review reports; drop it once it leaves that set.
-      if (status === "resolved" || status === "declined") {
-        setReports((prev) => prev.filter((r) => r.id !== id));
-      } else {
-        setReports((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, status } : r)),
-        );
-      }
+      // Latest-15 list shows every status now — never drop the row, just update it.
+      setReports((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status } : r)),
+      );
 
       const msg = `Report #${id.slice(0, 6)} marked "${REPORT_STATUS_LABELS[status]}" by ${user!.email!.replace(/@.*/, "")}`;
       await logActivity(msg);
@@ -735,7 +734,7 @@ export default function Admin() {
       id: "reports",
       label: "Reports",
       icon: <Flag className="h-4 w-4" />,
-      badge: reports.length || undefined,
+      badge: openReportsCount || undefined,
     },
     {
       id: "feedback",
@@ -864,7 +863,7 @@ export default function Admin() {
                   },
                   {
                     label: "Open Reports",
-                    value: reports.length,
+                    value: openReportsCount,
                     sub: "unresolved issues",
                   },
                 ].map((stat) => (
@@ -1335,14 +1334,14 @@ export default function Admin() {
               <div>
                 <h1 className="text-xl font-bold">Reports</h1>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Unresolved issues submitted by users
+                  Latest issues submitted by users
                 </p>
               </div>
               <SectionCard
                 title="User Reports"
                 action={
                   <span className="text-xs text-muted-foreground">
-                    {reports.length} active
+                    {openReportsCount} active · {reports.length} shown
                   </span>
                 }
               >

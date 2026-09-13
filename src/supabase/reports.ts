@@ -17,18 +17,18 @@ type ReportRow = {
 };
 
 const mapRow = (row: ReportRow): Report => ({
-   id: row.id,
-   message: row.message,
-   status: row.status,
-   createdAt: row.created_at ? new Date(row.created_at) : null,
- });
+  id: row.id,
+  message: row.message,
+  status: row.status,
+  createdAt: row.created_at ? new Date(row.created_at) : null,
+});
 
 export const fetchReports = async (): Promise<Report[]> => {
   const { data, error } = await supabase
     .from("reports")
     .select("id, message, status, created_at")
-    .in("status", ["pending", "in_review"])
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(15);
 
   if (error || !data) return [];
   return data.map(mapRow);
