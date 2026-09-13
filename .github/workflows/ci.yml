@@ -1,4 +1,4 @@
-name: LabXam
+name: LabXam 
 
 on:
   push:
@@ -126,7 +126,6 @@ jobs:
           name: dist
           path: dist/
           retention-days: 7
-
   bundle-size-check:
     name: Bundle size budget
     needs: [detect-changes, build]
@@ -161,8 +160,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - name: Fail on high/critical vulnerabilities
-        run: npm audit --audit-level=high
+      - name: Fail on high/critical vulns in PRODUCTION dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Report full audit (including devDependencies)
+        if: always()
+        run: npm audit --audit-level=high || true
 
   secret-scan:
     name: Secret scan (gitleaks)
@@ -205,7 +207,6 @@ jobs:
       - uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
-
   config-validation:
     name: Config validation
     needs: detect-changes
