@@ -14,7 +14,6 @@ A clean, scalable, and real-time web platform that helps students access previou
 
 The goal of this project is to eliminate the need to search through scattered WhatsApp messages, PDFs, and shared drives before lab exams by providing a centralized and structured repository.
 
----
 
 [![CI Status](https://github.com/DivyanshGarg380/LabXam/actions/workflows/ci.yml/badge.svg)](https://github.com/DivyanshGarg380/LabXam/actions)
 
