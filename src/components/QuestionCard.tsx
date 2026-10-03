@@ -131,7 +131,7 @@ export function QuestionCard({
         </div>
 
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0">
-          <Button
+          {/* <Button
             variant="ghost"
             size="sm"
             onClick={handleSolution}
@@ -146,7 +146,7 @@ export function QuestionCard({
             <span className="hidden sm:inline">
               {solution && isSolutionOpen ? "Hide" : "Solution"}
             </span>
-          </Button>
+          </Button> */}
 
           <Button
             variant="ghost"
@@ -164,7 +164,7 @@ export function QuestionCard({
         </div>
       </div>
 
-      {isSolutionOpen && (
+      {/* {isSolutionOpen && (
         <div
           className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed"
           onClick={(e) => e.stopPropagation()}
@@ -180,7 +180,7 @@ export function QuestionCard({
             <pre className="whitespace-pre-wrap font-mono text-foreground overflow-x-auto">{solution}</pre>
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 }
