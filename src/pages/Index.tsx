@@ -52,6 +52,7 @@ const subjectsBySemester = {
     { value: "bda", label: "Big Data Analysis (BDA)" },
     { value: "cd", label: "Compiler Design Lab (CDL)" },
     { value: "ppl", label: "Parallel Programming Lab (PPL)" },
+    { value: "pcap", label: "Parallel Computing Lab (PCAP)" },
   ],
   "6": [
     { value: "madl", label: "Mobile Application Development Lab (MADL)" },
