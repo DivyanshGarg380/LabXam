@@ -1,172 +1,310 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow">
-<title>LabXam - Maintenance</title>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LabXam is resting until next semester</title>
+<meta name="description" content="LabXam has done its job for this semester. The question archive reopens next semester.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#101114">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  :root {
+    --bg: #101114;
+    --ink: #ece8df;
+    --muted: #9a9ca1;
+    --bar: #1a1c21;
+    --bar-sealed: #2a2d35;
+    --edge: #e3c76a;
+    --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    --text: "Newsreader", Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--text);
+    font-size: 1.1875rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+  /* ---------- the sealed question rows ---------- */
+  .field {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 46vw;
+    padding: 6vh 4vw 6vh 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .row { display: flex; gap: 10px; height: 9px; }
+  .seg {
+    height: 100%;
+    background: var(--bar);
+    border-radius: 2px;
+    transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform .55s cubic-bezier(.2,.7,.2,1), background-color .9s ease;
+    transition-delay: calc(var(--i) * 55ms + var(--j) * 90ms);
+  }
+  .field.on .seg { transform: scaleX(1); background: var(--bar-sealed); }
+  .field.static .seg { transition: none; transform: scaleX(1); background: var(--bar-sealed); }
 
-body {
-  background: #0a0e17;
-  color: #e5e7eb;
-  font-family: 'Inter', sans-serif;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  overflow: hidden;
-  position: relative;
-}
+  /* ---------- content ---------- */
+  main {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: max(32px, env(safe-area-inset-top)) clamp(24px, 6vw, 88px) max(40px, env(safe-area-inset-bottom));
+    max-width: 62rem;
+  }
+  .brand {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -.01em;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(3rem, 9.2vw, 7.4rem);
+    line-height: .94;
+    letter-spacing: -.035em;
+    margin: 0 0 1.6rem;
+  }
+  h1 span { display: block; overflow: hidden; padding-bottom: .08em; }
+  h1 span i {
+    display: block;
+    font-style: normal;
+    transform: translateY(105%);
+    animation: rise .9s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  h1 span:nth-child(1) i { animation-delay: 1.35s; }
+  h1 span:nth-child(2) i { animation-delay: 1.5s; }
+  @keyframes rise { to { transform: none; } }
 
-.matrix-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0.25;
-  z-index: 0;
-}
+  .lede {
+    max-width: 30rem;
+    margin: 0 0 2rem;
+    color: #cfcbc2;
+    opacity: 0;
+    animation: show .8s ease 2.1s forwards;
+  }
+  @keyframes show { to { opacity: 1; } }
 
-.container {
-  max-width: 500px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
+  .actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem 1.75rem;
+    opacity: 0;
+    animation: show .8s ease 2.3s forwards;
+  }
+  .btn {
+    font: 600 1rem/1 var(--display);
+    background: var(--ink);
+    color: #121212;
+    border: 0;
+    border-radius: 999px;
+    padding: 1rem 1.6rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color .2s ease, transform .2s ease;
+  }
+  .btn:hover { background: #fff; }
+  .btn:active { transform: translateY(1px); }
+  .link {
+    font: inherit;
+    font-size: 1rem;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: #4a4d54;
+  }
+  .link:hover { color: var(--ink); }
+  .btn:focus-visible, .link:focus-visible {
+    outline: 2px solid var(--edge);
+    outline-offset: 4px;
+  }
+  .note {
+    margin: 1.1rem 0 0;
+    font-size: .95rem;
+    color: var(--muted);
+    min-height: 1.5em;
+  }
+  .hero { margin-top: auto; padding-top: 18vh; }
+  .brand, footer { opacity: 0; animation: show .8s ease .3s forwards; }
+  footer { font-size: .95rem; color: var(--muted); margin-top: 3.5rem; }
 
-.logo {
-  font-size: 32px;
-  font-weight: 700;
-  color: #22c55e;
-  margin-bottom: 16px;
-  letter-spacing: 2px;
-}
+  /* ---------- small screens: rows move to the top band ---------- */
+  @media (max-width: 760px) {
+    .field {
+      width: 100%;
+      height: 26svh;
+      bottom: auto;
+      padding: 0 24px;
+      opacity: .85;
+    }
+    main { padding-top: calc(26svh + 24px); }
+    .brand { position: absolute; top: calc(26svh - 3rem); left: 24px; z-index: 1; }
+    .hero { padding-top: 4rem; }
+    h1 { font-size: clamp(2.8rem, 15vw, 4.4rem); }
+  }
 
-h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #f9fafb;
-  margin-bottom: 12px;
-}
-
-.subtitle {
-  font-size: 16px;
-  color: #9ca3af;
-  margin-bottom: 40px;
-  line-height: 1.6;
-}
-
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #111827;
-  border: 1px solid #1f2937;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #9ca3af;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  background: #22c55e;
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.footer {
-  margin-top: 60px;
-  font-size: 13px;
-  color: #6b7280;
-}
+  @media (prefers-reduced-motion: reduce) {
+    h1 span i, .lede, .actions, .brand, footer { animation: none; opacity: 1; transform: none; }
+    .seg { transition: none; }
+  }
 </style>
 </head>
-
 <body>
 
-<canvas class="matrix-bg" id="matrix"></canvas>
+<div class="field" id="field" aria-hidden="true"></div>
 
-<div class="container">
-  <div class="logo">LABXAM</div>
-  
-  <h1>We'll be back soon</h1>
-  
-  <p class="subtitle">
-    We're currently performing maintenance and upgrades.<br>
-    Thanks for your patience.
-  </p>
-  
-  <div class="status">
-    <span class="status-dot"></span>
-    System maintenance in progress
-  </div>
-  
-  <div class="footer">
-    © <span id="year"></span> LabXam
-  </div>
-</div>
+<main>
+  <div class="brand">LabXam</div>
+
+  <section class="hero">
+    <h1 aria-label="See you next semester.">
+      <span aria-hidden="true"><i>See you next</i></span>
+      <span aria-hidden="true"><i>semester.</i></span>
+    </h1>
+    <p class="lede">
+      LabXam did its job this term, so the question archive is closed for now.
+      It opens again when the next semester starts.
+    </p>
+    <div class="actions">
+      <button class="btn" id="ask" type="button">Ask for access</button>
+      <button class="link" id="copy" type="button">Copy email address</button>
+    </div>
+    <p class="note" id="note" role="status" aria-live="polite">
+      Need something urgently? Send a request and it can be opened up.
+    </p>
+  </section>
+
+  <footer>Built by Divyansh for the students who needed it.</footer>
+</main>
 
 <script>
-// Matrix rain effect
-const canvas = document.getElementById('matrix');
-const ctx = canvas.getContext('2d');
+(function () {
+  "use strict";
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+  /* Email is assembled at runtime so it isn't sitting in the HTML for scrapers. */
+  var user = "Himynameisdivyansh", host = "gmail.com";
+  var addr = user + "@" + host;
 
-const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
-const fontSize = 14;
-const columns = canvas.width / fontSize;
-const drops = Array(Math.floor(columns)).fill(1);
+  var subject = "LabXam access request";
+  var body = [
+    "Hi Divyansh,",
+    "",
+    "I need access to the LabXam questions.",
+    "",
+    "Semester / subject:",
+    "Why I need it now:",
+    "",
+    "Thanks,"
+  ].join("\n");
 
-function drawMatrix() {
-  ctx.fillStyle = 'rgba(10, 14, 23, 0.05)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.fillStyle = '#22c55e';
-  ctx.font = fontSize + 'px monospace';
-  
-  for (let i = 0; i < drops.length; i++) {
-    const text = chars[Math.floor(Math.random() * chars.length)];
-    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-    
-    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-      drops[i] = 0;
-    }
-    drops[i]++;
+  var note = document.getElementById("note");
+  var defaultNote = note.textContent;
+  var timer;
+  function say(msg) {
+    note.textContent = msg;
+    clearTimeout(timer);
+    timer = setTimeout(function () { note.textContent = defaultNote; }, 4500);
   }
-}
 
-setInterval(drawMatrix, 35);
+  document.getElementById("ask").addEventListener("click", function () {
+    window.location.href = "mailto:" + addr +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+    say("Your email app should open with the message ready. If it doesn't, copy the address instead.");
+  });
 
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
+  document.getElementById("copy").addEventListener("click", function () {
+    function done() { say("Copied " + addr); }
+    function fallback() {
+      var t = document.createElement("textarea");
+      t.value = addr; t.setAttribute("readonly", "");
+      t.style.position = "fixed"; t.style.opacity = "0";
+      document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); done(); } catch (e) { say("Email: " + addr); }
+      document.body.removeChild(t);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(addr).then(done, fallback);
+    } else { fallback(); }
+  });
 
-// Set year
-document.getElementById('year').textContent = new Date().getFullYear();
+  /* ---------- build the rows of sealed "questions" ---------- */
+  var field = document.getElementById("field");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function rng(seed) {            // deterministic, so the pattern is the same every visit
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function build(animate) {
+    var rand = rng(2026);
+    field.innerHTML = "";
+    field.classList.remove("on", "static");
+    var rowH = 9, minGap = 26;
+    var count = Math.max(6, Math.floor(field.clientHeight / (rowH + minGap)));
+    for (var i = 0; i < count; i++) {
+      var row = document.createElement("div");
+      row.className = "row";
+      var remaining = 100, segs = 1 + Math.floor(rand() * 3);
+      if (rand() < .18) segs = 0;           // occasional blank line, like paragraph breaks
+      for (var j = 0; j < segs; j++) {
+        var w = j === segs - 1 ? Math.min(remaining, 18 + rand() * 40) : 22 + rand() * 38;
+        remaining -= w + 3;
+        if (remaining < 0 && j > 0) break;
+        var s = document.createElement("div");
+        s.className = "seg";
+        s.style.width = w + "%";
+        s.style.setProperty("--i", i);
+        s.style.setProperty("--j", j);
+        row.appendChild(s);
+      }
+      field.appendChild(row);
+    }
+    // two frames so the transition has a starting state to move from
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        field.classList.add(animate && !reduce ? "on" : "static");
+      });
+    });
+  }
+
+  build(true);
+
+  var rz;
+  window.addEventListener("resize", function () {
+    clearTimeout(rz);
+    rz = setTimeout(function () { build(false); }, 200);   // no replay on resize
+  });
+})();
 </script>
-
 </body>
 </html>
