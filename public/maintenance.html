@@ -197,13 +197,14 @@
       Need something urgently? Send a request and it can be opened up.
     </p>
   </section>
-
-  <footer>Built by Divyansh for the students who needed it.</footer>
 </main>
 
 <script>
 (function () {
   "use strict";
+
+  /* Hide the old ?query that Vercel's redirect carries over. */
+  try { history.replaceState(null, "", "/"); } catch (e) {}
 
   /* Email is assembled at runtime so it isn't sitting in the HTML for scrapers. */
   var user = "Himynameisdivyansh", host = "gmail.com";
