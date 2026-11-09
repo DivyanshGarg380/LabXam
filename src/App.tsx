@@ -30,13 +30,13 @@ const queryClient = new QueryClient({
 const SecurityBanner = () => {
   return (
     <div className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#241b0b]/80 backdrop-blur-md">
-      <div className="flex items-center justify-center gap-3 px-4 py-3 text-sm">
-        <Sparkles className="h-4 w-4 text-amber-400/80" />
+      <div className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm">
+        <Sparkles className="h-4 w-4 shrink-0 text-amber-400/80" />
 
         <p className="text-center text-amber-200/90 font-medium tracking-wide">
-          AI solution generation is temporarily unavailable.
+          Upon popular demand, LabXam is now open until 11 Nov 2026.
           <span className="text-amber-300/70">
-            {" "}We’re working to get it back up.
+            {" "}Maintenance mode begins thereafter.
           </span>
         </p>
       </div>
@@ -81,7 +81,7 @@ const App = () => {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          {/* <SecurityBanner /> */}
+          <SecurityBanner />
           <Toaster />
           <Sonner />
           <Routes>
