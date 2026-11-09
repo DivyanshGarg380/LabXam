@@ -1,11 +1,11 @@
 {
-  "redirects": [
-    {
-      "source": "/((?!admin(?:/|$)|auth(?:/|$)|assets/|api/admin|maintenance\\.html|favicon\\.ico|robots\\.txt).*)",
-      "destination": "/maintenance.html",
-      "permanent": false
-    }
-  ],
+  // "redirects": [
+  //   {
+  //     "source": "/((?!admin(?:/|$)|auth(?:/|$)|assets/|api/admin|maintenance\\.html|favicon\\.ico|robots\\.txt).*)",
+  //     "destination": "/maintenance.html",
+  //     "permanent": false
+  //   }
+  // ],
   "headers": [
     {
       "source": "/(.*)",
